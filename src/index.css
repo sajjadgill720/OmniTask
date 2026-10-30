@@ -72,6 +72,58 @@
   border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
+/* Corporate Enterprise Whiteboard & Glass Wall Surface */
+.corporate-wall-surface {
+  background-color: #f4f6fb;
+  background-image: 
+    linear-gradient(to right, rgba(203, 213, 225, 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(203, 213, 225, 0.45) 1px, transparent 1px);
+  background-size: 32px 32px;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  box-shadow: 
+    inset 0 1px 3px rgba(255, 255, 255, 0.9),
+    0 10px 30px -10px rgba(0, 0, 0, 0.08);
+}
+
+.dark .corporate-wall-surface {
+  background-color: #0d1017;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Corporate Agile Column Lane */
+.corporate-column-lane {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(8px);
+  border: 1.5px dashed rgba(203, 213, 225, 0.8);
+  border-radius: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.dark .corporate-column-lane {
+  background: rgba(18, 22, 31, 0.65);
+  border: 1.5px dashed rgba(255, 255, 255, 0.12);
+}
+
+.corporate-column-lane:hover,
+.corporate-column-lane.drag-over {
+  border-color: #3b82f6;
+  background: rgba(239, 246, 255, 0.85);
+}
+
+.dark .corporate-column-lane:hover,
+.dark .corporate-column-lane.drag-over {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: #60a5fa;
+}
+
 /* Physical Paper Bevel Edge (Real 3D card thickness) */
 .paper-edge {
   box-shadow:

@@ -259,6 +259,7 @@ export function App() {
     tags: string[];
     section: ThingsSection;
     colorHex?: string;
+    status?: Task['status'];
   }) => {
     const defaultColor = parsed.colorHex || '#fef08a';
 
@@ -271,7 +272,7 @@ export function App() {
       isThisEvening: parsed.isThisEvening || false,
       projectId: selectedProjectId || undefined,
       priority: parsed.priority,
-      status: 'todo',
+      status: parsed.status || 'todo',
       tags: parsed.tags,
       dueDate: parsed.dueDate,
       timeSpentSeconds: 0,
@@ -357,7 +358,7 @@ export function App() {
         {/* Dynamic Multi-Experience Views */}
         <main className="flex-1 pb-24">
           {viewMode === 'sticky_wall' ? (
-            /* Google Keep + Notezilla Motion Sticky Wall */
+            /* Google Keep + Notezilla Motion Sticky Wall with Corporate Whiteboard Option */
             <StickyWallView
               title={currentViewMeta.title}
               subtitle={currentViewMeta.subtitle}
@@ -369,13 +370,15 @@ export function App() {
               onUpdateTask={handleSaveTask}
               onDeleteTask={handleDeleteTask}
               audioEnabled={permissions.audioEnabled}
-              onQuickAdd={() => handleMagicAdd({
-                title: 'New Sticky Note',
+              onQuickAdd={(status) => handleMagicAdd({
+                title: 'New Post-it',
                 priority: 'normal',
                 tags: [],
                 section: currentSection,
+                status: status || 'todo',
               })}
               onReorderTasks={handleReorderTasks}
+              onMoveTaskStatus={handleMoveTaskStatus}
             />
           ) : viewMode === 'kanban' ? (
             /* Trello Kanban Board with Sticky Notes */
@@ -399,23 +402,26 @@ export function App() {
               onMoveTaskStatus={handleMoveTaskStatus}
             />
           ) : currentSection === 'today' && !selectedProjectId ? (
-            /* Things 3 Today View */
+            /* Things 3 Enhanced Today View */
             <TodayView
               tasks={visibleTasks}
               projects={projects}
               onToggleComplete={handleToggleComplete}
               onSelectTask={setSelectedTask}
               onToggleTimer={handleToggleTimer}
+              onUpdateTask={handleSaveTask}
+              onDeleteTask={handleDeleteTask}
+              onReorderTasks={handleReorderTasks}
               audioEnabled={permissions.audioEnabled}
-              onQuickAdd={() => handleMagicAdd({
-                title: 'New Task',
-                priority: 'normal',
+              onQuickAdd={(title, priority) => handleMagicAdd({
+                title: title || 'New Task',
+                priority: priority || 'normal',
                 tags: [],
                 section: 'today',
               })}
             />
           ) : (
-            /* Things 3 Standard List View */
+            /* Things 3 Enhanced Standard List View */
             <TaskListView
               section={currentSection}
               selectedProject={selectedProject}
@@ -424,10 +430,13 @@ export function App() {
               onToggleComplete={handleToggleComplete}
               onSelectTask={setSelectedTask}
               onToggleTimer={handleToggleTimer}
+              onUpdateTask={handleSaveTask}
+              onDeleteTask={handleDeleteTask}
+              onReorderTasks={handleReorderTasks}
               audioEnabled={permissions.audioEnabled}
-              onQuickAdd={() => handleMagicAdd({
-                title: 'New Task',
-                priority: 'normal',
+              onQuickAdd={(title, priority) => handleMagicAdd({
+                title: title || 'New Task',
+                priority: priority || 'normal',
                 tags: [],
                 section: currentSection,
               })}
