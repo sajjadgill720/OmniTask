@@ -260,7 +260,7 @@ export function App() {
     section: ThingsSection;
     colorHex?: string;
   }) => {
-    const defaultColor = STICKY_COLORS[Math.floor(Math.random() * STICKY_COLORS.length)].colorHex;
+    const defaultColor = parsed.colorHex || '#fef08a';
 
     const newTask: Task = {
       id: generateId(),
@@ -276,7 +276,7 @@ export function App() {
       dueDate: parsed.dueDate,
       timeSpentSeconds: 0,
       isTimerRunning: false,
-      colorHex: parsed.colorHex || defaultColor,
+      colorHex: defaultColor,
       isPinned: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

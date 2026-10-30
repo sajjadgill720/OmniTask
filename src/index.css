@@ -56,37 +56,20 @@
   will-change: transform;
 }
 
-/* Authentic Corkboard Background Texture */
-.corkboard-bg {
-  background-color: #d19a5b;
-  background-image: 
-    radial-gradient(rgba(78, 48, 20, 0.16) 15%, transparent 16%),
-    radial-gradient(rgba(255, 255, 255, 0.25) 15%, transparent 16%),
-    radial-gradient(rgba(60, 35, 10, 0.12) 15%, transparent 20%),
-    radial-gradient(rgba(255, 255, 255, 0.2) 15%, transparent 20%);
-  background-position: 0 0, 20px 20px, 10px 10px, 30px 30px;
-  background-size: 40px 40px;
-  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.35);
-  border: 8px solid #854d0e;
+/* Ergonomic HCI Clean Canvas Surface (Invisible Interface, Zero Cognitive Load) */
+.clean-canvas-surface {
+  background-color: #f8f9fc;
+  background-image: radial-gradient(circle, rgba(148, 163, 184, 0.25) 1px, transparent 1px);
+  background-size: 28px 28px;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-.dark .corkboard-bg {
-  background-color: #1c1815;
-  background-image: 
-    radial-gradient(rgba(255, 255, 255, 0.05) 15%, transparent 16%),
-    radial-gradient(rgba(0, 0, 0, 0.5) 15%, transparent 16%);
-  background-size: 32px 32px;
-  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 255, 255, 0.05);
-  border: 8px solid #382414;
-}
-
-/* Interactive 3D Dot Grid Mesh */
-.canvas-grid-bg {
-  background-size: 36px 36px;
-  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.08) 1.2px, transparent 1.2px);
-}
-.dark .canvas-grid-bg {
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.12) 1.2px, transparent 1.2px);
+.dark .clean-canvas-surface {
+  background-color: #10121a;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 /* Physical Paper Bevel Edge (Real 3D card thickness) */
