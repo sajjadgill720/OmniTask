@@ -217,6 +217,35 @@ export function App() {
     }
   };
 
+  // Reorder tasks via Drag and Drop
+  const handleReorderTasks = (sourceId: string, targetId: string) => {
+    if (sourceId === targetId) return;
+    setTasks(prev => {
+      const sourceIndex = prev.findIndex(t => t.id === sourceId);
+      const targetIndex = prev.findIndex(t => t.id === targetId);
+      if (sourceIndex === -1 || targetIndex === -1) return prev;
+
+      const updated = [...prev];
+      const [moved] = updated.splice(sourceIndex, 1);
+      updated.splice(targetIndex, 0, moved);
+      return updated;
+    });
+  };
+
+  // Move task status via Kanban Drag and Drop
+  const handleMoveTaskStatus = (taskId: string, newStatus: Task['status']) => {
+    setTasks(prev =>
+      prev.map(t => {
+        if (t.id !== taskId) return t;
+        return {
+          ...t,
+          status: newStatus,
+          completedAt: newStatus === 'done' ? new Date().toISOString() : undefined,
+        };
+      })
+    );
+  };
+
   const handleAddProject = (project: Project) => {
     setProjects(prev => [...prev, project]);
     setSelectedProjectId(project.id);
@@ -346,6 +375,7 @@ export function App() {
                 tags: [],
                 section: currentSection,
               })}
+              onReorderTasks={handleReorderTasks}
             />
           ) : viewMode === 'kanban' ? (
             /* Trello Kanban Board with Sticky Notes */
@@ -366,6 +396,7 @@ export function App() {
                 tags: [],
                 section: currentSection,
               })}
+              onMoveTaskStatus={handleMoveTaskStatus}
             />
           ) : currentSection === 'today' && !selectedProjectId ? (
             /* Things 3 Today View */

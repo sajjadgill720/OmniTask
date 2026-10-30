@@ -34,6 +34,7 @@ interface StickyNoteCardProps {
   onUpdateTask: (task: Task) => void;
   onDeleteTask: (id: string) => void;
   audioEnabled: boolean;
+  onDropOnItem?: (sourceId: string, targetId: string) => void;
 }
 
 export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
@@ -46,11 +47,14 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   onUpdateTask,
   onDeleteTask,
   audioEnabled,
+  onDropOnItem,
 }) => {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [newChecklistText, setNewChecklistText] = useState('');
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [useHandwriting, setUseHandwriting] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Direct Inline Editing States
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -222,22 +226,44 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
 
   return (
     <div
+      draggable={!isEditingTitle && !isEditingNotes}
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', task.id);
+        setIsDragging(true);
+      }}
+      onDragEnd={() => setIsDragging(false)}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(true);
+      }}
+      onDragLeave={() => setIsDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
+        const sourceId = e.dataTransfer.getData('text/plain');
+        if (sourceId && onDropOnItem) {
+          onDropOnItem(sourceId, task.id);
+          if (audioEnabled) playCompletionSound();
+        }
+      }}
       onClick={() => onSelectTask(task)}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={{
         transform: isHovered
-          ? `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) translateZ(44px) scale(1.05)`
+          ? `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) translateZ(48px) scale(1.05)`
           : `rotate(${naturalAngle}deg)`,
         backgroundColor: paperStyle.baseRgb,
         backgroundImage: `linear-gradient(135deg, ${paperStyle.lightRgb} 0%, ${paperStyle.baseRgb} 55%, ${paperStyle.darkRgb} 100%)`,
         borderColor: paperStyle.borderRgb,
         color: paperStyle.inkColor, // Direct HCI color application
-        zIndex: isHovered ? 40 : 1,
+        zIndex: isDragging ? 50 : isHovered ? 40 : 1,
       }}
-      className={`group relative flex flex-col justify-between p-5 pt-7 rounded-2xl border transition-all duration-150 cursor-pointer realistic-postit ${
+      className={`group relative flex flex-col justify-between p-5 pt-7 rounded-2xl border transition-all duration-150 cursor-grab active:cursor-grabbing realistic-postit paper-edge ${
         isDone ? 'opacity-65 grayscale-20' : ''
-      }`}
+      } ${isDragging ? 'dragging-note' : ''} ${isDragOver ? 'drop-target-active' : ''}`}
     >
       {/* Dynamic Specular Light Sheen Overlay */}
       <div 
