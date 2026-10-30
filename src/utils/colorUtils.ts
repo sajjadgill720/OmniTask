@@ -4,10 +4,11 @@ export interface RGBColor {
   b: number;
 }
 
+export type InkType = 'auto' | 'ballpoint_blue' | 'black' | 'white' | 'red';
+
 export function parseColorToRgb(color: string): RGBColor {
   if (!color) return { r: 254, g: 240, b: 138 }; // Default Canary Yellow
 
-  // If already rgb(...)
   const rgbMatch = color.match(/rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i);
   if (rgbMatch) {
     return {
@@ -17,7 +18,6 @@ export function parseColorToRgb(color: string): RGBColor {
     };
   }
 
-  // Hex (#fff or #ffffff)
   let hex = color.replace(/^#/, '');
   if (hex.length === 3) {
     hex = hex.split('').map(c => c + c).join('');
@@ -54,8 +54,22 @@ export function adjustBrightness(rgb: RGBColor, factor: number): RGBColor {
   };
 }
 
-export function getLuminance(rgb: RGBColor): number {
-  return (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+// WCAG 2.1 Relative Luminance Calculation
+export function getRelativeLuminance(rgb: RGBColor): number {
+  const transform = (val: number) => {
+    const s = val / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * transform(rgb.r) + 0.7152 * transform(rgb.g) + 0.0722 * transform(rgb.b);
+}
+
+// WCAG 2.1 Contrast Ratio Formula
+export function getContrastRatio(rgb1: RGBColor, rgb2: RGBColor): number {
+  const lum1 = getRelativeLuminance(rgb1);
+  const lum2 = getRelativeLuminance(rgb2);
+  const lighter = Math.max(lum1, lum2);
+  const darker = Math.min(lum1, lum2);
+  return (lighter + 0.05) / (darker + 0.05);
 }
 
 export interface PaperStyle {
@@ -65,39 +79,49 @@ export interface PaperStyle {
   darkRgb: string;
   inkColor: string;
   borderRgb: string;
-  pinColor: string;
   isDarkNote: boolean;
+  contrastRatio: number;
+  wcagRating: 'AAA' | 'AA' | 'Pass';
 }
 
-export function getPostitPaperStyle(colorInput?: string, inkType: 'ballpoint_blue' | 'black' | 'auto' = 'ballpoint_blue'): PaperStyle {
-  const rgb = parseColorToRgb(colorInput || '#fef08a');
-  const light = adjustBrightness(rgb, 1.06);
-  const dark = adjustBrightness(rgb, 0.88);
-  const border = adjustBrightness(rgb, 0.82);
-  const lum = getLuminance(rgb);
-  const isDarkNote = lum < 0.45;
+export function getPostitPaperStyle(colorInput?: string, inkType: InkType = 'auto'): PaperStyle {
+  const bgRgb = parseColorToRgb(colorInput || '#fef08a');
+  const light = adjustBrightness(bgRgb, 1.05);
+  const dark = adjustBrightness(bgRgb, 0.90);
+  const border = adjustBrightness(bgRgb, 0.80);
+  
+  const bgLuminance = getRelativeLuminance(bgRgb);
+  const isDarkNote = bgLuminance < 0.38;
 
-  let inkColor = '#1d4ed8'; // Classic ballpoint blue ink from the reference image!
-  if (inkType === 'black') {
-    inkColor = isDarkNote ? '#f8fafc' : '#1e293b';
-  } else if (inkType === 'ballpoint_blue') {
-    inkColor = isDarkNote ? '#93c5fd' : '#1e40af';
+  let chosenInkRgb: RGBColor;
+
+  if (inkType === 'ballpoint_blue') {
+    // If background is dark, use luminous light ice-blue to maintain readability!
+    chosenInkRgb = isDarkNote ? { r: 147, g: 197, b: 253 } : { r: 26, g: 54, b: 160 };
+  } else if (inkType === 'black') {
+    chosenInkRgb = isDarkNote ? { r: 248, g: 250, b: 252 } : { r: 15, g: 23, b: 42 };
+  } else if (inkType === 'white') {
+    chosenInkRgb = isDarkNote ? { r: 255, g: 255, b: 255 } : { r: 30, g: 41, b: 59 };
+  } else if (inkType === 'red') {
+    chosenInkRgb = isDarkNote ? { r: 254, g: 202, b: 202 } : { r: 185, g: 28, b: 28 };
   } else {
-    inkColor = isDarkNote ? '#ffffff' : '#1e3a8a';
+    // 'auto' HCI optimal contrast:
+    // If background is light, classic ballpoint blue (or charcoal); if dark, high-contrast crisp white!
+    chosenInkRgb = isDarkNote ? { r: 255, g: 255, b: 255 } : { r: 26, g: 60, b: 180 };
   }
 
-  // 3D Pushpin Color (default classic red like reference photo, or contrasting)
-  const pinColor = '#dc2626';
+  const contrastRatio = parseFloat(getContrastRatio(bgRgb, chosenInkRgb).toFixed(2));
+  const wcagRating = contrastRatio >= 7 ? 'AAA' : contrastRatio >= 4.5 ? 'AA' : 'Pass';
 
   return {
-    baseRgb: rgbToString(rgb),
-    hex: rgbToHex(rgb),
+    baseRgb: rgbToString(bgRgb),
+    hex: rgbToHex(bgRgb),
     lightRgb: rgbToString(light),
     darkRgb: rgbToString(dark),
     borderRgb: rgbToString(border),
-    inkColor,
-    pinColor,
+    inkColor: rgbToString(chosenInkRgb),
     isDarkNote,
+    contrastRatio,
+    wcagRating,
   };
 }
-

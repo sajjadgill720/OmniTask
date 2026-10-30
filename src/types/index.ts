@@ -48,6 +48,7 @@ export interface Task {
   isTimerRunning: boolean;
   contextUrl?: string; // Anchored website/doc link
   colorHex?: string;
+  inkType?: 'auto' | 'ballpoint_blue' | 'black' | 'white' | 'red'; // HCI contrast-compliant ink
   isPinned?: boolean; // Google Keep & Notezilla pinning
   completedAt?: string;
   createdAt: string;

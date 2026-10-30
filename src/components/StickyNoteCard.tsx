@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Pin, 
   Check, 
@@ -8,16 +8,19 @@ import {
   Trash2, 
   Palette, 
   Plus, 
-  ChevronRight, 
-  Calendar,
-  Moon,
-  Type
+  Calendar, 
+  Moon, 
+  Type,
+  Edit2,
+  CheckCircle2,
+  ShieldCheck,
+  Sparkles
 } from 'lucide-react';
 import { Task, Project } from '../types';
 import { checkDueDate, formatDuration } from '../utils/storage';
 import { playCompletionSound } from '../utils/permissions';
 import { STICKY_COLORS } from '../constants/theme';
-import { getPostitPaperStyle, parseColorToRgb, rgbToString } from '../utils/colorUtils';
+import { getPostitPaperStyle, parseColorToRgb, rgbToString, InkType } from '../utils/colorUtils';
 import { RedPushPin } from './RedPushPin';
 import confetti from 'canvas-confetti';
 
@@ -49,13 +52,64 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [useHandwriting, setUseHandwriting] = useState(true);
 
+  // Direct Inline Editing States
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleInput, setTitleInput] = useState(task.title);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [notesInput, setNotesInput] = useState(task.notes || '');
+
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const notesTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Keep local inputs synced with task updates
+  useEffect(() => {
+    setTitleInput(task.title);
+  }, [task.title]);
+
+  useEffect(() => {
+    setNotesInput(task.notes || '');
+  }, [task.notes]);
+
+  useEffect(() => {
+    if (isEditingTitle) {
+      titleInputRef.current?.focus();
+      titleInputRef.current?.select();
+    }
+  }, [isEditingTitle]);
+
+  useEffect(() => {
+    if (isEditingNotes) {
+      notesTextareaRef.current?.focus();
+    }
+  }, [isEditingNotes]);
+
   const isDone = task.status === 'done';
-  const paperStyle = getPostitPaperStyle(task.colorHex, 'ballpoint_blue');
+  // HCI & WCAG Contrast Compliant Paper & Ink Styling
+  const paperStyle = getPostitPaperStyle(task.colorHex, task.inkType || 'auto');
   const dueInfo = checkDueDate(task.dueDate);
 
   // Subtle natural angle for post-it note aesthetic (-1.8 deg to +1.8 deg)
   const angles = [-1.5, 1.2, -0.8, 1.6, -1.2, 0.9, -1.8];
   const naturalAngle = angles[index % angles.length];
+
+  // Inline Title Save
+  const handleSaveTitle = () => {
+    setIsEditingTitle(false);
+    const trimmed = titleInput.trim();
+    if (trimmed && trimmed !== task.title) {
+      onUpdateTask({ ...task, title: trimmed });
+    } else {
+      setTitleInput(task.title);
+    }
+  };
+
+  // Inline Notes Save
+  const handleSaveNotes = () => {
+    setIsEditingNotes(false);
+    if (notesInput !== (task.notes || '')) {
+      onUpdateTask({ ...task, notes: notesInput });
+    }
+  };
 
   const handleCompleteNote = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -107,7 +161,6 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   const handleSelectColor = (e: React.MouseEvent, colorStr: string) => {
     e.stopPropagation();
     onUpdateTask({ ...task, colorHex: colorStr });
-    setShowColorPicker(false);
   };
 
   const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,6 +168,11 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
     const hex = e.target.value;
     const rgb = parseColorToRgb(hex);
     onUpdateTask({ ...task, colorHex: rgbToString(rgb) });
+  };
+
+  const handleSelectInkType = (e: React.MouseEvent, ink: InkType) => {
+    e.stopPropagation();
+    onUpdateTask({ ...task, inkType: ink });
   };
 
   const handleAdvanceStage = (e: React.MouseEvent) => {
@@ -140,29 +198,30 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
         backgroundColor: paperStyle.baseRgb,
         backgroundImage: `linear-gradient(135deg, ${paperStyle.lightRgb} 0%, ${paperStyle.baseRgb} 55%, ${paperStyle.darkRgb} 100%)`,
         borderColor: paperStyle.borderRgb,
+        color: paperStyle.inkColor, // Direct HCI color application
       }}
       className={`group relative flex flex-col justify-between p-5 pt-7 rounded-2xl border transition-all duration-200 cursor-pointer realistic-postit hover:!rotate-0 ${
         isDone ? 'opacity-65 grayscale-20' : ''
       }`}
     >
-      {/* 3D Red Pushpin at Top Center (Exact match to reference photo!) */}
+      {/* 3D Red Pushpin at Top Center */}
       <div 
         onClick={handleTogglePin}
         className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 cursor-pointer transition-transform hover:scale-125 active:scale-95"
-        title={task.isPinned ? 'Pinned Note (Click to unpin)' : 'Click to pin note'}
+        title={task.isPinned ? '📌 Pinned to top (Click to unpin)' : 'Click to pin note'}
       >
         <RedPushPin size={34} />
       </div>
 
-      {/* Top Bar: Controls, Stage, Project, and RGB Color Picker */}
+      {/* Top Bar: Controls, Stage, Project, and Color/HCI Picker */}
       <div className="flex items-center justify-between gap-1 mb-3 z-10">
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* Trello Workflow Stage Badge */}
           <button
             type="button"
             onClick={handleAdvanceStage}
-            className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-black/10 dark:bg-black/30 hover:bg-black/15 text-slate-800 dark:text-slate-100 transition cursor-pointer"
-            title="Click to advance status (To Do → Doing → Done)"
+            className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-black/10 dark:bg-black/30 hover:bg-black/20 text-current transition cursor-pointer"
+            title="Advance stage (To Do → Doing → Done)"
           >
             {task.status === 'in_progress' ? 'Doing' : task.status}
           </button>
@@ -170,7 +229,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
           {/* Project tag if assigned */}
           {project && (
             <span 
-              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border bg-white/40 dark:bg-black/20 text-slate-800 dark:text-slate-200"
+              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border bg-black/5 dark:bg-black/20"
               style={{ borderColor: `${project.colorHex}60` }}
             >
               {project.title}
@@ -178,8 +237,21 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
           )}
         </div>
 
-        {/* Right tools: Font toggle + RGB Palette Popover Trigger */}
+        {/* Right tools: Direct Edit + Font Toggle + HCI Color Picker Trigger */}
         <div className="flex items-center gap-1">
+          {/* Quick Edit Button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditingTitle(true);
+            }}
+            className="p-1 rounded-md transition opacity-60 hover:opacity-100 hover:bg-black/10 cursor-pointer text-xs"
+            title="Edit note text inline"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </button>
+
           {/* Handwriting / Sans Toggle */}
           <button
             type="button"
@@ -187,13 +259,13 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
               e.stopPropagation();
               setUseHandwriting(!useHandwriting);
             }}
-            className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 rounded-md transition opacity-60 group-hover:opacity-100 cursor-pointer text-xs"
-            title={useHandwriting ? 'Switch to clean font' : 'Switch to handwriting ballpoint ink'}
+            className="p-1 rounded-md transition opacity-60 hover:opacity-100 hover:bg-black/10 cursor-pointer text-xs"
+            title={useHandwriting ? 'Switch to clean modern font' : 'Switch to authentic handwriting ink'}
           >
             <Type className="w-3.5 h-3.5" />
           </button>
 
-          {/* RGB Color Palette Trigger */}
+          {/* HCI RGB Color Palette Trigger */}
           <div className="relative">
             <button
               type="button"
@@ -201,94 +273,219 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
                 e.stopPropagation();
                 setShowColorPicker(!showColorPicker);
               }}
-              className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 rounded-md transition opacity-60 group-hover:opacity-100 cursor-pointer"
-              title="Select note RGB color"
+              className="p-1 rounded-md transition opacity-60 hover:opacity-100 hover:bg-black/10 cursor-pointer"
+              title="Change note color & ink (HCI contrast)"
             >
               <Palette className="w-3.5 h-3.5" />
             </button>
 
-            {/* RGB Color Options Modal/Popover */}
+            {/* HCI RGB Color & Contrast Popover */}
             {showColorPicker && (
               <div 
                 onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 top-7 z-30 p-2.5 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-52 animate-pop-in text-xs"
+                className="absolute right-0 top-7 z-30 p-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-60 animate-pop-in text-xs"
               >
-                <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-slate-100 dark:border-slate-800">
-                  <span className="font-bold text-[10px] uppercase tracking-wider text-slate-500">Post-it RGB Colors</span>
-                  <span className="text-[9px] font-mono text-slate-400">{paperStyle.baseRgb}</span>
+                {/* Header & Live WCAG Contrast Ratio */}
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
+                  <span className="font-extrabold text-[10px] uppercase tracking-wider text-slate-500">Color & Contrast</span>
+                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                    paperStyle.wcagRating === 'AAA' 
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' 
+                      : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+                  }`}>
+                    <ShieldCheck className="w-2.5 h-2.5" />
+                    <span>WCAG {paperStyle.wcagRating} ({paperStyle.contrastRatio}:1)</span>
+                  </span>
                 </div>
 
                 {/* Preset RGB Swatches */}
-                <div className="grid grid-cols-5 gap-1.5 mb-2.5">
-                  {STICKY_COLORS.map(c => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={(e) => handleSelectColor(e, c.rgb)}
-                      style={{ backgroundColor: c.rgb }}
-                      className={`w-7 h-7 rounded-xl border border-black/15 transition-transform hover:scale-115 cursor-pointer shadow-xs ${
-                        task.colorHex === c.rgb || task.colorHex === c.colorHex ? 'ring-2 ring-blue-600 scale-105' : ''
-                      }`}
-                      title={`${c.name} (${c.rgb})`}
-                    />
-                  ))}
+                <div className="mb-3">
+                  <span className="block text-[10px] text-slate-400 font-semibold mb-1">Paper RGB Preset:</span>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {STICKY_COLORS.map(c => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={(e) => handleSelectColor(e, c.rgb)}
+                        style={{ backgroundColor: c.rgb }}
+                        className={`w-8 h-8 rounded-xl border border-black/15 transition-transform hover:scale-110 cursor-pointer shadow-xs ${
+                          task.colorHex === c.rgb || task.colorHex === c.colorHex ? 'ring-2 ring-blue-600 scale-105' : ''
+                        }`}
+                        title={`${c.name} (${c.rgb})`}
+                      />
+                    ))}
+                  </div>
                 </div>
 
                 {/* Custom RGB Color Picker */}
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                  <label className="text-[10px] font-bold text-slate-600 dark:text-slate-300 cursor-pointer flex items-center gap-1.5">
-                    <span>Custom RGB:</span>
-                  </label>
+                <div className="mb-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="block text-[10px] font-semibold text-slate-600 dark:text-slate-300">Custom RGB Color:</span>
+                    <span className="text-[9px] font-mono text-slate-400">{paperStyle.baseRgb}</span>
+                  </div>
                   <input
                     type="color"
                     value={paperStyle.hex}
                     onChange={handleCustomColorChange}
-                    className="w-8 h-7 rounded-lg border border-slate-300 dark:border-slate-700 cursor-pointer p-0.5 bg-transparent"
-                    title="Pick custom RGB color"
+                    className="w-8 h-8 rounded-lg border border-slate-300 dark:border-slate-700 cursor-pointer p-0.5 bg-transparent"
+                    title="Pick any custom RGB color"
                   />
                 </div>
+
+                {/* HCI Ink Color Selector */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <span className="block text-[10px] font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Text Ink Color:</span>
+                  <div className="grid grid-cols-4 gap-1 text-[10px]">
+                    <button
+                      type="button"
+                      onClick={(e) => handleSelectInkType(e, 'auto')}
+                      className={`px-1.5 py-1 rounded-lg border text-center font-bold cursor-pointer transition ${
+                        (task.inkType || 'auto') === 'auto'
+                          ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600'
+                      }`}
+                      title="Auto HCI contrast calculation"
+                    >
+                      ⚡ Auto
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleSelectInkType(e, 'ballpoint_blue')}
+                      className={`px-1.5 py-1 rounded-lg border text-center font-bold cursor-pointer transition ${
+                        task.inkType === 'ballpoint_blue'
+                          ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600'
+                      }`}
+                      title="Classic Blue Ballpoint"
+                    >
+                      🔵 Blue
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleSelectInkType(e, 'black')}
+                      className={`px-1.5 py-1 rounded-lg border text-center font-bold cursor-pointer transition ${
+                        task.inkType === 'black'
+                          ? 'bg-slate-100 border-slate-900 text-slate-900 dark:bg-slate-800 dark:text-white'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600'
+                      }`}
+                      title="Jet Black Pen"
+                    >
+                      ⚫ Black
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleSelectInkType(e, 'white')}
+                      className={`px-1.5 py-1 rounded-lg border text-center font-bold cursor-pointer transition ${
+                        task.inkType === 'white'
+                          ? 'bg-slate-800 border-slate-600 text-white'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600'
+                      }`}
+                      title="White Chalk / Gel Pen"
+                    >
+                      ⚪ White
+                    </button>
+                  </div>
+                </div>
+
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Note Title & Body (Handwritten Ballpoint Ink like reference photo) */}
+      {/* Note Title & Body with DIRECT INLINE EDITING */}
       <div className="mb-3">
         <div className="flex items-start gap-2.5">
-          {/* Circular check toggle */}
+          {/* Checkbox Complete Toggle */}
           <button
             type="button"
             onClick={handleCompleteNote}
-            className={`w-5 h-5 mt-1 rounded-full border-2 transition-all flex items-center justify-center shrink-0 cursor-pointer ${
-              isDone
-                ? 'bg-blue-600 border-blue-600 text-white'
-                : 'border-blue-700/60 dark:border-blue-400 hover:border-blue-600 bg-white/50 dark:bg-black/20'
-            }`}
+            className="w-5 h-5 mt-1 rounded-full border-2 transition-all flex items-center justify-center shrink-0 cursor-pointer bg-white/40 dark:bg-black/30"
+            style={{ borderColor: paperStyle.inkColor }}
             title={isDone ? 'Mark Incomplete' : 'Mark Completed'}
           >
             {isDone && <Check className="w-3.5 h-3.5 stroke-[3]" />}
           </button>
 
           <div className="min-w-0 flex-1">
-            <h3 className={`text-xl sm:text-2xl font-bold leading-tight break-words ${
-              useHandwriting ? 'font-handwriting ballpoint-blue' : 'font-sans font-bold text-slate-900 dark:text-white'
-            } ${isDone ? 'line-through opacity-60' : ''}`}>
-              {task.title || 'Untitled Post-it'}
-            </h3>
+            {/* Inline Title Editor */}
+            {isEditingTitle ? (
+              <form 
+                onSubmit={(e) => { e.preventDefault(); handleSaveTitle(); }}
+                onClick={(e) => e.stopPropagation()}
+                className="mb-1"
+              >
+                <input
+                  ref={titleInputRef}
+                  type="text"
+                  value={titleInput}
+                  onChange={(e) => setTitleInput(e.target.value)}
+                  onBlur={handleSaveTitle}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setTitleInput(task.title);
+                      setIsEditingTitle(false);
+                    }
+                  }}
+                  className={`w-full px-2 py-0.5 rounded-lg border border-blue-500/50 bg-white/70 dark:bg-black/40 text-xl sm:text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${
+                    useHandwriting ? 'font-handwriting' : 'font-sans'
+                  }`}
+                  style={{ color: paperStyle.inkColor }}
+                  placeholder="Note Title..."
+                />
+              </form>
+            ) : (
+              <h3 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditingTitle(true);
+                }}
+                className={`text-xl sm:text-2xl font-bold leading-tight break-words cursor-text rounded-md hover:bg-black/5 dark:hover:bg-white/5 px-1 -mx-1 transition ${
+                  useHandwriting ? 'font-handwriting' : 'font-sans'
+                } ${isDone ? 'line-through opacity-60' : ''}`}
+                style={{ color: paperStyle.inkColor }}
+                title="Click to edit title"
+              >
+                {task.title || 'Untitled Post-it'}
+              </h3>
+            )}
 
-            {task.notes && (
-              <p className={`text-base sm:text-lg mt-1 line-clamp-4 leading-snug break-words font-medium ${
-                useHandwriting ? 'font-handwriting ballpoint-blue opacity-90' : 'text-xs text-slate-700 dark:text-slate-300'
-              }`}>
-                {task.notes}
+            {/* Inline Notes Body Editor */}
+            {isEditingNotes ? (
+              <div onClick={(e) => e.stopPropagation()} className="mt-1">
+                <textarea
+                  ref={notesTextareaRef}
+                  rows={3}
+                  value={notesInput}
+                  onChange={(e) => setNotesInput(e.target.value)}
+                  onBlur={handleSaveNotes}
+                  className={`w-full p-2 rounded-lg border border-blue-500/50 bg-white/70 dark:bg-black/40 text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-blue-500/40 resize-none ${
+                    useHandwriting ? 'font-handwriting' : 'font-sans text-xs'
+                  }`}
+                  style={{ color: paperStyle.inkColor }}
+                  placeholder="Jot down notes or thoughts..."
+                />
+              </div>
+            ) : (
+              <p 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditingNotes(true);
+                }}
+                className={`text-base sm:text-lg mt-1 line-clamp-4 leading-snug break-words font-medium cursor-text rounded-md hover:bg-black/5 dark:hover:bg-white/5 px-1 -mx-1 transition opacity-90 ${
+                  useHandwriting ? 'font-handwriting' : 'font-sans text-xs'
+                }`}
+                style={{ color: paperStyle.inkColor }}
+                title="Click to edit notes"
+              >
+                {task.notes || <span className="opacity-40 italic text-sm">Click to add notes...</span>}
               </p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Direct In-Card Checklist with Blue Ink Handwriting */}
+      {/* Direct In-Card Checklist */}
       {task.checklists.length > 0 && (
         <div className="space-y-1.5 my-2 pt-2 border-t border-black/10 dark:border-white/10">
           {task.checklists.map(c => (
@@ -297,16 +494,18 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
               onClick={(e) => handleToggleChecklistItem(e, c.id)}
               className="flex items-center gap-2 group/item cursor-pointer"
             >
-              <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors shrink-0 ${
-                c.completed 
-                  ? 'bg-blue-600 border-blue-600 text-white' 
-                  : 'border-blue-800/60 dark:border-blue-400 bg-white/40'
-              }`}>
+              <div 
+                className="w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors shrink-0 bg-white/30"
+                style={{ borderColor: paperStyle.inkColor }}
+              >
                 {c.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
               </div>
-              <span className={`text-base sm:text-lg leading-none ${
-                useHandwriting ? 'font-handwriting ballpoint-blue' : 'text-xs text-slate-800 dark:text-slate-200'
-              } ${c.completed ? 'line-through opacity-50' : ''}`}>
+              <span 
+                className={`text-base sm:text-lg leading-none ${
+                  useHandwriting ? 'font-handwriting' : 'text-xs'
+                } ${c.completed ? 'line-through opacity-50' : ''}`}
+                style={{ color: paperStyle.inkColor }}
+              >
                 {c.text}
               </span>
             </div>
@@ -322,12 +521,13 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
             autoFocus
             value={newChecklistText}
             onChange={(e) => setNewChecklistText(e.target.value)}
-            placeholder="Add handwritten subtask..."
-            className="flex-1 px-2.5 py-1 text-base font-handwriting bg-white/80 dark:bg-black/40 rounded-lg border border-blue-300 dark:border-blue-700 focus:outline-none"
+            placeholder="Add subtask item..."
+            className="flex-1 px-2.5 py-1 text-base font-handwriting bg-white/80 dark:bg-black/40 rounded-lg border focus:outline-none"
+            style={{ color: paperStyle.inkColor, borderColor: paperStyle.borderRgb }}
           />
           <button 
             type="submit" 
-            className="px-2.5 py-1 bg-blue-600 text-white text-xs rounded-lg font-bold"
+            className="px-2.5 py-1 bg-black/80 dark:bg-white/80 text-white dark:text-black text-xs rounded-lg font-bold"
           >
             Add
           </button>
@@ -339,7 +539,8 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
             e.stopPropagation();
             setIsAddingItem(true);
           }}
-          className="flex items-center gap-1 text-sm font-handwriting ballpoint-blue hover:underline opacity-80 hover:opacity-100 transition cursor-pointer mt-1 mb-2"
+          className="flex items-center gap-1 text-sm font-handwriting hover:underline opacity-70 hover:opacity-100 transition cursor-pointer mt-1 mb-2"
+          style={{ color: paperStyle.inkColor }}
         >
           <Plus className="w-3.5 h-3.5" />
           <span>+ Add subtask</span>
@@ -347,17 +548,19 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
       )}
 
       {/* Bottom Footer: Due Date, Focus Stopwatch & Delete */}
-      <div className="pt-2.5 border-t border-black/10 dark:border-white/10 flex items-center justify-between gap-1 text-xs text-slate-700 dark:text-slate-300">
-        
+      <div 
+        className="pt-2.5 border-t border-black/10 dark:border-white/10 flex items-center justify-between gap-1 text-xs"
+        style={{ color: paperStyle.inkColor }}
+      >
         {/* Due Date & Evening */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {dueInfo.label && (
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${
               dueInfo.isOverdue 
-                ? 'bg-rose-500 text-white' 
+                ? 'bg-rose-600 text-white' 
                 : dueInfo.isToday 
                 ? 'bg-amber-500 text-slate-900' 
-                : 'bg-black/10 dark:bg-white/15 text-slate-800 dark:text-slate-100'
+                : 'bg-black/10 dark:bg-white/15'
             }`}>
               <Calendar className="w-2.5 h-2.5" />
               <span>{dueInfo.label}</span>
@@ -372,7 +575,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
           )}
 
           {task.tags.slice(0, 2).map(tag => (
-            <span key={tag} className="text-[11px] font-handwriting font-bold ballpoint-blue">
+            <span key={tag} className="text-[11px] font-handwriting font-bold opacity-80">
               #{tag}
             </span>
           ))}
@@ -389,7 +592,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-mono transition cursor-pointer ${
               task.isTimerRunning
                 ? 'bg-rose-600 text-white animate-pulse'
-                : 'bg-black/10 dark:bg-white/10 hover:bg-black/20 text-slate-800 dark:text-slate-100'
+                : 'bg-black/10 dark:bg-white/10 hover:bg-black/20'
             }`}
             title={task.isTimerRunning ? 'Pause Focus Timer' : 'Start Focus Timer'}
           >
@@ -407,7 +610,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
               e.stopPropagation();
               onDeleteTask(task.id);
             }}
-            className="p-1 text-slate-500 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition rounded-md cursor-pointer"
+            className="p-1 opacity-0 group-hover:opacity-100 hover:text-rose-500 transition rounded-md cursor-pointer"
             title="Discard Post-it Note"
           >
             <Trash2 className="w-3.5 h-3.5" />
