@@ -9,10 +9,8 @@ import {
   Palette, 
   Plus, 
   Calendar, 
-  Moon, 
   Type,
   Edit2,
-  CheckCircle2,
   ShieldCheck,
   Sparkles
 } from 'lucide-react';
@@ -87,7 +85,6 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
     }
   }, [isEditingNotes]);
 
-  const [isDoneState, setIsDoneState] = useState(false);
   // 3D Canvas Tilt & Parallax Physics
   const [isHovered, setIsHovered] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -100,9 +97,9 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
 
-    // 3D Tilt calculation (max 12 degrees)
-    const tiltX = -((y - centerY) / centerY) * 12;
-    const tiltY = ((x - centerX) / centerX) * 12;
+    // 3D Tilt calculation (smooth 9 degrees max)
+    const tiltX = -((y - centerY) / centerY) * 9;
+    const tiltY = ((x - centerX) / centerX) * 9;
 
     setTilt({ x: tiltX, y: tiltY });
     setGlare({
@@ -115,6 +112,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   const handleMouseLeave = () => {
     setIsHovered(false);
     setTilt({ x: 0, y: 0 });
+    setShowColorPicker(false);
   };
 
   const isDone = task.status === 'done';
@@ -122,8 +120,8 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   const paperStyle = getPostitPaperStyle(task.colorHex, task.inkType || 'auto');
   const dueInfo = checkDueDate(task.dueDate);
 
-  // Subtle natural angle for post-it note aesthetic (-1.8 deg to +1.8 deg)
-  const angles = [-1.5, 1.2, -0.8, 1.6, -1.2, 0.9, -1.8];
+  // Subtle natural angle for physical post-it note aesthetic (-1.3 deg to +1.4 deg)
+  const angles = [-1.2, 0.9, -0.6, 1.3, -0.9, 0.7, -1.4];
   const naturalAngle = angles[index % angles.length];
 
   // Inline Title Save
@@ -152,8 +150,8 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
     if (!isDone) {
       if (audioEnabled) playCompletionSound();
       confetti({
-        particleCount: 35,
-        spread: 60,
+        particleCount: 30,
+        spread: 55,
         origin: { y: 0.75 },
         colors: [paperStyle.hex, '#dc2626', '#1a56db'],
       });
@@ -197,36 +195,31 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
     onUpdateTask({ ...task, colorHex: colorStr });
   };
 
-  const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation();
-    const hex = e.target.value;
-    const rgb = parseColorToRgb(hex);
-    onUpdateTask({ ...task, colorHex: rgbToString(rgb) });
-  };
-
   const handleSelectInkType = (e: React.MouseEvent, ink: InkType) => {
     e.stopPropagation();
     onUpdateTask({ ...task, inkType: ink });
   };
 
+  // Workflow Stage advancement (To Do -> In Progress -> Done)
   const handleAdvanceStage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    let nextStatus: Task['status'] = 'todo';
-    if (task.status === 'todo') nextStatus = 'in_progress';
-    else if (task.status === 'in_progress') nextStatus = 'done';
-    else nextStatus = 'todo';
-
+    const nextStatusMap: Record<Task['status'], Task['status']> = {
+      todo: 'in_progress',
+      in_progress: 'done',
+      done: 'todo',
+    };
+    const nextStatus = nextStatusMap[task.status];
     onUpdateTask({
       ...task,
       status: nextStatus,
       completedAt: nextStatus === 'done' ? new Date().toISOString() : undefined,
     });
-    if (nextStatus === 'done' && audioEnabled) playCompletionSound();
+    if (audioEnabled) playCompletionSound();
   };
 
   return (
     <div
-      draggable={!isEditingTitle && !isEditingNotes}
+      draggable
       onDragStart={(e) => {
         e.dataTransfer.setData('text/plain', task.id);
         setIsDragging(true);
@@ -253,16 +246,16 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
       onMouseLeave={handleMouseLeave}
       style={{
         transform: isHovered
-          ? `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) translateZ(48px) scale(1.05)`
+          ? `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) translateZ(40px) scale(1.04)`
           : `rotate(${naturalAngle}deg)`,
         backgroundColor: paperStyle.baseRgb,
-        backgroundImage: `linear-gradient(135deg, ${paperStyle.lightRgb} 0%, ${paperStyle.baseRgb} 55%, ${paperStyle.darkRgb} 100%)`,
+        backgroundImage: `linear-gradient(145deg, ${paperStyle.lightRgb} 0%, ${paperStyle.baseRgb} 60%, ${paperStyle.darkRgb} 100%)`,
         borderColor: paperStyle.borderRgb,
-        color: paperStyle.inkColor, // Direct HCI color application
+        color: paperStyle.inkColor,
         zIndex: isDragging ? 50 : isHovered ? 40 : 1,
       }}
-      className={`group relative flex flex-col justify-between p-5 pt-7 rounded-2xl border transition-all duration-150 cursor-grab active:cursor-grabbing realistic-postit paper-edge ${
-        isDone ? 'opacity-65 grayscale-20' : ''
+      className={`group relative flex flex-col justify-between w-[270px] min-h-[270px] max-w-[280px] mx-auto p-5 pt-8 rounded-2xl border transition-all duration-150 cursor-grab active:cursor-grabbing realistic-postit paper-edge select-none ${
+        isDone ? 'opacity-70' : ''
       } ${isDragging ? 'dragging-note' : ''} ${isDragOver ? 'drop-target-active' : ''}`}
     >
       {/* Dynamic Specular Light Sheen Overlay */}
@@ -278,421 +271,324 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
         onClick={handleTogglePin}
         style={{
           transform: isHovered 
-            ? `translateZ(36px) translate(-50%, 0) scale(1.15) rotate(${tilt.y * 0.4}deg)` 
+            ? `translateZ(34px) translate(-50%, 0) scale(1.15) rotate(${tilt.y * 0.4}deg)` 
             : 'translate(-50%, 0)',
           transition: 'transform 0.15s ease-out',
         }}
         className="absolute -top-3.5 left-1/2 z-30 cursor-pointer"
-        title={task.isPinned ? '📌 Pinned to top (Click to unpin)' : 'Click to pin note'}
+        title={task.isPinned ? '📌 Pinned to wall (Click to unpin)' : 'Click to pin note'}
       >
         <RedPushPin size={34} />
       </div>
 
-      {/* Top Bar: Controls, Stage, Project, and Color/HCI Picker */}
-      <div className="flex items-center justify-between gap-1 mb-3 z-10">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Trello Workflow Stage Badge */}
-          <button
-            type="button"
-            onClick={handleAdvanceStage}
-            className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-black/10 dark:bg-black/30 hover:bg-black/20 text-current transition cursor-pointer"
-            title="Advance stage (To Do → Doing → Done)"
-          >
-            {task.status === 'in_progress' ? 'Doing' : task.status}
-          </button>
+      {/* FLOATING HOVER-ONLY GLASS TOOLBAR (Clean & Invisible until hovered) */}
+      <div className="absolute top-2.5 right-2.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1 bg-black/15 dark:bg-black/35 backdrop-blur-md px-1.5 py-1 rounded-xl shadow-xs">
+        
+        {/* Stage advancement chip (To Do -> Doing -> Done) */}
+        <button
+          type="button"
+          onClick={handleAdvanceStage}
+          className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-white/70 dark:bg-black/60 text-slate-800 dark:text-slate-200 hover:scale-105 transition cursor-pointer"
+          title={`Stage: ${task.status}. Click to advance.`}
+        >
+          {task.status === 'in_progress' ? 'Doing' : task.status === 'done' ? 'Done' : 'To Do'}
+        </button>
 
-          {/* Project tag if assigned */}
-          {project && (
-            <span 
-              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border bg-black/5 dark:bg-black/20"
-              style={{ borderColor: `${project.colorHex}60` }}
-            >
-              {project.title}
-            </span>
-          )}
-        </div>
-
-        {/* Right tools: Direct Edit + Font Toggle + HCI Color Picker Trigger */}
-        <div className="flex items-center gap-1">
-          {/* Quick Edit Button */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditingTitle(true);
-            }}
-            className="p-1 rounded-md transition opacity-60 hover:opacity-100 hover:bg-black/10 cursor-pointer text-xs"
-            title="Edit note text inline"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Handwriting / Sans Toggle */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setUseHandwriting(!useHandwriting);
-            }}
-            className="p-1 rounded-md transition opacity-60 hover:opacity-100 hover:bg-black/10 cursor-pointer text-xs"
-            title={useHandwriting ? 'Switch to clean modern font' : 'Switch to authentic handwriting ink'}
-          >
-            <Type className="w-3.5 h-3.5" />
-          </button>
-
-          {/* HCI RGB Color Palette Trigger */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowColorPicker(!showColorPicker);
-              }}
-              className="p-1 rounded-md transition opacity-60 hover:opacity-100 hover:bg-black/10 cursor-pointer"
-              title="Change note color & ink (HCI contrast)"
-            >
-              <Palette className="w-3.5 h-3.5" />
-            </button>
-
-            {/* HCI RGB Color & Contrast Popover */}
-            {showColorPicker && (
-              <div 
-                onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 top-7 z-30 p-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-60 animate-pop-in text-xs"
-              >
-                {/* Header & Live WCAG Contrast Ratio */}
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
-                  <span className="font-extrabold text-[10px] uppercase tracking-wider text-slate-500">Color & Contrast</span>
-                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                    paperStyle.wcagRating === 'AAA' 
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' 
-                      : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                  }`}>
-                    <ShieldCheck className="w-2.5 h-2.5" />
-                    <span>WCAG {paperStyle.wcagRating} ({paperStyle.contrastRatio}:1)</span>
-                  </span>
-                </div>
-
-                {/* Preset RGB Swatches */}
-                <div className="mb-3">
-                  <span className="block text-[10px] text-slate-400 font-semibold mb-1">Paper RGB Preset:</span>
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {STICKY_COLORS.map(c => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={(e) => handleSelectColor(e, c.rgb)}
-                        style={{ backgroundColor: c.rgb }}
-                        className={`w-8 h-8 rounded-xl border border-black/15 transition-transform hover:scale-110 cursor-pointer shadow-xs ${
-                          task.colorHex === c.rgb || task.colorHex === c.colorHex ? 'ring-2 ring-blue-600 scale-105' : ''
-                        }`}
-                        title={`${c.name} (${c.rgb})`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Custom RGB Color Picker */}
-                <div className="mb-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <div>
-                    <span className="block text-[10px] font-semibold text-slate-600 dark:text-slate-300">Custom RGB Color:</span>
-                    <span className="text-[9px] font-mono text-slate-400">{paperStyle.baseRgb}</span>
-                  </div>
-                  <input
-                    type="color"
-                    value={paperStyle.hex}
-                    onChange={handleCustomColorChange}
-                    className="w-8 h-8 rounded-lg border border-slate-300 dark:border-slate-700 cursor-pointer p-0.5 bg-transparent"
-                    title="Pick any custom RGB color"
-                  />
-                </div>
-
-                {/* HCI Ink Color Selector */}
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <span className="block text-[10px] font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Text Ink Color:</span>
-                  <div className="grid grid-cols-4 gap-1 text-[10px]">
-                    <button
-                      type="button"
-                      onClick={(e) => handleSelectInkType(e, 'auto')}
-                      className={`px-1.5 py-1 rounded-lg border text-center font-bold cursor-pointer transition ${
-                        (task.inkType || 'auto') === 'auto'
-                          ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-600'
-                      }`}
-                      title="Auto HCI contrast calculation"
-                    >
-                      ⚡ Auto
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => handleSelectInkType(e, 'ballpoint_blue')}
-                      className={`px-1.5 py-1 rounded-lg border text-center font-bold cursor-pointer transition ${
-                        task.inkType === 'ballpoint_blue'
-                          ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-600'
-                      }`}
-                      title="Classic Blue Ballpoint"
-                    >
-                      🔵 Blue
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => handleSelectInkType(e, 'black')}
-                      className={`px-1.5 py-1 rounded-lg border text-center font-bold cursor-pointer transition ${
-                        task.inkType === 'black'
-                          ? 'bg-slate-100 border-slate-900 text-slate-900 dark:bg-slate-800 dark:text-white'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-600'
-                      }`}
-                      title="Jet Black Pen"
-                    >
-                      ⚫ Black
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => handleSelectInkType(e, 'white')}
-                      className={`px-1.5 py-1 rounded-lg border text-center font-bold cursor-pointer transition ${
-                        task.inkType === 'white'
-                          ? 'bg-slate-800 border-slate-600 text-white'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-600'
-                      }`}
-                      title="White Chalk / Gel Pen"
-                    >
-                      ⚪ White
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Note Title & Body with DIRECT INLINE EDITING */}
-      <div className="mb-3">
-        <div className="flex items-start gap-2.5">
-          {/* Checkbox Complete Toggle */}
-          <button
-            type="button"
-            onClick={handleCompleteNote}
-            className="w-5 h-5 mt-1 rounded-full border-2 transition-all flex items-center justify-center shrink-0 cursor-pointer bg-white/40 dark:bg-black/30"
-            style={{ borderColor: paperStyle.inkColor }}
-            title={isDone ? 'Mark Incomplete' : 'Mark Completed'}
-          >
-            {isDone && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-          </button>
-
-          <div className="min-w-0 flex-1">
-            {/* Inline Title Editor */}
-            {isEditingTitle ? (
-              <form 
-                onSubmit={(e) => { e.preventDefault(); handleSaveTitle(); }}
-                onClick={(e) => e.stopPropagation()}
-                className="mb-1"
-              >
-                <input
-                  ref={titleInputRef}
-                  type="text"
-                  value={titleInput}
-                  onChange={(e) => setTitleInput(e.target.value)}
-                  onBlur={handleSaveTitle}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                      setTitleInput(task.title);
-                      setIsEditingTitle(false);
-                    }
-                  }}
-                  className={`w-full px-2 py-0.5 rounded-lg border border-blue-500/50 bg-white/70 dark:bg-black/40 text-xl sm:text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${
-                    useHandwriting ? 'font-handwriting' : 'font-sans'
-                  }`}
-                  style={{ color: paperStyle.inkColor }}
-                  placeholder="Note Title..."
-                />
-              </form>
-            ) : (
-              <h3 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditingTitle(true);
-                }}
-                className={`text-xl sm:text-2xl font-bold leading-tight break-words cursor-text rounded-md hover:bg-black/5 dark:hover:bg-white/5 px-1 -mx-1 transition ${
-                  useHandwriting ? 'font-handwriting' : 'font-sans'
-                } ${isDone ? 'line-through opacity-60' : ''}`}
-                style={{ color: paperStyle.inkColor }}
-                title="Click to edit title"
-              >
-                {task.title || 'Untitled Post-it'}
-              </h3>
-            )}
-
-            {/* Inline Notes Body Editor */}
-            {isEditingNotes ? (
-              <div onClick={(e) => e.stopPropagation()} className="mt-1">
-                <textarea
-                  ref={notesTextareaRef}
-                  rows={3}
-                  value={notesInput}
-                  onChange={(e) => setNotesInput(e.target.value)}
-                  onBlur={handleSaveNotes}
-                  className={`w-full p-2 rounded-lg border border-blue-500/50 bg-white/70 dark:bg-black/40 text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-blue-500/40 resize-none ${
-                    useHandwriting ? 'font-handwriting' : 'font-sans text-xs'
-                  }`}
-                  style={{ color: paperStyle.inkColor }}
-                  placeholder="Jot down notes or thoughts..."
-                />
-              </div>
-            ) : (
-              <p 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditingNotes(true);
-                }}
-                className={`text-base sm:text-lg mt-1 line-clamp-4 leading-snug break-words font-medium cursor-text rounded-md hover:bg-black/5 dark:hover:bg-white/5 px-1 -mx-1 transition opacity-90 ${
-                  useHandwriting ? 'font-handwriting' : 'font-sans text-xs'
-                }`}
-                style={{ color: paperStyle.inkColor }}
-                title="Click to edit notes"
-              >
-                {task.notes || <span className="opacity-40 italic text-sm">Click to add notes...</span>}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Direct In-Card Checklist */}
-      {task.checklists.length > 0 && (
-        <div className="space-y-1.5 my-2 pt-2 border-t border-black/10 dark:border-white/10">
-          {task.checklists.map(c => (
-            <div 
-              key={c.id} 
-              onClick={(e) => handleToggleChecklistItem(e, c.id)}
-              className="flex items-center gap-2 group/item cursor-pointer"
-            >
-              <div 
-                className="w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors shrink-0 bg-white/30"
-                style={{ borderColor: paperStyle.inkColor }}
-              >
-                {c.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-              </div>
-              <span 
-                className={`text-base sm:text-lg leading-none ${
-                  useHandwriting ? 'font-handwriting' : 'text-xs'
-                } ${c.completed ? 'line-through opacity-50' : ''}`}
-                style={{ color: paperStyle.inkColor }}
-              >
-                {c.text}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Add subtask */}
-      {isAddingItem ? (
-        <form onSubmit={handleAddChecklistItem} onClick={(e) => e.stopPropagation()} className="my-1.5 flex gap-1">
-          <input
-            type="text"
-            autoFocus
-            value={newChecklistText}
-            onChange={(e) => setNewChecklistText(e.target.value)}
-            placeholder="Add subtask item..."
-            className="flex-1 px-2.5 py-1 text-base font-handwriting bg-white/80 dark:bg-black/40 rounded-lg border focus:outline-none"
-            style={{ color: paperStyle.inkColor, borderColor: paperStyle.borderRgb }}
-          />
-          <button 
-            type="submit" 
-            className="px-2.5 py-1 bg-black/80 dark:bg-white/80 text-white dark:text-black text-xs rounded-lg font-bold"
-          >
-            Add
-          </button>
-        </form>
-      ) : (
+        {/* Quick Edit */}
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            setIsAddingItem(true);
+            setIsEditingTitle(true);
           }}
-          className="flex items-center gap-1 text-sm font-handwriting hover:underline opacity-70 hover:opacity-100 transition cursor-pointer mt-1 mb-2"
-          style={{ color: paperStyle.inkColor }}
+          className="p-1 rounded text-slate-800 dark:text-slate-200 hover:bg-black/10 transition cursor-pointer"
+          title="Edit text inline"
         >
-          <Plus className="w-3.5 h-3.5" />
-          <span>+ Add subtask</span>
+          <Edit2 className="w-3 h-3" />
         </button>
-      )}
 
-      {/* Bottom Footer: Due Date, Focus Stopwatch & Delete */}
+        {/* Font Toggle */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setUseHandwriting(!useHandwriting);
+          }}
+          className="p-1 rounded text-slate-800 dark:text-slate-200 hover:bg-black/10 transition cursor-pointer"
+          title={useHandwriting ? 'Switch to clean sans font' : 'Switch to authentic handwriting'}
+        >
+          <Type className="w-3 h-3" />
+        </button>
+
+        {/* Color Palette Popover Trigger */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowColorPicker(!showColorPicker);
+            }}
+            className="p-1 rounded text-slate-800 dark:text-slate-200 hover:bg-black/10 transition cursor-pointer"
+            title="Change paper color & ink"
+          >
+            <Palette className="w-3 h-3" />
+          </button>
+
+          {/* Color Picker Popover */}
+          {showColorPicker && (
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="absolute right-0 top-7 z-50 p-2.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-56 animate-pop-in text-xs"
+            >
+              <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-slate-100 dark:border-slate-800">
+                <span className="font-extrabold text-[10px] uppercase text-slate-500">Paper Color</span>
+                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-1 rounded">
+                  WCAG {paperStyle.wcagRating}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-5 gap-1.5 mb-2">
+                {STICKY_COLORS.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={(e) => handleSelectColor(e, c.colorHex)}
+                    style={{ backgroundColor: c.colorHex }}
+                    className={`w-6 h-6 rounded-full border transition-all cursor-pointer ${
+                      task.colorHex === c.colorHex ? 'ring-2 ring-blue-500 scale-110 shadow-sm' : 'border-black/15'
+                    }`}
+                    title={c.name}
+                  />
+                ))}
+              </div>
+
+              {/* Ink choice */}
+              <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1 text-[10px]">
+                <button
+                  type="button"
+                  onClick={(e) => handleSelectInkType(e, 'ballpoint_blue')}
+                  className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-bold border border-blue-300"
+                >
+                  Blue Ink
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => handleSelectInkType(e, 'black')}
+                  className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-900 font-bold border border-slate-300"
+                >
+                  Black Ink
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => handleSelectInkType(e, 'auto')}
+                  className="px-1.5 py-0.5 rounded bg-slate-50 text-slate-600 font-semibold"
+                >
+                  Auto
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Stopwatch Timer */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleTimer(task.id);
+          }}
+          className={`p-1 rounded transition cursor-pointer ${
+            task.isTimerRunning ? 'text-rose-600 animate-pulse' : 'text-slate-800 dark:text-slate-200 hover:bg-black/10'
+          }`}
+          title={task.isTimerRunning ? 'Pause timer' : 'Start focus timer'}
+        >
+          {task.isTimerRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+        </button>
+
+        {/* Delete button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeleteTask(task.id);
+          }}
+          className="p-1 rounded text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-950/40 transition cursor-pointer"
+          title="Discard note"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+      </div>
+
+      {/* PURE HANDWRITTEN POST-IT NOTE FACE */}
+      <div className="flex-1 min-w-0">
+        
+        {/* Note Title (Handwritten) */}
+        {isEditingTitle ? (
+          <form 
+            onSubmit={(e) => { e.preventDefault(); handleSaveTitle(); }}
+            onClick={(e) => e.stopPropagation()}
+            className="mb-2"
+          >
+            <input
+              ref={titleInputRef}
+              type="text"
+              value={titleInput}
+              onChange={(e) => setTitleInput(e.target.value)}
+              onBlur={handleSaveTitle}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setTitleInput(task.title);
+                  setIsEditingTitle(false);
+                }
+              }}
+              className="w-full p-1 text-2xl font-handwriting bg-white/70 dark:bg-black/30 border border-blue-500 rounded focus:outline-none"
+              style={{ color: paperStyle.inkColor }}
+            />
+          </form>
+        ) : (
+          <h3 
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditingTitle(true);
+            }}
+            className={`text-2xl sm:text-[26px] font-bold leading-tight break-words cursor-text transition rounded px-0.5 ${
+              useHandwriting ? 'font-handwriting' : 'font-sans text-lg font-bold'
+            } ${isDone ? 'line-through opacity-60' : ''}`}
+            style={{ color: paperStyle.inkColor }}
+            title="Click to edit title"
+          >
+            {task.title || 'Untitled Post-it'}
+          </h3>
+        )}
+
+        {/* Note Body / Thoughts (Handwritten) */}
+        {isEditingNotes ? (
+          <div onClick={(e) => e.stopPropagation()} className="mt-1">
+            <textarea
+              ref={notesTextareaRef}
+              rows={3}
+              value={notesInput}
+              onChange={(e) => setNotesInput(e.target.value)}
+              onBlur={handleSaveNotes}
+              className="w-full p-1.5 text-lg font-handwriting bg-white/70 dark:bg-black/30 border border-blue-500 rounded focus:outline-none resize-none"
+              style={{ color: paperStyle.inkColor }}
+              placeholder="Jot down notes in ink..."
+            />
+          </div>
+        ) : (
+          <p 
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditingNotes(true);
+            }}
+            className={`text-base sm:text-lg mt-1 line-clamp-4 leading-snug break-words font-medium cursor-text opacity-90 transition rounded px-0.5 ${
+              useHandwriting ? 'font-handwriting' : 'font-sans text-xs'
+            }`}
+            style={{ color: paperStyle.inkColor }}
+            title="Click to edit notes"
+          >
+            {task.notes || <span className="opacity-30 italic text-sm">Write notes here...</span>}
+          </p>
+        )}
+
+        {/* Hand-drawn Checklist Subtasks */}
+        {task.checklists.length > 0 && (
+          <div className="space-y-1 mt-2.5 pt-2 border-t border-black/10 dark:border-white/10">
+            {task.checklists.map(c => (
+              <div 
+                key={c.id} 
+                onClick={(e) => handleToggleChecklistItem(e, c.id)}
+                className="flex items-center gap-2 group/item cursor-pointer"
+              >
+                <div 
+                  className="w-3.5 h-3.5 rounded-xs border flex items-center justify-center transition-colors shrink-0 bg-white/40"
+                  style={{ borderColor: paperStyle.inkColor }}
+                >
+                  {c.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                </div>
+                <span 
+                  className={`text-base leading-tight ${
+                    useHandwriting ? 'font-handwriting' : 'text-xs'
+                  } ${c.completed ? 'line-through opacity-55' : ''}`}
+                  style={{ color: paperStyle.inkColor }}
+                >
+                  {c.text}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Quick inline checklist item creator */}
+        {isAddingItem ? (
+          <form 
+            onSubmit={handleAddChecklistItem}
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1 mt-2"
+          >
+            <input
+              type="text"
+              autoFocus
+              value={newChecklistText}
+              onChange={(e) => setNewChecklistText(e.target.value)}
+              placeholder="Write subtask..."
+              className="flex-1 px-1.5 py-0.5 text-base font-handwriting bg-white/70 dark:bg-black/30 rounded border focus:outline-none"
+              style={{ color: paperStyle.inkColor, borderColor: paperStyle.borderRgb }}
+            />
+            <button 
+              type="submit" 
+              className="px-2 py-0.5 bg-black/80 dark:bg-white/80 text-white dark:text-black text-[10px] rounded font-bold"
+            >
+              Add
+            </button>
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsAddingItem(true);
+            }}
+            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition flex items-center gap-1 text-sm font-handwriting hover:underline cursor-pointer mt-1"
+            style={{ color: paperStyle.inkColor }}
+          >
+            <Plus className="w-3 h-3" />
+            <span>+ add item</span>
+          </button>
+        )}
+      </div>
+
+      {/* NATURAL PAPER BOTTOM MARGIN (Subtle hand-written annotations) */}
       <div 
-        className="pt-2.5 border-t border-black/10 dark:border-white/10 flex items-center justify-between gap-1 text-xs"
+        className="pt-2 flex items-center justify-between text-[11px] font-handwriting font-bold opacity-75 select-none"
         style={{ color: paperStyle.inkColor }}
       >
-        {/* Due Date & Evening */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {dueInfo.label && (
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${
-              dueInfo.isOverdue 
-                ? 'bg-rose-600 text-white' 
-                : dueInfo.isToday 
-                ? 'bg-amber-500 text-slate-900' 
-                : 'bg-black/10 dark:bg-white/15'
-            }`}>
-              <Calendar className="w-2.5 h-2.5" />
-              <span>{dueInfo.label}</span>
+            <span className="flex items-center gap-0.5">
+              <span>📅 {dueInfo.label}</span>
             </span>
           )}
 
-          {task.isThisEvening && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-600 text-white">
-              <Moon className="w-2.5 h-2.5" />
-              <span>Evening</span>
+          {project && (
+            <span className="opacity-90">
+              📁 {project.title}
             </span>
           )}
 
           {task.tags.slice(0, 2).map(tag => (
-            <span key={tag} className="text-[11px] font-handwriting font-bold opacity-80">
-              #{tag}
-            </span>
+            <span key={tag}>#{tag}</span>
           ))}
         </div>
 
-        {/* Stopwatch & Delete */}
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleTimer(task.id);
-            }}
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-mono transition cursor-pointer ${
-              task.isTimerRunning
-                ? 'bg-rose-600 text-white animate-pulse'
-                : 'bg-black/10 dark:bg-white/10 hover:bg-black/20'
-            }`}
-            title={task.isTimerRunning ? 'Pause Focus Timer' : 'Start Focus Timer'}
-          >
-            {task.isTimerRunning ? (
-              <Pause className="w-2.5 h-2.5 fill-white" />
-            ) : (
-              <Play className="w-2.5 h-2.5" />
-            )}
-            <span>{formatDuration(task.timeSpentSeconds)}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteTask(task.id);
-            }}
-            className="p-1 opacity-0 group-hover:opacity-100 hover:text-rose-500 transition rounded-md cursor-pointer"
-            title="Discard Post-it Note"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
+        {/* Stopwatch indicator if running */}
+        {task.timeSpentSeconds > 0 && (
+          <span className="font-mono text-[9px] opacity-80">
+            ⏱ {formatDuration(task.timeSpentSeconds)}
+          </span>
+        )}
       </div>
+
     </div>
   );
 };
