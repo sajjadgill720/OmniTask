@@ -17,7 +17,7 @@
   letter-spacing: 0.02em;
 }
 
-/* Blue Ballpoint Pen Ink Effect (Matches Reference Photo "Simplified Redesigned Intuitive !") */
+/* Blue Ballpoint Pen Ink Effect */
 .ballpoint-blue {
   color: #1a56db;
   text-shadow: 0 0.5px 0.5px rgba(26, 86, 219, 0.3);
@@ -37,7 +37,29 @@
   background-attachment: fixed;
 }
 
-/* 3D Curled Post-it Note (Matches Photo with Corner Lift Shadow) */
+/* 3D Spatial Canvas Stage & Board */
+.canvas-3d-stage {
+  perspective: 1600px;
+  perspective-origin: 50% 25%;
+  transform-style: preserve-3d;
+}
+
+.canvas-3d-board {
+  transform-style: preserve-3d;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+  will-change: transform;
+}
+
+/* Interactive 3D Dot Grid Mesh */
+.canvas-grid-bg {
+  background-size: 36px 36px;
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.08) 1.2px, transparent 1.2px);
+}
+.dark .canvas-grid-bg {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.12) 1.2px, transparent 1.2px);
+}
+
+/* 3D Curled Post-it Note with Preserved 3D Depth */
 .realistic-postit {
   position: relative;
   border-bottom-right-radius: 36px 12px;
@@ -46,8 +68,9 @@
     0 1px 3px rgba(0, 0, 0, 0.08),
     0 8px 20px -4px rgba(0, 0, 0, 0.16),
     0 18px 28px -8px rgba(0, 0, 0, 0.12);
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
   transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .realistic-postit::before,
@@ -71,20 +94,13 @@
   transform: rotate(3.5deg);
 }
 
-.realistic-postit:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: 
-    0 2px 6px rgba(0, 0, 0, 0.08),
-    0 16px 32px -6px rgba(0, 0, 0, 0.22),
-    0 28px 45px -10px rgba(0, 0, 0, 0.16);
-}
 .realistic-postit:hover::before {
-  transform: rotate(-5.5deg);
-  box-shadow: 0 20px 18px rgba(0, 0, 0, 0.45);
+  transform: rotate(-6.5deg) scale(1.05);
+  box-shadow: 0 24px 22px rgba(0, 0, 0, 0.45);
 }
 .realistic-postit:hover::after {
-  transform: rotate(5.5deg);
-  box-shadow: 0 20px 18px rgba(0, 0, 0, 0.45);
+  transform: rotate(6.5deg) scale(1.05);
+  box-shadow: 0 24px 22px rgba(0, 0, 0, 0.45);
 }
 
 /* Dark mode realistic post-it */
@@ -101,8 +117,23 @@
 .dark .realistic-postit:hover {
   box-shadow: 
     0 2px 8px rgba(0, 0, 0, 0.7),
-    0 18px 38px -6px rgba(0, 0, 0, 0.85),
-    0 0 32px rgba(255, 255, 255, 0.12);
+    0 24px 45px -6px rgba(0, 0, 0, 0.9),
+    0 0 36px rgba(255, 255, 255, 0.16);
+}
+
+/* Specular Light Sheen Overlay */
+.specular-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  mix-blend-mode: soft-light;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 25;
+}
+.realistic-postit:hover .specular-glare {
+  opacity: 1;
 }
 
 /* Custom Scrollbars */

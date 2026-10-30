@@ -83,6 +83,36 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
     }
   }, [isEditingNotes]);
 
+  const [isDoneState, setIsDoneState] = useState(false);
+  // 3D Canvas Tilt & Parallax Physics
+  const [isHovered, setIsHovered] = useState(false);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [glare, setGlare] = useState({ x: 50, y: 50 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    // 3D Tilt calculation (max 12 degrees)
+    const tiltX = -((y - centerY) / centerY) * 12;
+    const tiltY = ((x - centerX) / centerX) * 12;
+
+    setTilt({ x: tiltX, y: tiltY });
+    setGlare({
+      x: (x / rect.width) * 100,
+      y: (y / rect.height) * 100,
+    });
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setTilt({ x: 0, y: 0 });
+  };
+
   const isDone = task.status === 'done';
   // HCI & WCAG Contrast Compliant Paper & Ink Styling
   const paperStyle = getPostitPaperStyle(task.colorHex, task.inkType || 'auto');
@@ -193,21 +223,40 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   return (
     <div
       onClick={() => onSelectTask(task)}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       style={{
-        transform: `rotate(${naturalAngle}deg)`,
+        transform: isHovered
+          ? `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) translateZ(44px) scale(1.05)`
+          : `rotate(${naturalAngle}deg)`,
         backgroundColor: paperStyle.baseRgb,
         backgroundImage: `linear-gradient(135deg, ${paperStyle.lightRgb} 0%, ${paperStyle.baseRgb} 55%, ${paperStyle.darkRgb} 100%)`,
         borderColor: paperStyle.borderRgb,
         color: paperStyle.inkColor, // Direct HCI color application
+        zIndex: isHovered ? 40 : 1,
       }}
-      className={`group relative flex flex-col justify-between p-5 pt-7 rounded-2xl border transition-all duration-200 cursor-pointer realistic-postit hover:!rotate-0 ${
+      className={`group relative flex flex-col justify-between p-5 pt-7 rounded-2xl border transition-all duration-150 cursor-pointer realistic-postit ${
         isDone ? 'opacity-65 grayscale-20' : ''
       }`}
     >
+      {/* Dynamic Specular Light Sheen Overlay */}
+      <div 
+        className="specular-glare"
+        style={{
+          background: `radial-gradient(circle at ${glare.x}% ${glare.y}%, rgba(255, 255, 255, 0.45) 0%, transparent 60%)`,
+        }}
+      />
+
       {/* 3D Red Pushpin at Top Center */}
       <div 
         onClick={handleTogglePin}
-        className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 cursor-pointer transition-transform hover:scale-125 active:scale-95"
+        style={{
+          transform: isHovered 
+            ? `translateZ(36px) translate(-50%, 0) scale(1.15) rotate(${tilt.y * 0.4}deg)` 
+            : 'translate(-50%, 0)',
+          transition: 'transform 0.15s ease-out',
+        }}
+        className="absolute -top-3.5 left-1/2 z-30 cursor-pointer"
         title={task.isPinned ? '📌 Pinned to top (Click to unpin)' : 'Click to pin note'}
       >
         <RedPushPin size={34} />
