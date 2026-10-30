@@ -1,0 +1,17 @@
+{
+  "short_name": "OmniSticky",
+  "name": "OmniSticky — Sticky Speed Meets Kanban Flow",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#f59e0b",
+  "display": "standalone",
+  "orientation": "portrait"
+}
+

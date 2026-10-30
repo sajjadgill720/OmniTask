@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background-color: #fbfbfe;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* Authentic Handwriting Font from Reference Photo */
+.font-handwriting {
+  font-family: 'Caveat', 'Patrick Hand', 'Kalam', 'Chalkboard SE', 'Comic Sans MS', cursive, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+/* Blue Ballpoint Pen Ink Effect (Matches Reference Photo "Simplified Redesigned Intuitive !") */
+.ballpoint-blue {
+  color: #1a56db;
+  text-shadow: 0 0.5px 0.5px rgba(26, 86, 219, 0.3);
+}
+.dark .ballpoint-blue {
+  color: #93c5fd;
+  text-shadow: 0 0 1px rgba(147, 197, 253, 0.5);
+}
+
+/* Ambient White Hue in Dark Mode */
+.dark body {
+  background-color: #0d0f15 !important;
+  background-image: 
+    radial-gradient(ellipse 70% 40% at 50% -10%, rgba(255, 255, 255, 0.14), transparent 60%),
+    radial-gradient(ellipse 60% 30% at 85% 25%, rgba(255, 255, 255, 0.08), transparent 50%),
+    radial-gradient(circle 500px at 15% 75%, rgba(255, 255, 255, 0.06), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* 3D Curled Post-it Note (Matches Photo with Corner Lift Shadow) */
+.realistic-postit {
+  position: relative;
+  border-bottom-right-radius: 36px 12px;
+  border-bottom-left-radius: 10px 28px;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 8px 20px -4px rgba(0, 0, 0, 0.16),
+    0 18px 28px -8px rgba(0, 0, 0, 0.12);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  transform-style: preserve-3d;
+}
+
+.realistic-postit::before,
+.realistic-postit::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  bottom: 10px;
+  width: 45%;
+  height: 22%;
+  box-shadow: 0 16px 14px rgba(0, 0, 0, 0.35);
+  transition: all 0.25s ease;
+  pointer-events: none;
+}
+.realistic-postit::before {
+  left: 8px;
+  transform: rotate(-3.5deg);
+}
+.realistic-postit::after {
+  right: 8px;
+  transform: rotate(3.5deg);
+}
+
+.realistic-postit:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.08),
+    0 16px 32px -6px rgba(0, 0, 0, 0.22),
+    0 28px 45px -10px rgba(0, 0, 0, 0.16);
+}
+.realistic-postit:hover::before {
+  transform: rotate(-5.5deg);
+  box-shadow: 0 20px 18px rgba(0, 0, 0, 0.45);
+}
+.realistic-postit:hover::after {
+  transform: rotate(5.5deg);
+  box-shadow: 0 20px 18px rgba(0, 0, 0, 0.45);
+}
+
+/* Dark mode realistic post-it */
+.dark .realistic-postit {
+  box-shadow: 
+    0 1px 4px rgba(0, 0, 0, 0.6),
+    0 10px 26px -4px rgba(0, 0, 0, 0.75),
+    0 0 24px rgba(255, 255, 255, 0.06);
+}
+.dark .realistic-postit::before,
+.dark .realistic-postit::after {
+  box-shadow: 0 16px 14px rgba(0, 0, 0, 0.75);
+}
+.dark .realistic-postit:hover {
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.7),
+    0 18px 38px -6px rgba(0, 0, 0, 0.85),
+    0 0 32px rgba(255, 255, 255, 0.12);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.55);
+}
+
+/* Animation Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  70% {
+    transform: scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-right {
+  animation: slideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pop-in {
+  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
