@@ -62,4 +62,6 @@ export interface AppPermissionsState {
   badgingSupported: boolean;
 }
 
-export type WidgetType = 'today_focus' | 'standby_clock' | 'mini_bar';
+export type WidgetType = 'today_focus' | 'standby_clock' | 'pomodoro' | 'sticky_pad';
+
+export type SubscriptionPlan = 'free' | 'pro_monthly' | 'pro_annual' | 'pro_lifetime';

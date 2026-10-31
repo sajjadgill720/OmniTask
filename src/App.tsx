@@ -10,6 +10,7 @@ import { TaskDetailDrawer } from './components/TaskDetailDrawer';
 import { WidgetCenterModal } from './components/WidgetCenterModal';
 import { PermissionsModal } from './components/PermissionsModal';
 import { ProjectModal } from './components/ProjectModal';
+import { SubscriptionModal } from './components/SubscriptionModal';
 import { 
   Task, 
   Area, 
@@ -81,6 +82,15 @@ export function App() {
   const [isPermissionsOpen, setIsPermissionsOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
+  const [isProUser, setIsProUser] = useState<boolean>(() => {
+    return localStorage.getItem('omnisticky_pro_user') === 'true';
+  });
+
+  const handleUpgradeSuccess = () => {
+    setIsProUser(true);
+    localStorage.setItem('omnisticky_pro_user', 'true');
+  };
 
   // Permissions state
   const [permissions, setPermissions] = useState<AppPermissionsState>({
@@ -321,6 +331,8 @@ export function App() {
         onOpenNewProject={() => setIsProjectModalOpen(true)}
         onOpenWidgets={() => setIsWidgetsOpen(true)}
         onOpenPermissions={() => setIsPermissionsOpen(true)}
+        onOpenSubscription={() => setIsSubscriptionOpen(true)}
+        isProUser={isProUser}
         permissions={permissions}
         isOpenMobile={isMobileNavOpen}
         onCloseMobile={() => setIsMobileNavOpen(false)}
@@ -347,6 +359,8 @@ export function App() {
             tags: [],
             section: currentSection,
           })}
+          onOpenSubscription={() => setIsSubscriptionOpen(true)}
+          isProUser={isProUser}
           onlyUrgent={onlyUrgent}
           onToggleUrgent={() => setOnlyUrgent(!onlyUrgent)}
           viewMode={viewMode}
@@ -471,7 +485,22 @@ export function App() {
         tasks={tasks}
         onToggleComplete={handleToggleComplete}
         onToggleTimer={handleToggleTimer}
+        onAddTask={(title, section, colorHex) => handleMagicAdd({
+          title,
+          priority: 'normal',
+          tags: [],
+          section: (section as any) || currentSection,
+          colorHex,
+        })}
         audioEnabled={permissions.audioEnabled}
+      />
+
+      {/* Commercial Subscription & Pro Tier Modal */}
+      <SubscriptionModal
+        isOpen={isSubscriptionOpen}
+        onClose={() => setIsSubscriptionOpen(false)}
+        isProUser={isProUser}
+        onUpgradeSuccess={handleUpgradeSuccess}
       />
 
       {/* Web & OS Permissions Hub Modal */}

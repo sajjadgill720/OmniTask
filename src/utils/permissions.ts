@@ -47,6 +47,36 @@ export function playCompletionSound(): void {
 }
 
 /**
+ * Gentle 3-tone chime for completed Pomodoro interval
+ */
+export function playPomodoroChime(): void {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    [523.25, 659.25, 783.99].forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const startTime = ctx.currentTime + idx * 0.12;
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      gain.gain.setValueAtTime(0.14, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + 0.38);
+    });
+  } catch (e) {
+    console.debug('Pomodoro audio unavailable:', e);
+  }
+}
+
+/**
  * Check existing permissions across browser APIs
  */
 export async function checkPermissions(): Promise<AppPermissionsState> {

@@ -12,7 +12,8 @@ import {
   Columns3,
   List,
   Sun,
-  Moon
+  Moon,
+  Crown
 } from 'lucide-react';
 import { exportTasksJSON, exportTasksMarkdown } from '../utils/storage';
 import { Task, Area, Project, AppPermissionsState, ViewMode, ThemeMode } from '../types';
@@ -27,6 +28,8 @@ interface ThingsHeaderProps {
   permissions: AppPermissionsState;
   onOpenPermissions: () => void;
   onOpenQuickAdd: () => void;
+  onOpenSubscription?: () => void;
+  isProUser?: boolean;
   onlyUrgent: boolean;
   onToggleUrgent: () => void;
   viewMode: ViewMode;
@@ -45,6 +48,8 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
   permissions,
   onOpenPermissions,
   onOpenQuickAdd,
+  onOpenSubscription,
+  isProUser,
   onlyUrgent,
   onToggleUrgent,
   viewMode,
@@ -134,6 +139,18 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
         {/* Right Action Suite */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           
+          {/* Pro Subscription Trigger */}
+          {onOpenSubscription && (
+            <button
+              onClick={onOpenSubscription}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              title="OmniSticky Pro Subscription"
+            >
+              <Crown className="w-3.5 h-3.5 fill-white text-white" />
+              <span>{isProUser ? 'PRO' : 'UPGRADE'}</span>
+            </button>
+          )}
+
           {/* Urgent Filter Toggle */}
           <button
             onClick={onToggleUrgent}

@@ -14,7 +14,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Sun, 
-  Moon
+  Moon,
+  Crown
 } from 'lucide-react';
 import { ThingsSection, Area, Project, Task, AppPermissionsState, ThemeMode } from '../types';
 
@@ -29,6 +30,8 @@ interface SidebarProps {
   onOpenNewProject: () => void;
   onOpenWidgets: () => void;
   onOpenPermissions: () => void;
+  onOpenSubscription: () => void;
+  isProUser: boolean;
   permissions: AppPermissionsState;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
@@ -47,6 +50,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenNewProject,
   onOpenWidgets,
   onOpenPermissions,
+  onOpenSubscription,
+  isProUser,
   permissions,
   isOpenMobile,
   onCloseMobile,
@@ -415,11 +420,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {/* Bottom Strip: Theme Switcher & Widgets Hub */}
+        {/* Bottom Strip: Theme Switcher & Widgets Hub & Pro Subscription */}
         <div className="p-2 border-t border-slate-200/80 dark:border-white/10 space-y-1.5">
           
           {!isCollapsed ? (
             <>
+              {/* Pro Subscription Badge / Upgrade Pill */}
+              <button
+                type="button"
+                onClick={onOpenSubscription}
+                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500/15 via-indigo-500/15 to-blue-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 hover:scale-[1.02] active:scale-95 transition cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5 truncate">
+                  <Crown className="w-3.5 h-3.5 fill-amber-500 text-amber-500 shrink-0" />
+                  <span className="truncate">{isProUser ? 'OmniSticky Pro' : 'Upgrade to Pro'}</span>
+                </div>
+                <span className={`text-[9px] font-black uppercase px-1.5 py-0.2 rounded shrink-0 ${
+                  isProUser ? 'bg-emerald-500 text-white' : 'bg-gradient-to-r from-amber-500 to-indigo-600 text-white'
+                }`}>
+                  {isProUser ? 'ACTIVE' : 'PRO'}
+                </span>
+              </button>
+
               {/* Theme Toggle Pill in Expanded Sidebar */}
               <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 text-xs">
                 <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Theme</span>
@@ -449,7 +471,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <Layout className="w-3.5 h-3.5 text-indigo-500" />
-                  <span className="truncate">Widgets</span>
+                  <span className="truncate">Widgets Suite</span>
                 </div>
                 <ChevronRight className="w-3 h-3 text-indigo-400" />
               </button>
@@ -457,6 +479,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ) : (
             /* Collapsed Bottom Strip: Minimal Icons */
             <div className="flex flex-col items-center space-y-1">
+              <button
+                type="button"
+                onClick={onOpenSubscription}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-amber-500 hover:bg-amber-500/10 transition cursor-pointer"
+                title={isProUser ? 'OmniSticky Pro (Active)' : 'Upgrade to OmniSticky Pro'}
+              >
+                <Crown className="w-4 h-4 fill-amber-500 text-amber-500" />
+              </button>
+
               <button
                 type="button"
                 onClick={onToggleTheme}
