@@ -468,7 +468,7 @@ export function App() {
           ) : viewMode === 'connections' || viewMode === 'network_3d' ? (
             /* Connections View: 3D Network Graph */
             <NetworkGraph3DView
-              tasks={visibleTasks}
+              tasks={tasks}
               projects={projects}
               onSelectTask={setSelectedTask}
               onToggleComplete={handleToggleComplete}

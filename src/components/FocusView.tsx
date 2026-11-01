@@ -64,23 +64,25 @@ export const FocusView: React.FC<FocusViewProps> = ({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
 
-  // Source pool: if current section has 0 tasks, fall back to all uncompleted tasks
-  const effectiveTasks = tasks.length > 0 
-    ? tasks 
-    : allTasks.length > 0 
-      ? allTasks.filter(t => t.status !== 'done') 
-      : [];
+  // Source pool:
+  // First look for active tasks in current view (tasks)
+  const candidateActiveTasks = tasks.filter(t => t.status !== 'done');
+  // If none in current view, draw from all tasks across the app
+  const fallbackActiveTasks = allTasks.filter(t => t.status !== 'done');
+  
+  const activeTasks = candidateActiveTasks.length > 0 
+    ? candidateActiveTasks 
+    : fallbackActiveTasks;
 
-  const totalCount = effectiveTasks.length;
-  const completedCount = effectiveTasks.filter(t => t.status === 'done').length;
-  const activeTasks = effectiveTasks.filter(t => t.status !== 'done');
+  const completedTasks = tasks.filter(t => t.status === 'done');
+  const totalCount = activeTasks.length + completedTasks.length;
+  const completedCount = completedTasks.length;
   const progressRatio = totalCount > 0 ? completedCount / totalCount : 0;
   const progressPercent = Math.round(progressRatio * 100);
 
   // Today vs Later Queues
   const dayTasks = activeTasks.filter(t => !t.isThisEvening);
   const eveningTasks = activeTasks.filter(t => t.isThisEvening);
-  const completedTasks = effectiveTasks.filter(t => t.status === 'done');
 
   // Determine the Hero "Now" task:
   // 1. Task currently running a stopwatch timer
@@ -461,7 +463,81 @@ export const FocusView: React.FC<FocusViewProps> = ({
             </div>
           </div>
         </section>
-      ) : null}
+      ) : (
+        /* Empty Hero Note: Authentic Canary Yellow Post-it Note Ready to Capture */
+        <section className="mb-8 flex flex-col items-center">
+          <div className="w-full max-w-[390px] flex items-center justify-between mb-2 px-1 text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            <div className="flex items-center gap-1.5">
+              <Zap className="w-4 h-4 fill-amber-500 text-amber-500" />
+              <span>Capture Top Focus</span>
+            </div>
+            <span className="text-[11px] font-semibold text-slate-500">
+              Canary Yellow Pad
+            </span>
+          </div>
+
+          <div 
+            className="relative w-full max-w-[390px] min-h-[360px] p-6 pt-9 rounded-2xl border transition-all duration-200 select-none flex flex-col justify-between"
+            style={{
+              backgroundColor: '#fef08a',
+              backgroundImage: 'linear-gradient(145deg, #fef9c3 0%, #fef08a 55%, #fde047 100%)',
+              borderColor: '#facc15',
+              color: '#1e293b',
+              boxShadow: '0 16px 36px -10px rgba(0, 0, 0, 0.16), 0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+              transform: 'rotate(-0.8deg)',
+            }}
+          >
+            {/* 3D Tactile Red Pushpin at Top Center */}
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
+              <RedPushPin size={34} />
+            </div>
+
+            <div className="flex items-center justify-between pb-2 mb-3 border-b border-black/10 text-xs text-slate-700 font-bold">
+              <span>📌 Top Focus Note</span>
+              <span className="text-[11px] font-mono text-amber-800">Ready to start</span>
+            </div>
+
+            <div className="space-y-4 my-auto">
+              <div className="text-center">
+                <span className="text-3xl block mb-2">✨</span>
+                <h3 className="font-extrabold text-base text-slate-900 leading-tight">
+                  What is your #1 focus today?
+                </h3>
+                <p className="text-xs text-slate-700 mt-1">
+                  Pin your main task right here to get focused.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. Complete product strategy deck..."
+                  value={quickTitle}
+                  onChange={(e) => setQuickTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleInlineAdd(e);
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 text-xs font-semibold bg-white/70 border border-amber-300 rounded-xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleInlineAdd}
+                  disabled={!quickTitle.trim()}
+                  className="px-3.5 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-xs disabled:opacity-40"
+                >
+                  Pin Note
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-black/10 text-center text-[11px] text-slate-600 font-medium">
+              💡 Pro tip: Break large goals into smaller checklist subtasks
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 4. CELEBRATION (WHEN TODAY IS CLEARED) */}
       {isTodayClear && (

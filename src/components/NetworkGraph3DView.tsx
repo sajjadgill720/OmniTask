@@ -71,6 +71,7 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [selectedNode, setSelectedNode] = useState<Node3D | null>(null);
   const [hoveredNode, setHoveredNode] = useState<Node3D | null>(null);
+  const [hoverCoords, setHoverCoords] = useState<{ x: number; y: number } | null>(null);
   const [autoRotate, setAutoRotate] = useState(true);
   const [filterProject, setFilterProject] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -359,6 +360,7 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
     const sinY = Math.sin(rotY.current);
 
     let found: Node3D | null = null;
+    let foundCoords: { x: number; y: number } | null = null;
 
     for (const node of nodes) {
       let x1 = node.x * cosY + node.z * sinY;
@@ -374,11 +376,20 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
       const dist = Math.hypot(mx - x2d, my - y2d);
       if (dist < (node.radius * scale + 8)) {
         found = node;
+        foundCoords = { x: x2d, y: y2d };
         break;
       }
     }
 
     setHoveredNode(found);
+    setHoverCoords(foundCoords);
+  };
+
+  const handleMouseLeave = () => {
+    isDragging.current = false;
+    lastMouse.current = null;
+    setHoveredNode(null);
+    setHoverCoords(null);
   };
 
   const handleMouseUp = () => {
@@ -498,23 +509,101 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
         </div>
       </div>
 
-      {/* 3D Network Canvas Container */}
+      {/* 3D Network Canvas Container with Premium Studio / Cosmos Background */}
       <div 
-        className="relative w-full h-[620px] rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl flex items-center justify-center"
+        className="relative w-full h-[620px] rounded-3xl overflow-hidden bg-gradient-to-br from-[#0b0f19] via-[#101728] to-[#070b14] border border-indigo-900/40 shadow-[0_25px_60px_-15px_rgba(2,6,23,0.8),inset_0_1px_1px_rgba(255,255,255,0.08)] flex items-center justify-center"
         style={{ perspective: '1200px' }}
       >
         
-        {/* Ambient Cosmic Background */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.08)_0%,transparent_70%)] pointer-events-none" />
+        {/* Ambient Cosmic Studio Lighting & Stardust Grid */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `
+              radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
+              radial-gradient(ellipse 70% 60% at 20% 15%, rgba(99, 102, 241, 0.16) 0%, transparent 65%),
+              radial-gradient(ellipse 60% 50% at 80% 85%, rgba(139, 92, 246, 0.14) 0%, transparent 70%),
+              radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px)
+            `,
+            backgroundSize: '100% 100%, 100% 100%, 100% 100%, 28px 28px'
+          }}
+        />
 
         <canvas
           ref={canvasRef}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
           onClick={handleCanvasClick}
           className="w-full h-full cursor-grab active:cursor-grabbing"
         />
+
+        {/* Floating Glassmorphic On-Hover Preview Card */}
+        {hoveredNode && hoverCoords && !selectedNode && (
+          <div 
+            className="pointer-events-none absolute z-20 px-3.5 py-3 rounded-2xl bg-[#0f172a]/92 backdrop-blur-md border border-white/20 shadow-2xl text-white text-xs max-w-[270px] animate-in fade-in zoom-in-95 duration-150 flex flex-col gap-1.5"
+            style={{
+              left: `${Math.min(Math.max(16, hoverCoords.x + 14), (canvasRef.current?.clientWidth || 600) - 280)}px`,
+              top: `${Math.min(Math.max(16, hoverCoords.y - 36), (canvasRef.current?.clientHeight || 600) - 170)}px`,
+            }}
+          >
+            {/* Header / Type badge */}
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider text-blue-400">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: hoveredNode.color }} />
+                {hoveredNode.type === 'task' ? 'Sticky Note' : hoveredNode.type === 'project' ? 'Project' : 'Tag'}
+              </span>
+              {hoveredNode.task?.priority === 'urgent' && (
+                <span className="px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-extrabold text-[9px]">
+                  Urgent
+                </span>
+              )}
+            </div>
+
+            {/* Title */}
+            <div className="font-bold text-sm text-slate-100 leading-snug line-clamp-2">
+              {hoveredNode.label}
+            </div>
+
+            {/* Task specific metadata */}
+            {hoveredNode.task && (
+              <>
+                {hoveredNode.task.checklists && hoveredNode.task.checklists.length > 0 && (
+                  <div className="flex items-center gap-1 text-[11px] text-slate-300">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>
+                      {hoveredNode.task.checklists.filter(c => c.completed).length} of {hoveredNode.task.checklists.length} subtasks done
+                    </span>
+                  </div>
+                )}
+
+                {hoveredNode.task.dueDate && (
+                  <div className="flex items-center gap-1 text-[11px] text-amber-300">
+                    <Calendar className="w-3.5 h-3.5 shrink-0" />
+                    <span>Due {hoveredNode.task.dueDate}</span>
+                  </div>
+                )}
+
+                {hoveredNode.task.tags && hoveredNode.task.tags.length > 0 && (
+                  <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                    {hoveredNode.task.tags.map(t => (
+                      <span key={t} className="px-1.5 py-0.5 rounded-md bg-white/10 text-slate-300 text-[10px] font-medium">
+                        #{t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Call to action hint */}
+            <div className="pt-1 mt-0.5 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-400 font-medium">
+              <span>Click to pop up 3D note</span>
+              <span className="text-amber-400 font-bold">🪐 3D</span>
+            </div>
+          </div>
+        )}
 
         {/* 3D POP-UP STICKY NOTE MODAL OVER NODE */}
         {selectedNode && selectedTask && selectedPaper && (
