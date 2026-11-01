@@ -472,6 +472,8 @@ export function App() {
               projects={projects}
               onSelectTask={setSelectedTask}
               onToggleComplete={handleToggleComplete}
+              onToggleTimer={handleToggleTimer}
+              onUpdateTask={handleSaveTask}
               onQuickAdd={() => handleMagicAdd({
                 title: 'New note',
                 priority: 'normal',

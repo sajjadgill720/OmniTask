@@ -57,18 +57,34 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Search Bar (Clicking opens Command Palette or directly searches) */}
-          <div 
-            onClick={onOpenCommandPalette}
-            className="relative flex-1 group cursor-pointer"
-          >
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition" />
-            <div className="w-full pl-9 pr-14 py-1.5 bg-white dark:bg-[#181a24] rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-400 hover:border-slate-300 dark:hover:border-white/20 transition shadow-2xs flex items-center justify-between">
-              <span className="truncate">{searchQuery || 'Search or jump to...'}</span>
-              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-400 bg-slate-100 dark:bg-white/5 rounded border border-slate-200 dark:border-white/10">
-                ⌘K
-              </kbd>
-            </div>
+          {/* Real Interactive Search Bar with ⌘K Badge */}
+          <div className="relative flex-1">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search sticky notes, #tags..."
+              className="w-full pl-9 pr-16 py-1.5 bg-white dark:bg-[#181a24] rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => onSearchChange('')}
+                className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs cursor-pointer p-0.5"
+                title="Clear search"
+              >
+                ✕
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={onOpenCommandPalette}
+              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 rounded border border-slate-200 dark:border-white/10 transition cursor-pointer"
+              title="Open Command Palette (⌘K)"
+            >
+              ⌘K
+            </button>
           </div>
         </div>
 
