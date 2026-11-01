@@ -44,14 +44,14 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
     'focus';
 
   return (
-    <header className="sticky top-0 z-30 bg-[#f8f9fa]/95 dark:bg-[#11131a]/90 backdrop-blur-md border-b border-slate-200/80 dark:border-white/10 transition-colors">
+    <header className="sticky top-0 z-30 bg-[#f6f3eb]/95 dark:bg-[#19161e]/90 backdrop-blur-md border-b border-[#e8e2d5] dark:border-white/10 transition-colors">
       <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
         
         {/* Left: Mobile Menu & Clean Search Bar with ⌘K Trigger */}
         <div className="flex items-center gap-2 flex-1 max-w-sm sm:max-w-md">
           <button
             onClick={onToggleMobileNav}
-            className="p-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-white/10 md:hidden transition cursor-pointer"
+            className="p-1.5 rounded-xl text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-[#ece7dc]/60 dark:hover:bg-white/10 md:hidden transition cursor-pointer"
             title="Toggle Navigation Menu"
           >
             <Menu className="w-5 h-5" />
@@ -59,19 +59,19 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
 
           {/* Real Interactive Search Bar with ⌘K Badge */}
           <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search sticky notes, #tags..."
-              className="w-full pl-9 pr-16 py-1.5 bg-white dark:bg-[#181a24] rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs"
+              className="w-full pl-9 pr-16 py-1.5 bg-white dark:bg-[#201c27] rounded-xl border border-[#ded7ca] dark:border-white/10 text-xs text-stone-800 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-2xs"
             />
             {searchQuery ? (
               <button
                 type="button"
                 onClick={() => onSearchChange('')}
-                className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs cursor-pointer p-0.5"
+                className="absolute right-10 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-xs cursor-pointer p-0.5"
                 title="Clear search"
               >
                 ✕
@@ -80,7 +80,7 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
             <button
               type="button"
               onClick={onOpenCommandPalette}
-              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 rounded border border-slate-200 dark:border-white/10 transition cursor-pointer"
+              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-bold text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 bg-[#ece7dc] hover:bg-[#e4decb] dark:bg-white/5 dark:hover:bg-white/10 rounded border border-[#ded7ca] dark:border-white/10 transition cursor-pointer"
               title="Open Command Palette (⌘K)"
             >
               ⌘K
@@ -89,7 +89,7 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
         </div>
 
         {/* Center: Streamlined View Switcher (Focus | Board | Canvas | Connections) */}
-        <div className="hidden md:flex items-center p-1 bg-slate-200/60 dark:bg-[#181a24]/90 rounded-xl border border-slate-300/40 dark:border-white/10">
+        <div className="hidden md:flex items-center p-1 bg-[#ece7dc]/80 dark:bg-[#201c27]/90 rounded-xl border border-[#ded7ca]/60 dark:border-white/10">
           <button
             type="button"
             onClick={() => onChangeViewMode('focus')}

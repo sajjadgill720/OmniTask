@@ -377,7 +377,7 @@ export function App() {
   }, [selectedProject, currentSection]);
 
   return (
-    <div className="min-h-screen bg-[#fcfcfd] dark:bg-[#0d0f15] text-slate-900 dark:text-slate-100 flex font-sans antialiased selection:bg-blue-100 selection:text-blue-900 transition-colors duration-300">
+    <div className="min-h-screen bg-[#fbf8f3] dark:bg-[#141217] text-stone-900 dark:text-stone-100 flex font-sans antialiased selection:bg-amber-200 selection:text-amber-950 transition-colors duration-300">
       
       {/* Sidebar Navigation */}
       <Sidebar

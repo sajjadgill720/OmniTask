@@ -161,8 +161,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         className={`
           fixed md:sticky top-0 left-0 z-40 h-screen 
           ${isCollapsed ? 'md:w-16' : 'md:w-56'} w-64
-          bg-[#f8f9fa] dark:bg-[#11131a]/95 
-          border-r border-slate-200/80 dark:border-white/10 flex flex-col justify-between 
+          bg-[#f6f3eb] dark:bg-[#19161e]/98 
+          border-r border-[#e8e2d5] dark:border-white/10 flex flex-col justify-between 
           select-none transition-all duration-300 ease-in-out font-sans
           ${isOpenMobile ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}

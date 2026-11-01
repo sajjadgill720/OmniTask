@@ -6,7 +6,7 @@
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
-    background-color: #fbfbfe;
+    background-color: #fbf8f3;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
@@ -33,13 +33,13 @@
   text-shadow: 0 0 1px rgba(147, 197, 253, 0.5);
 }
 
-/* Ambient White Hue in Dark Mode */
+/* Cozy Ambient Warm Hue in Dark Mode */
 .dark body {
-  background-color: #0d0f15 !important;
+  background-color: #141217 !important;
   background-image: 
-    radial-gradient(ellipse 70% 40% at 50% -10%, rgba(255, 255, 255, 0.14), transparent 60%),
-    radial-gradient(ellipse 60% 30% at 85% 25%, rgba(255, 255, 255, 0.08), transparent 50%),
-    radial-gradient(circle 500px at 15% 75%, rgba(255, 255, 255, 0.06), transparent 60%);
+    radial-gradient(ellipse 70% 40% at 50% -10%, rgba(251, 191, 36, 0.09), transparent 60%),
+    radial-gradient(ellipse 60% 30% at 85% 25%, rgba(245, 158, 11, 0.06), transparent 50%),
+    radial-gradient(circle 500px at 15% 75%, rgba(217, 119, 6, 0.04), transparent 60%);
   background-attachment: fixed;
 }
 

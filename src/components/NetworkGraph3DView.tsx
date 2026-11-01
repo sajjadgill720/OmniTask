@@ -149,17 +149,17 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
 
       nodeList.push(taskNode);
 
-      // Link to Project
+      // Link to Project with warm golden filament
       if (task.projectId) {
         edgeList.push({
           sourceId: taskNode.id,
           targetId: `proj_${task.projectId}`,
-          color: task.colorHex || '#3b82f6',
+          color: 'rgba(245, 158, 11, 0.4)',
         });
       }
     });
 
-    // 3. Connect tasks that share tags
+    // 3. Connect tasks that share tags with warm amber threads
     for (let i = 0; i < activeTasks.length; i++) {
       for (let j = i + 1; j < activeTasks.length; j++) {
         const shared = activeTasks[i].tags.filter(t => activeTasks[j].tags.includes(t));
@@ -167,7 +167,7 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
           edgeList.push({
             sourceId: `task_${activeTasks[i].id}`,
             targetId: `task_${activeTasks[j].id}`,
-            color: 'rgba(148, 163, 184, 0.4)',
+            color: 'rgba(217, 119, 6, 0.3)',
           });
         }
       }
@@ -257,21 +257,24 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
         ctx.beginPath();
         ctx.moveTo(s.x2d, s.y2d);
         ctx.lineTo(t.x2d, t.y2d);
-        ctx.strokeStyle = isHovered ? '#3b82f6' : edge.color;
-        ctx.lineWidth = isHovered ? 2.5 : Math.max(0.6, 1.2 * s.scale);
-        ctx.globalAlpha = isHovered ? 0.9 : Math.min(0.6, Math.max(0.12, s.scale * 0.45));
+        ctx.strokeStyle = isHovered ? '#fbbf24' : edge.color;
+        ctx.lineWidth = isHovered ? 2.5 : Math.max(0.7, 1.2 * s.scale);
+        ctx.globalAlpha = isHovered ? 0.95 : Math.min(0.65, Math.max(0.15, s.scale * 0.45));
         ctx.stroke();
 
-        // Energy Particle along connection
+        // Energy Particle along connection: Cozy Golden Amber Firefly
         const tProgress = (particleOffset + (s.x + t.y) * 0.01) % 1;
         const px = s.x2d + (t.x2d - s.x2d) * tProgress;
         const py = s.y2d + (t.y2d - s.y2d) * tProgress;
 
         ctx.beginPath();
-        ctx.arc(px, py, 2 * s.scale, 0, Math.PI * 2);
-        ctx.fillStyle = '#60a5fa';
-        ctx.globalAlpha = Math.min(1, s.scale * 0.8);
+        ctx.arc(px, py, 2.2 * s.scale, 0, Math.PI * 2);
+        ctx.fillStyle = '#fde68a';
+        ctx.shadowColor = '#f59e0b';
+        ctx.shadowBlur = 6;
+        ctx.globalAlpha = Math.min(1, s.scale * 0.9);
         ctx.fill();
+        ctx.shadowBlur = 0;
       });
 
       // 2. Draw 3D Nodes
@@ -303,10 +306,10 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
         ctx.lineWidth = isSelected ? 2.5 : 1;
         ctx.stroke();
 
-        // Node Label
+        // Node Label with Warm Cozy Typography
         if (node.scale > 0.75 || isHovered || isSelected) {
-          ctx.font = `${Math.round(11 * node.scale)}px sans-serif`;
-          ctx.fillStyle = isSelected ? '#ffffff' : '#94a3b8';
+          ctx.font = `600 ${Math.round(11 * node.scale)}px sans-serif`;
+          ctx.fillStyle = isSelected ? '#ffffff' : isHovered ? '#fef3c7' : '#d6d3d1';
           ctx.textAlign = 'center';
           ctx.fillText(
             node.label.length > 20 ? node.label.slice(0, 18) + '...' : node.label, 
@@ -440,12 +443,12 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
             <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
               Connections — 3D Network
             </h2>
-            <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 text-xs font-bold font-mono">
+            <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300/40 dark:border-amber-900/50 text-xs font-bold font-mono">
               {nodes.length} Nodes • {edges.length} Edges
             </span>
           </div>
-          <p className="text-xs text-slate-400 font-medium">
-            Click on any circle to pop up its sticky note in 3D • Drag to orbit the constellation
+          <p className="text-xs text-stone-500 dark:text-stone-400 font-medium">
+            Click on any circle to pop up its sticky note in 3D • Drag to orbit the cozy constellation
           </p>
         </div>
 
@@ -453,12 +456,12 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
         <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           
           {/* Project Filter */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 dark:bg-[#181a24] rounded-xl border border-slate-300/40 dark:border-white/10 text-xs font-bold">
-            <Filter className="w-3.5 h-3.5 text-slate-400 ml-1.5" />
+          <div className="flex items-center gap-1.5 p-1 bg-[#ece7dc]/80 dark:bg-[#201c27] rounded-xl border border-[#ded7ca] dark:border-amber-500/20 text-xs font-bold">
+            <Filter className="w-3.5 h-3.5 text-stone-400 ml-1.5" />
             <select
               value={filterProject}
               onChange={(e) => setFilterProject(e.target.value)}
-              className="bg-transparent border-none text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer pr-2 text-xs"
+              className="bg-transparent border-none text-stone-700 dark:text-stone-200 focus:outline-none cursor-pointer pr-2 text-xs"
             >
               <option value="all">All Projects</option>
               {projects.map(p => (
@@ -472,8 +475,8 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
             onClick={() => setAutoRotate(!autoRotate)}
             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
               autoRotate
-                ? 'bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-950/40 dark:border-blue-900 dark:text-blue-400'
-                : 'bg-white dark:bg-[#181a24] border-slate-200 dark:border-white/10 text-slate-500'
+                ? 'bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-950/50 dark:border-amber-800 dark:text-amber-300'
+                : 'bg-white dark:bg-[#201c27] border-[#ded7ca] dark:border-white/10 text-stone-500'
             }`}
             title={autoRotate ? 'Pause Auto-Orbit' : 'Resume Auto-Orbit'}
           >
@@ -482,17 +485,17 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
           </button>
 
           {/* Zoom In / Out */}
-          <div className="flex items-center p-0.5 bg-slate-200/70 dark:bg-[#181a24] rounded-xl border border-slate-300/40 dark:border-white/10">
+          <div className="flex items-center p-0.5 bg-[#ece7dc]/80 dark:bg-[#201c27] rounded-xl border border-[#ded7ca] dark:border-white/10">
             <button
               onClick={() => { zoom.current = Math.max(0.6, zoom.current - 0.15); }}
-              className="p-1 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-300 transition cursor-pointer"
+              className="p-1 rounded-lg text-stone-500 hover:text-stone-800 dark:text-stone-300 transition cursor-pointer"
               title="Zoom Out"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => { zoom.current = Math.min(2.0, zoom.current + 0.15); }}
-              className="p-1 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-300 transition cursor-pointer"
+              className="p-1 rounded-lg text-stone-500 hover:text-stone-800 dark:text-stone-300 transition cursor-pointer"
               title="Zoom In"
             >
               <ZoomIn className="w-3.5 h-3.5" />
@@ -501,7 +504,7 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
 
           <button
             onClick={onQuickAdd}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>New note</span>
@@ -509,21 +512,21 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
         </div>
       </div>
 
-      {/* 3D Network Canvas Container with Premium Studio / Cosmos Background */}
+      {/* 3D Network Canvas Container with Warm Cozy Premium Atelier Background */}
       <div 
-        className="relative w-full h-[620px] rounded-3xl overflow-hidden bg-gradient-to-br from-[#0b0f19] via-[#101728] to-[#070b14] border border-indigo-900/40 shadow-[0_25px_60px_-15px_rgba(2,6,23,0.8),inset_0_1px_1px_rgba(255,255,255,0.08)] flex items-center justify-center"
+        className="relative w-full h-[620px] rounded-3xl overflow-hidden bg-gradient-to-br from-[#16131b] via-[#1d1825] to-[#110e16] border border-amber-500/25 shadow-[0_25px_70px_-15px_rgba(18,14,22,0.95),inset_0_1px_2px_rgba(254,243,199,0.12)] flex items-center justify-center"
         style={{ perspective: '1200px' }}
       >
         
-        {/* Ambient Cosmic Studio Lighting & Stardust Grid */}
+        {/* Ambient Warm Candlelight & Stardust Grid */}
         <div 
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: `
-              radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
-              radial-gradient(ellipse 70% 60% at 20% 15%, rgba(99, 102, 241, 0.16) 0%, transparent 65%),
-              radial-gradient(ellipse 60% 50% at 80% 85%, rgba(139, 92, 246, 0.14) 0%, transparent 70%),
-              radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px)
+              radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.16) 0%, transparent 62%),
+              radial-gradient(ellipse 70% 60% at 20% 18%, rgba(251, 191, 36, 0.18) 0%, transparent 68%),
+              radial-gradient(ellipse 60% 50% at 80% 82%, rgba(244, 114, 182, 0.09) 0%, transparent 65%),
+              radial-gradient(circle, rgba(254, 243, 199, 0.08) 1px, transparent 1px)
             `,
             backgroundSize: '100% 100%, 100% 100%, 100% 100%, 28px 28px'
           }}
@@ -539,10 +542,10 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
           className="w-full h-full cursor-grab active:cursor-grabbing"
         />
 
-        {/* Floating Glassmorphic On-Hover Preview Card */}
+        {/* Floating Glassmorphic On-Hover Preview Card with Cozy Amber Warmth */}
         {hoveredNode && hoverCoords && !selectedNode && (
           <div 
-            className="pointer-events-none absolute z-20 px-3.5 py-3 rounded-2xl bg-[#0f172a]/92 backdrop-blur-md border border-white/20 shadow-2xl text-white text-xs max-w-[270px] animate-in fade-in zoom-in-95 duration-150 flex flex-col gap-1.5"
+            className="pointer-events-none absolute z-20 px-3.5 py-3 rounded-2xl bg-[#1c1724]/95 backdrop-blur-md border border-amber-500/30 shadow-2xl text-amber-50 text-xs max-w-[270px] animate-in fade-in zoom-in-95 duration-150 flex flex-col gap-1.5"
             style={{
               left: `${Math.min(Math.max(16, hoverCoords.x + 14), (canvasRef.current?.clientWidth || 600) - 280)}px`,
               top: `${Math.min(Math.max(16, hoverCoords.y - 36), (canvasRef.current?.clientHeight || 600) - 170)}px`,
@@ -550,8 +553,8 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
           >
             {/* Header / Type badge */}
             <div className="flex items-center justify-between gap-2">
-              <span className="flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider text-blue-400">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: hoveredNode.color }} />
+              <span className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
+                <span className="w-2 h-2 rounded-full shadow-xs" style={{ backgroundColor: hoveredNode.color }} />
                 {hoveredNode.type === 'task' ? 'Sticky Note' : hoveredNode.type === 'project' ? 'Project' : 'Tag'}
               </span>
               {hoveredNode.task?.priority === 'urgent' && (
@@ -562,7 +565,7 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
             </div>
 
             {/* Title */}
-            <div className="font-bold text-sm text-slate-100 leading-snug line-clamp-2">
+            <div className="font-bold text-sm text-stone-100 leading-snug line-clamp-2">
               {hoveredNode.label}
             </div>
 
@@ -570,7 +573,7 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
             {hoveredNode.task && (
               <>
                 {hoveredNode.task.checklists && hoveredNode.task.checklists.length > 0 && (
-                  <div className="flex items-center gap-1 text-[11px] text-slate-300">
+                  <div className="flex items-center gap-1.5 text-[11px] text-stone-300">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                     <span>
                       {hoveredNode.task.checklists.filter(c => c.completed).length} of {hoveredNode.task.checklists.length} subtasks done
@@ -579,7 +582,7 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
                 )}
 
                 {hoveredNode.task.dueDate && (
-                  <div className="flex items-center gap-1 text-[11px] text-amber-300">
+                  <div className="flex items-center gap-1.5 text-[11px] text-amber-300">
                     <Calendar className="w-3.5 h-3.5 shrink-0" />
                     <span>Due {hoveredNode.task.dueDate}</span>
                   </div>
@@ -588,7 +591,7 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
                 {hoveredNode.task.tags && hoveredNode.task.tags.length > 0 && (
                   <div className="flex items-center gap-1 flex-wrap pt-0.5">
                     {hoveredNode.task.tags.map(t => (
-                      <span key={t} className="px-1.5 py-0.5 rounded-md bg-white/10 text-slate-300 text-[10px] font-medium">
+                      <span key={t} className="px-1.5 py-0.5 rounded-md bg-white/10 text-amber-200/80 text-[10px] font-medium">
                         #{t}
                       </span>
                     ))}
@@ -598,9 +601,9 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
             )}
 
             {/* Call to action hint */}
-            <div className="pt-1 mt-0.5 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-400 font-medium">
+            <div className="pt-1 mt-0.5 border-t border-white/10 flex items-center justify-between text-[10px] text-amber-300/70 font-medium">
               <span>Click to pop up 3D note</span>
-              <span className="text-amber-400 font-bold">🪐 3D</span>
+              <span className="text-amber-400 font-bold">✨ Cozy 3D</span>
             </div>
           </div>
         )}
