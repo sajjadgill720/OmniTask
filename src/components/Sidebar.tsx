@@ -102,7 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Inbox, 
       count: inboxCount, 
       color: 'text-blue-500', 
-      activeBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
+      activeBg: 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white' 
     },
     { 
       id: 'today' as ThingsSection, 
@@ -110,7 +110,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Star, 
       count: todayCount, 
       color: 'text-amber-500 fill-amber-500', 
-      activeBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' 
+      activeBg: 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white' 
     },
     { 
       id: 'upcoming' as ThingsSection, 
@@ -118,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Calendar, 
       count: upcomingCount, 
       color: 'text-rose-500', 
-      activeBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400' 
+      activeBg: 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white' 
     },
     { 
       id: 'anytime' as ThingsSection, 
@@ -126,7 +126,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Compass, 
       count: anytimeCount, 
       color: 'text-emerald-500', 
-      activeBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
+      activeBg: 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white' 
     },
     { 
       id: 'someday' as ThingsSection, 
@@ -134,7 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Archive, 
       count: somedayCount, 
       color: 'text-purple-400', 
-      activeBg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400' 
+      activeBg: 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white' 
     },
     { 
       id: 'logbook' as ThingsSection, 
@@ -142,7 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: CheckCircle2, 
       count: logbookCount, 
       color: 'text-slate-400', 
-      activeBg: 'bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white' 
+      activeBg: 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white' 
     },
   ];
 
@@ -269,27 +269,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
           
           {!isCollapsed ? (
             <>
-              <div className="flex items-center justify-between text-[11px] text-slate-400 font-bold uppercase tracking-wider px-2 relative mb-1">
-                <span>Categories & Projects</span>
+              <div className="flex items-center justify-between text-[11px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-wider px-2 relative mb-1.5">
+                <span>Projects</span>
                 
-                <div className="flex items-center gap-1">
+                <div className="relative">
                   <button
-                    onClick={onOpenNewCategory}
-                    className="flex items-center gap-1 px-1.5 py-0.5 rounded-md hover:bg-blue-50 dark:hover:bg-blue-950/40 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition cursor-pointer text-[10px] font-bold"
-                    title="Add new category or area"
+                    onClick={() => setShowAddMenu(!showAddMenu)}
+                    className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200/50 dark:hover:bg-white/5 rounded-md transition cursor-pointer"
+                    title="Add Project or Category"
                   >
-                    <Plus className="w-3 h-3 text-blue-500 stroke-[2.5]" />
-                    <span>Category</span>
+                    <Plus className="w-3.5 h-3.5" />
                   </button>
 
-                  <button
-                    onClick={onOpenNewProject}
-                    className="flex items-center gap-1 px-1.5 py-0.5 rounded-md hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition cursor-pointer text-[10px] font-bold"
-                    title="Add new project"
-                  >
-                    <Folder className="w-3 h-3 text-indigo-500" />
-                    <span>Project</span>
-                  </button>
+                  {/* Clean Contextual Popup */}
+                  {showAddMenu && (
+                    <div 
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute right-0 top-6 z-50 w-40 p-1 bg-white dark:bg-[#1f1b26] rounded-xl shadow-xl border border-stone-200 dark:border-white/10 text-xs animate-pop-in font-normal normal-case"
+                    >
+                      <button
+                        onClick={() => {
+                          setShowAddMenu(false);
+                          onOpenNewProject();
+                        }}
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left font-medium text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-white/5 transition cursor-pointer"
+                      >
+                        <Folder className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>New Project</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowAddMenu(false);
+                          onOpenNewCategory();
+                        }}
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left font-medium text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-white/5 transition cursor-pointer"
+                      >
+                        <Tag className="w-3.5 h-3.5 text-blue-500" />
+                        <span>New Category</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -299,14 +318,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                   return (
                     <div key={area.id} className="space-y-1">
-                      <div className="group/area flex items-center justify-between px-2 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      <div className="group/area flex items-center justify-between px-2 py-1 text-xs font-semibold text-stone-700 dark:text-stone-300">
                         <div className="flex items-center gap-1.5 truncate">
                           <span>{area.emoji}</span>
                           <span className="truncate">{area.name}</span>
                         </div>
                         <button
                           onClick={onOpenNewProject}
-                          className="opacity-60 hover:opacity-100 p-0.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer"
+                          className="opacity-0 group-hover/area:opacity-100 p-0.5 text-stone-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer"
                           title={`Add project under ${area.name}`}
                         >
                           <Plus className="w-3 h-3" />
@@ -329,8 +348,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             onClick={() => handleProjectClick(proj.id)}
                             className={`w-full flex items-center justify-between pl-5 pr-2 py-1.5 rounded-xl text-xs transition cursor-pointer ${
                               isSelected
-                                ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold'
-                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/40 dark:hover:bg-white/5'
+                                ? 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white font-semibold'
+                                : 'text-stone-600 dark:text-stone-400 hover:bg-stone-200/40 dark:hover:bg-white/5'
                             }`}
                           >
                             <div className="flex items-center gap-2 truncate">
@@ -342,7 +361,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   fill="transparent"
                                   stroke="currentColor"
                                   strokeWidth="1.8"
-                                  className="text-slate-200 dark:text-slate-700"
+                                  className="text-stone-200 dark:text-stone-700"
                                 />
                                 <circle
                                   cx="7"
@@ -360,7 +379,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               <span className="truncate">{proj.title}</span>
                             </div>
 
-                            <span className="text-[10px] font-mono text-slate-400">
+                            <span className="text-[10px] font-mono text-stone-400">
                               {doneTasks.length}/{projTasks.length}
                             </span>
                           </button>
@@ -370,14 +389,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   );
                 })}
 
-                {/* Prominent Quick-Add Category Action */}
-                <div className="pt-2 px-1">
+                {/* Quiet Minimalist New List Action */}
+                <div className="pt-1 px-2">
                   <button
-                    onClick={onOpenNewCategory}
-                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl border border-dashed border-slate-300 dark:border-white/15 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 text-xs font-semibold transition cursor-pointer"
+                    onClick={() => setShowAddMenu(true)}
+                    className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition cursor-pointer font-medium py-1"
                   >
-                    <Plus className="w-3.5 h-3.5 text-blue-500" />
-                    <span>Add Category</span>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>New List...</span>
                   </button>
                 </div>
               </div>
@@ -472,62 +491,51 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {/* Bottom Strip: Theme Switcher & Widgets Hub & Pro Subscription */}
-        <div className="p-2 border-t border-slate-200/80 dark:border-white/10 space-y-1.5">
+        {/* Bottom Minimalist Footer Strip */}
+        <div className="p-2 border-t border-[#e8e2d5] dark:border-white/10">
           
           {!isCollapsed ? (
-            <>
-              {/* Pro Subscription Badge / Upgrade Pill */}
+            <div className="flex items-center justify-between px-1.5 py-0.5">
+              {/* Theme Toggle (Quiet Button) */}
               <button
                 type="button"
-                onClick={onOpenSubscription}
-                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500/15 via-indigo-500/15 to-blue-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 hover:scale-[1.02] active:scale-95 transition cursor-pointer"
+                onClick={onToggleTheme}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 hover:bg-stone-200/50 dark:hover:bg-white/5 transition cursor-pointer"
+                title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
               >
-                <div className="flex items-center gap-1.5 truncate">
-                  <Crown className="w-3.5 h-3.5 fill-amber-500 text-amber-500 shrink-0" />
-                  <span className="truncate">{isProUser ? 'OmniSticky Pro' : 'Upgrade to Pro'}</span>
-                </div>
-                <span className={`text-[9px] font-black uppercase px-1.5 py-0.2 rounded shrink-0 ${
-                  isProUser ? 'bg-emerald-500 text-white' : 'bg-gradient-to-r from-amber-500 to-indigo-600 text-white'
-                }`}>
-                  {isProUser ? 'ACTIVE' : 'PRO'}
-                </span>
+                {theme === 'dark' ? (
+                  <>
+                    <Sun className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-[11px] font-semibold">Light</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-3.5 h-3.5 text-stone-600" />
+                    <span className="text-[11px] font-semibold">Dark</span>
+                  </>
+                )}
               </button>
 
-              {/* Theme Toggle Pill in Expanded Sidebar */}
-              <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 text-xs">
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Theme</span>
+              {/* Utility Shortcuts: Widgets & Pro */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={onOpenWidgets}
+                  className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200/50 dark:hover:bg-white/5 transition cursor-pointer"
+                  title="Widgets Suite"
+                >
+                  <Layout className="w-4 h-4 text-stone-500" />
+                </button>
+
                 <button
                   type="button"
-                  onClick={onToggleTheme}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-amber-300 text-[11px] font-bold shadow-2xs dark:shadow-[0_0_10px_rgba(255,255,255,0.08)] cursor-pointer"
+                  onClick={onOpenSubscription}
+                  className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-500/10 transition cursor-pointer"
+                  title={isProUser ? 'OmniSticky Pro (Active)' : 'Upgrade to Pro'}
                 >
-                  {theme === 'dark' ? (
-                    <>
-                      <Sun className="w-3 h-3 text-amber-300" />
-                      <span>Light</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="w-3 h-3 text-slate-600" />
-                      <span>Dark</span>
-                    </>
-                  )}
+                  <Crown className="w-4 h-4 fill-amber-500" />
                 </button>
               </div>
-
-              {/* Interactive Widgets Hub Trigger */}
-              <button
-                onClick={onOpenWidgets}
-                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500/10 to-indigo-500/10 text-indigo-700 dark:text-indigo-300 hover:from-amber-500/20 hover:to-indigo-500/20 transition cursor-pointer border border-indigo-200/50 dark:border-white/10"
-              >
-                <div className="flex items-center gap-2">
-                  <Layout className="w-3.5 h-3.5 text-indigo-500" />
-                  <span className="truncate">Widgets Suite</span>
-                </div>
-                <ChevronRight className="w-3 h-3 text-indigo-400" />
-              </button>
-            </>
+            </div>
           ) : (
             /* Collapsed Bottom Strip: Minimal Icons */
             <div className="flex flex-col items-center space-y-1">
