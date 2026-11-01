@@ -4,6 +4,8 @@ import { ThingsHeader } from './components/ThingsHeader';
 import { TodayView } from './components/TodayView';
 import { TaskListView } from './components/TaskListView';
 import { StickyWallView } from './components/StickyWallView';
+import { SpatialCanvas3DView } from './components/SpatialCanvas3DView';
+import { NetworkGraph3DView } from './components/NetworkGraph3DView';
 import { KanbanBoardView } from './components/KanbanBoardView';
 import { MagicPlusButton } from './components/MagicPlusButton';
 import { TaskDetailDrawer } from './components/TaskDetailDrawer';
@@ -393,6 +395,41 @@ export function App() {
               })}
               onReorderTasks={handleReorderTasks}
               onMoveTaskStatus={handleMoveTaskStatus}
+            />
+          ) : viewMode === 'canvas_3d' ? (
+            /* 3D Spatial Canvas with Real Orbit & Z-axis Elevation */
+            <SpatialCanvas3DView
+              title={currentViewMeta.title}
+              subtitle={currentViewMeta.subtitle}
+              tasks={visibleTasks}
+              projects={projects}
+              onToggleComplete={handleToggleComplete}
+              onSelectTask={setSelectedTask}
+              onToggleTimer={handleToggleTimer}
+              onUpdateTask={handleSaveTask}
+              onDeleteTask={handleDeleteTask}
+              audioEnabled={permissions.audioEnabled}
+              onQuickAdd={() => handleMagicAdd({
+                title: 'New Post-it',
+                priority: 'normal',
+                tags: [],
+                section: currentSection,
+              })}
+              onReorderTasks={handleReorderTasks}
+            />
+          ) : viewMode === 'network_3d' ? (
+            /* 3D Knowledge & Task Constellation Graph */
+            <NetworkGraph3DView
+              tasks={visibleTasks}
+              projects={projects}
+              onSelectTask={setSelectedTask}
+              onToggleComplete={handleToggleComplete}
+              onQuickAdd={() => handleMagicAdd({
+                title: 'New Task Node',
+                priority: 'normal',
+                tags: [],
+                section: currentSection,
+              })}
             />
           ) : viewMode === 'kanban' ? (
             /* Trello Kanban Board with Sticky Notes */

@@ -13,7 +13,9 @@ import {
   List,
   Sun,
   Moon,
-  Crown
+  Crown,
+  Box,
+  Network
 } from 'lucide-react';
 import { exportTasksJSON, exportTasksMarkdown } from '../utils/storage';
 import { Task, Area, Project, AppPermissionsState, ViewMode, ThemeMode } from '../types';
@@ -91,8 +93,8 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
           </div>
         </div>
 
-        {/* Center: View Switcher (Sticky Wall vs Kanban vs List) */}
-        <div className="hidden sm:flex items-center p-1 bg-slate-200/60 dark:bg-[#181a24]/90 rounded-xl border border-slate-300/40 dark:border-white/10">
+        {/* Center: View Switcher (Sticky Wall vs 3D Canvas vs 3D Network vs Kanban vs List) */}
+        <div className="hidden lg:flex items-center p-1 bg-slate-200/60 dark:bg-[#181a24]/90 rounded-xl border border-slate-300/40 dark:border-white/10">
           <button
             type="button"
             onClick={() => onChangeViewMode('sticky_wall')}
@@ -104,7 +106,35 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
             title="Sticky Note Wall (Keep + Notezilla)"
           >
             <LayoutGrid className="w-3.5 h-3.5" />
-            <span>Sticky Wall</span>
+            <span>Wall</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onChangeViewMode('canvas_3d')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+              viewMode === 'canvas_3d'
+                ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-300 shadow-xs dark:shadow-[0_0_12px_rgba(255,255,255,0.08)]'
+                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+            }`}
+            title="3D Spatial Canvas (Orbit & Depth Layers)"
+          >
+            <Box className="w-3.5 h-3.5" />
+            <span>3D Canvas</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onChangeViewMode('network_3d')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+              viewMode === 'network_3d'
+                ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-300 shadow-xs dark:shadow-[0_0_12px_rgba(255,255,255,0.08)]'
+                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+            }`}
+            title="3D Task & Knowledge Constellation Graph"
+          >
+            <Network className="w-3.5 h-3.5" />
+            <span>3D Network</span>
           </button>
 
           <button
@@ -134,6 +164,21 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
             <List className="w-3.5 h-3.5" />
             <span>List</span>
           </button>
+        </div>
+
+        {/* Mobile / Tablet View Switcher Dropdown */}
+        <div className="lg:hidden">
+          <select
+            value={viewMode}
+            onChange={(e) => onChangeViewMode(e.target.value as ViewMode)}
+            className="px-2 py-1 text-xs font-bold bg-white dark:bg-[#181a24] rounded-xl border border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
+          >
+            <option value="sticky_wall">📌 Wall</option>
+            <option value="canvas_3d">🪐 3D Canvas</option>
+            <option value="network_3d">🕸️ 3D Network</option>
+            <option value="kanban">📋 Kanban</option>
+            <option value="things_list">📝 List</option>
+          </select>
         </div>
 
         {/* Right Action Suite */}

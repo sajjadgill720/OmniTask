@@ -4,7 +4,7 @@ export type Status = 'todo' | 'in_progress' | 'done';
 
 export type ThingsSection = 'inbox' | 'today' | 'upcoming' | 'anytime' | 'someday' | 'logbook';
 
-export type ViewMode = 'sticky_wall' | 'kanban' | 'things_list';
+export type ViewMode = 'sticky_wall' | 'canvas_3d' | 'network_3d' | 'kanban' | 'things_list';
 
 export type ThemeMode = 'light' | 'dark';
 
