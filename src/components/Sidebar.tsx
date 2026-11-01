@@ -15,7 +15,9 @@ import {
   PanelLeftOpen,
   Sun, 
   Moon,
-  Crown
+  Crown,
+  Folder,
+  Tag
 } from 'lucide-react';
 import { ThingsSection, Area, Project, Task, AppPermissionsState, ThemeMode } from '../types';
 
@@ -28,6 +30,7 @@ interface SidebarProps {
   projects: Project[];
   tasks: Task[];
   onOpenNewProject: () => void;
+  onOpenNewCategory: () => void;
   onOpenWidgets: () => void;
   onOpenPermissions: () => void;
   onOpenSubscription: () => void;
@@ -48,6 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   projects,
   tasks,
   onOpenNewProject,
+  onOpenNewCategory,
   onOpenWidgets,
   onOpenPermissions,
   onOpenSubscription,
@@ -58,6 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   theme,
   onToggleTheme,
 }) => {
+  const [showAddMenu, setShowAddMenu] = useState(false);
   // Collapsed Sidebar State persisted in localStorage
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     return localStorage.getItem('omnisticky_sidebar_collapsed') === 'true';
@@ -280,15 +285,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
           
           {!isCollapsed ? (
             <>
-              <div className="flex items-center justify-between text-[11px] text-slate-400 font-bold uppercase tracking-wider px-2">
-                <span>Projects</span>
-                <button
-                  onClick={onOpenNewProject}
-                  className="p-1 hover:text-slate-700 dark:hover:text-slate-200 rounded-md transition cursor-pointer"
-                  title="Add New Project"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
+              <div className="flex items-center justify-between text-[11px] text-slate-400 font-bold uppercase tracking-wider px-2 relative">
+                <span>Categories & Projects</span>
+                
+                <div className="relative">
+                  <button
+                    onClick={() => setShowAddMenu(!showAddMenu)}
+                    className="p-1 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-white/5 rounded-md transition cursor-pointer"
+                    title="Add Category or Project"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* Contextual Quick Menu */}
+                  {showAddMenu && (
+                    <div 
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute right-0 top-6 z-50 w-44 p-1.5 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 text-xs animate-pop-in"
+                    >
+                      <button
+                        onClick={() => {
+                          setShowAddMenu(false);
+                          onOpenNewCategory();
+                        }}
+                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left font-bold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-600 transition cursor-pointer"
+                      >
+                        <Tag className="w-3.5 h-3.5 text-blue-500" />
+                        <span>New Category</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowAddMenu(false);
+                          onOpenNewProject();
+                        }}
+                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition cursor-pointer"
+                      >
+                        <Folder className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>New Project</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-3 px-1">
@@ -297,9 +335,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                   return (
                     <div key={area.id} className="space-y-1">
-                      <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        <span>{area.emoji}</span>
-                        <span className="truncate">{area.name}</span>
+                      <div className="group/area flex items-center justify-between px-2 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <span>{area.emoji}</span>
+                          <span className="truncate">{area.name}</span>
+                        </div>
+                        <button
+                          onClick={onOpenNewProject}
+                          className="opacity-0 group-hover/area:opacity-100 p-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition cursor-pointer"
+                          title={`Add project under ${area.name}`}
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
                       </div>
 
                       {areaProjects.map(proj => {
@@ -363,13 +410,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ) : (
             /* Collapsed Projects Rail: Minimalist Icon Hub */
             <div className="flex flex-col items-center space-y-2 border-t border-slate-200/60 dark:border-white/10 pt-3">
-              <button
-                onClick={onOpenNewProject}
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-white/5 transition cursor-pointer"
-                title="Add New Project"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowAddMenu(!showAddMenu)}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-white/5 transition cursor-pointer"
+                  title="Add Category or Project"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+
+                {showAddMenu && (
+                  <div 
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute left-11 top-0 z-50 w-44 p-1.5 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 text-xs animate-pop-in"
+                  >
+                    <button
+                      onClick={() => {
+                        setShowAddMenu(false);
+                        onOpenNewCategory();
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left font-bold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-600 transition cursor-pointer"
+                    >
+                      <Tag className="w-3.5 h-3.5 text-blue-500" />
+                      <span>New Category</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAddMenu(false);
+                        onOpenNewProject();
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition cursor-pointer"
+                    >
+                      <Folder className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>New Project</span>
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {projects.map(proj => {
                 const projTasks = tasks.filter(t => t.projectId === proj.id);

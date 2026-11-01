@@ -12,6 +12,7 @@ import { TaskDetailDrawer } from './components/TaskDetailDrawer';
 import { WidgetCenterModal } from './components/WidgetCenterModal';
 import { PermissionsModal } from './components/PermissionsModal';
 import { ProjectModal } from './components/ProjectModal';
+import { CategoryModal } from './components/CategoryModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { 
   Task, 
@@ -83,6 +84,7 @@ export function App() {
   const [isWidgetsOpen, setIsWidgetsOpen] = useState(false);
   const [isPermissionsOpen, setIsPermissionsOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
   const [isProUser, setIsProUser] = useState<boolean>(() => {
@@ -263,6 +265,10 @@ export function App() {
     setSelectedProjectId(project.id);
   };
 
+  const handleAddArea = (area: Area) => {
+    setAreas(prev => [...prev, area]);
+  };
+
   const handleMagicAdd = (parsed: {
     title: string;
     dueDate?: string;
@@ -331,6 +337,7 @@ export function App() {
         projects={projects}
         tasks={tasks}
         onOpenNewProject={() => setIsProjectModalOpen(true)}
+        onOpenNewCategory={() => setIsCategoryModalOpen(true)}
         onOpenWidgets={() => setIsWidgetsOpen(true)}
         onOpenPermissions={() => setIsPermissionsOpen(true)}
         onOpenSubscription={() => setIsSubscriptionOpen(true)}
@@ -409,13 +416,15 @@ export function App() {
               onUpdateTask={handleSaveTask}
               onDeleteTask={handleDeleteTask}
               audioEnabled={permissions.audioEnabled}
-              onQuickAdd={() => handleMagicAdd({
+              onQuickAdd={(status) => handleMagicAdd({
                 title: 'New Post-it',
                 priority: 'normal',
                 tags: [],
                 section: currentSection,
+                status: status || 'todo',
               })}
               onReorderTasks={handleReorderTasks}
+              onMoveTaskStatus={handleMoveTaskStatus}
             />
           ) : viewMode === 'network_3d' ? (
             /* 3D Knowledge & Task Constellation Graph */
@@ -554,6 +563,13 @@ export function App() {
         onClose={() => setIsProjectModalOpen(false)}
         areas={areas}
         onAddProject={handleAddProject}
+      />
+
+      {/* New Category / Area Modal */}
+      <CategoryModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        onAddCategory={handleAddArea}
       />
 
     </div>
