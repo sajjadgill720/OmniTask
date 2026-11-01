@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ThingsHeader } from './components/ThingsHeader';
 import { TodayView } from './components/TodayView';
+import { FocusView } from './components/FocusView';
 import { TaskListView } from './components/TaskListView';
 import { CanvasView } from './components/CanvasView';
 import { NetworkGraph3DView } from './components/NetworkGraph3DView';
@@ -475,8 +476,8 @@ export function App() {
               })}
             />
           ) : currentSection === 'today' && !selectedProjectId ? (
-            /* Focus View (Default): Things 3 Enhanced Today with Density Toggle */
-            <TodayView
+            /* Focus View (Default): Hero "Now" note + Quiet Queue */
+            <FocusView
               tasks={visibleTasks}
               projects={projects}
               onToggleComplete={handleToggleComplete}

@@ -237,3 +237,4 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
     </div>
   );
 };
+
