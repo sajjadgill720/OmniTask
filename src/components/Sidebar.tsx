@@ -187,22 +187,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
-                {/* Permissions Status Indicator */}
-                <button
-                  onClick={onOpenPermissions}
-                  className={`p-1.5 rounded-lg text-xs transition cursor-pointer relative ${
-                    permissions.notifications === 'granted'
-                      ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40'
-                      : 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40'
-                  }`}
-                  title="Permissions & Notifications"
-                >
-                  <Bell className="w-3.5 h-3.5" />
-                  {permissions.notifications !== 'granted' && (
-                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900" />
-                  )}
-                </button>
-
                 {/* Collapse Sidebar Toggle */}
                 <button
                   onClick={toggleCollapsed}

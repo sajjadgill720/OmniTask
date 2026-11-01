@@ -85,23 +85,23 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({
           <div className="flex items-center gap-2.5 mb-1">
             <span className="text-2xl">📋</span>
             <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              {title}
+              Board
             </h2>
             <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 text-xs font-bold font-mono">
-              Kanban Board (Drag & Drop Active)
+              {tasks.length} {tasks.length === 1 ? 'note' : 'notes'}
             </span>
           </div>
-          <p className="text-xs text-slate-400 font-medium">
-            {subtitle} • Drag sticky notes across columns to advance workflow stages
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            Move notes across columns to track your progress from start to finish.
           </p>
         </div>
 
         <button
           onClick={onQuickAdd}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/20 transition-all hover:scale-105 active:scale-95 cursor-pointer self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>Add Card</span>
+          <span>New note</span>
         </button>
       </div>
 

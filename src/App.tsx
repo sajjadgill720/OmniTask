@@ -3,8 +3,7 @@ import { Sidebar } from './components/Sidebar';
 import { ThingsHeader } from './components/ThingsHeader';
 import { TodayView } from './components/TodayView';
 import { TaskListView } from './components/TaskListView';
-import { StickyWallView } from './components/StickyWallView';
-import { SpatialCanvas3DView } from './components/SpatialCanvas3DView';
+import { CanvasView } from './components/CanvasView';
 import { NetworkGraph3DView } from './components/NetworkGraph3DView';
 import { KanbanBoardView } from './components/KanbanBoardView';
 import { MagicPlusButton } from './components/MagicPlusButton';
@@ -14,6 +13,8 @@ import { PermissionsModal } from './components/PermissionsModal';
 import { ProjectModal } from './components/ProjectModal';
 import { CategoryModal } from './components/CategoryModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
+import { SettingsModal } from './components/SettingsModal';
+import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { 
   Task, 
   Area, 
@@ -22,6 +23,7 @@ import {
   AppPermissionsState, 
   Priority,
   ViewMode,
+  DensityMode,
   ThemeMode
 } from './types';
 import { 
@@ -66,10 +68,41 @@ export function App() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // View Mode: 'sticky_wall' (Google Keep + Notezilla) | 'kanban' (Trello) | 'things_list' (Things 3)
+  // View Mode: 'focus' (default) | 'board' | 'canvas' | 'connections'
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    return (localStorage.getItem('omnisticky_view_mode') as ViewMode) || 'sticky_wall';
+    const saved = localStorage.getItem('omnisticky_view_mode') as ViewMode;
+    if (saved === 'kanban') return 'board';
+    if (saved === 'canvas_3d' || saved === 'sticky_wall') return 'canvas';
+    if (saved === 'network_3d') return 'connections';
+    if (saved === 'focus' || saved === 'board' || saved === 'canvas' || saved === 'connections') return saved;
+    return 'focus';
   });
+
+  // Density Mode: 'comfortable' | 'compact'
+  const [density, setDensity] = useState<DensityMode>(() => {
+    return (localStorage.getItem('omnisticky_density') as DensityMode) || 'comfortable';
+  });
+
+  const handleToggleDensity = () => {
+    setDensity(prev => {
+      const next = prev === 'comfortable' ? 'compact' : 'comfortable';
+      localStorage.setItem('omnisticky_density', next);
+      return next;
+    });
+  };
+
+  // 3D Debug Mode: camera pitch/yaw/scale metrics overlay
+  const [debugMode, setDebugMode] = useState<boolean>(() => {
+    return localStorage.getItem('omnisticky_debug_mode') === 'true';
+  });
+
+  const handleToggleDebugMode = () => {
+    setDebugMode(prev => {
+      const next = !prev;
+      localStorage.setItem('omnisticky_debug_mode', String(next));
+      return next;
+    });
+  };
 
   // Navigation state
   const [currentSection, setCurrentSection] = useState<ThingsSection>('today');
@@ -87,9 +120,23 @@ export function App() {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isProUser, setIsProUser] = useState<boolean>(() => {
     return localStorage.getItem('omnisticky_pro_user') === 'true';
   });
+
+  // Global ⌘K / Ctrl+K keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleUpgradeSuccess = () => {
     setIsProUser(true);
@@ -352,96 +399,28 @@ export function App() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         
-        {/* Top Header with Search, Switcher & Action Suite */}
+        {/* Top Header: Search (⌘K), View Switcher, Primary "New note", Settings */}
         <ThingsHeader
           onToggleMobileNav={() => setIsMobileNavOpen(!isMobileNavOpen)}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          tasks={tasks}
-          areas={areas}
-          projects={projects}
-          permissions={permissions}
-          onOpenPermissions={() => setIsPermissionsOpen(true)}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           onOpenQuickAdd={() => handleMagicAdd({
-            title: 'New Sticky Note',
+            title: 'New note',
             priority: 'normal',
             tags: [],
             section: currentSection,
           })}
-          onOpenSubscription={() => setIsSubscriptionOpen(true)}
-          isProUser={isProUser}
-          onlyUrgent={onlyUrgent}
-          onToggleUrgent={() => setOnlyUrgent(!onlyUrgent)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
           viewMode={viewMode}
           onChangeViewMode={handleChangeViewMode}
-          theme={theme}
-          onToggleTheme={handleToggleTheme}
+          isProUser={isProUser}
         />
 
-        {/* Dynamic Multi-Experience Views */}
+        {/* Dynamic Streamlined Views */}
         <main className="flex-1 pb-24">
-          {viewMode === 'sticky_wall' ? (
-            /* Google Keep + Notezilla Motion Sticky Wall with Corporate Whiteboard Option */
-            <StickyWallView
-              title={currentViewMeta.title}
-              subtitle={currentViewMeta.subtitle}
-              tasks={visibleTasks}
-              projects={projects}
-              onToggleComplete={handleToggleComplete}
-              onSelectTask={setSelectedTask}
-              onToggleTimer={handleToggleTimer}
-              onUpdateTask={handleSaveTask}
-              onDeleteTask={handleDeleteTask}
-              audioEnabled={permissions.audioEnabled}
-              onQuickAdd={(status) => handleMagicAdd({
-                title: 'New Post-it',
-                priority: 'normal',
-                tags: [],
-                section: currentSection,
-                status: status || 'todo',
-              })}
-              onReorderTasks={handleReorderTasks}
-              onMoveTaskStatus={handleMoveTaskStatus}
-            />
-          ) : viewMode === 'canvas_3d' ? (
-            /* 3D Spatial Canvas with Real Orbit & Z-axis Elevation */
-            <SpatialCanvas3DView
-              title={currentViewMeta.title}
-              subtitle={currentViewMeta.subtitle}
-              tasks={visibleTasks}
-              projects={projects}
-              onToggleComplete={handleToggleComplete}
-              onSelectTask={setSelectedTask}
-              onToggleTimer={handleToggleTimer}
-              onUpdateTask={handleSaveTask}
-              onDeleteTask={handleDeleteTask}
-              audioEnabled={permissions.audioEnabled}
-              onQuickAdd={(status) => handleMagicAdd({
-                title: 'New Post-it',
-                priority: 'normal',
-                tags: [],
-                section: currentSection,
-                status: status || 'todo',
-              })}
-              onReorderTasks={handleReorderTasks}
-              onMoveTaskStatus={handleMoveTaskStatus}
-            />
-          ) : viewMode === 'network_3d' ? (
-            /* 3D Knowledge & Task Constellation Graph */
-            <NetworkGraph3DView
-              tasks={visibleTasks}
-              projects={projects}
-              onSelectTask={setSelectedTask}
-              onToggleComplete={handleToggleComplete}
-              onQuickAdd={() => handleMagicAdd({
-                title: 'New Task Node',
-                priority: 'normal',
-                tags: [],
-                section: currentSection,
-              })}
-            />
-          ) : viewMode === 'kanban' ? (
-            /* Trello Kanban Board with Sticky Notes */
+          {viewMode === 'board' ? (
+            /* Board View: Kanban Columns with Plain Language */
             <KanbanBoardView
               title={currentViewMeta.title}
               subtitle={currentViewMeta.subtitle}
@@ -454,15 +433,49 @@ export function App() {
               onDeleteTask={handleDeleteTask}
               audioEnabled={permissions.audioEnabled}
               onQuickAdd={() => handleMagicAdd({
-                title: 'New Sticky Note',
+                title: 'New note',
                 priority: 'normal',
                 tags: [],
                 section: currentSection,
               })}
               onMoveTaskStatus={handleMoveTaskStatus}
             />
+          ) : viewMode === 'canvas' || viewMode === 'canvas_3d' || viewMode === 'sticky_wall' ? (
+            /* Canvas View: Merged Freeform Spatial Board with Tilt Slider */
+            <CanvasView
+              tasks={visibleTasks}
+              projects={projects}
+              onToggleComplete={handleToggleComplete}
+              onSelectTask={setSelectedTask}
+              onToggleTimer={handleToggleTimer}
+              onUpdateTask={handleSaveTask}
+              onDeleteTask={handleDeleteTask}
+              audioEnabled={permissions.audioEnabled}
+              onQuickAdd={() => handleMagicAdd({
+                title: 'New note',
+                priority: 'normal',
+                tags: [],
+                section: currentSection,
+              })}
+              onReorderTasks={handleReorderTasks}
+              debugMode={debugMode}
+            />
+          ) : viewMode === 'connections' || viewMode === 'network_3d' ? (
+            /* Connections View: 3D Network Graph */
+            <NetworkGraph3DView
+              tasks={visibleTasks}
+              projects={projects}
+              onSelectTask={setSelectedTask}
+              onToggleComplete={handleToggleComplete}
+              onQuickAdd={() => handleMagicAdd({
+                title: 'New note',
+                priority: 'normal',
+                tags: [],
+                section: currentSection,
+              })}
+            />
           ) : currentSection === 'today' && !selectedProjectId ? (
-            /* Things 3 Enhanced Today View */
+            /* Focus View (Default): Things 3 Enhanced Today with Density Toggle */
             <TodayView
               tasks={visibleTasks}
               projects={projects}
@@ -474,14 +487,16 @@ export function App() {
               onReorderTasks={handleReorderTasks}
               audioEnabled={permissions.audioEnabled}
               onQuickAdd={(title, priority) => handleMagicAdd({
-                title: title || 'New Task',
+                title: title || 'New note',
                 priority: priority || 'normal',
                 tags: [],
                 section: 'today',
               })}
+              density={density}
+              onToggleDensity={handleToggleDensity}
             />
           ) : (
-            /* Things 3 Enhanced Standard List View */
+            /* Focus Standard List for non-today sections or selected project */
             <TaskListView
               section={currentSection}
               selectedProject={selectedProject}
@@ -495,7 +510,7 @@ export function App() {
               onReorderTasks={handleReorderTasks}
               audioEnabled={permissions.audioEnabled}
               onQuickAdd={(title, priority) => handleMagicAdd({
-                title: title || 'New Task',
+                title: title || 'New note',
                 priority: priority || 'normal',
                 tags: [],
                 section: currentSection,
@@ -570,6 +585,49 @@ export function App() {
         isOpen={isCategoryModalOpen}
         onClose={() => setIsCategoryModalOpen(false)}
         onAddCategory={handleAddArea}
+      />
+
+      {/* Global Settings & Preferences Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+        permissions={permissions}
+        onUpdatePermissions={refreshPermissions}
+        isProUser={isProUser}
+        onOpenSubscription={() => setIsSubscriptionOpen(true)}
+        tasks={tasks}
+        areas={areas}
+        projects={projects}
+        debugMode={debugMode}
+        onToggleDebugMode={handleToggleDebugMode}
+      />
+
+      {/* ⌘K / Ctrl+K Command Palette Modal */}
+      <CommandPaletteModal
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        tasks={tasks}
+        projects={projects}
+        onSelectTask={setSelectedTask}
+        onNavigateSection={(sec) => {
+          setSelectedProjectId(null);
+          setCurrentSection(sec);
+        }}
+        onNavigateProject={(projId) => {
+          setSelectedProjectId(projId);
+        }}
+        onChangeViewMode={handleChangeViewMode}
+        onOpenNewNote={() => handleMagicAdd({
+          title: 'New note',
+          priority: 'normal',
+          tags: [],
+          section: currentSection,
+        })}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onToggleTheme={handleToggleTheme}
+        theme={theme}
       />
 
     </div>

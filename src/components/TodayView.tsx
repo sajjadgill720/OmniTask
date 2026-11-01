@@ -14,6 +14,8 @@ interface TodayViewProps {
   onReorderTasks?: (sourceId: string, targetId: string) => void;
   audioEnabled: boolean;
   onQuickAdd: (title?: string, priority?: Priority) => void;
+  density?: 'comfortable' | 'compact';
+  onToggleDensity?: () => void;
 }
 
 export const TodayView: React.FC<TodayViewProps> = ({
@@ -27,6 +29,8 @@ export const TodayView: React.FC<TodayViewProps> = ({
   onReorderTasks,
   audioEnabled,
   onQuickAdd,
+  density = 'comfortable',
+  onToggleDensity,
 }) => {
   const [quickTitle, setQuickTitle] = useState('');
   const [quickPriority, setQuickPriority] = useState<Priority>('normal');
@@ -62,7 +66,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       
-      {/* Things 3 Header: Star + Date + Circular Progress Ring */}
+      {/* Header: Star + Date + Circular Progress Ring */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 mb-5 border-b border-slate-200/80 dark:border-white/10 gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -71,50 +75,62 @@ export const TodayView: React.FC<TodayViewProps> = ({
               Today
             </h2>
             <span className="px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 text-xs font-bold font-mono">
-              {tasks.length} {tasks.length === 1 ? 'Focus Item' : 'Focus Items'}
+              {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
             </span>
           </div>
-          <p className="text-xs font-medium text-slate-400">
-            {todayFormatted} • High-leverage execution list
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            {todayFormatted} • What needs your attention right now.
           </p>
         </div>
 
-        {/* Progress Metric Ring + Stats */}
-        {totalCount > 0 && (
-          <div className="flex items-center gap-3 self-start sm:self-auto p-2 px-3 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 rounded-2xl">
-            <div className="text-right">
-              <span className="block font-mono text-xs font-extrabold text-slate-900 dark:text-white">
-                {completedCount}/{totalCount} Completed
-              </span>
-              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
-                {progressPercent}% Daily Goal
-              </span>
+        {/* Progress Metric Ring + Density Toggle */}
+        <div className="flex items-center gap-3 self-start sm:self-auto">
+          {onToggleDensity && (
+            <button
+              onClick={onToggleDensity}
+              className="px-2.5 py-1 text-xs font-semibold rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition cursor-pointer"
+              title="Toggle list density"
+            >
+              {density === 'compact' ? 'Compact' : 'Comfortable'}
+            </button>
+          )}
+
+          {totalCount > 0 && (
+            <div className="flex items-center gap-3 p-2 px-3 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 rounded-2xl">
+              <div className="text-right">
+                <span className="block font-mono text-xs font-extrabold text-slate-900 dark:text-white">
+                  {completedCount} of {totalCount} completed
+                </span>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                  {progressPercent}% Daily Goal
+                </span>
+              </div>
+              <svg className="w-8 h-8 -rotate-90">
+                <circle
+                  cx="16"
+                  cy="16"
+                  r={radius}
+                  fill="transparent"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  className="text-amber-200/80 dark:text-amber-900/60"
+                />
+                <circle
+                  cx="16"
+                  cy="16"
+                  r={radius}
+                  fill="transparent"
+                  stroke="#f59e0b"
+                  strokeWidth="3"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  className="transition-all duration-300"
+                />
+              </svg>
             </div>
-            <svg className="w-8 h-8 -rotate-90">
-              <circle
-                cx="16"
-                cy="16"
-                r={radius}
-                fill="transparent"
-                stroke="currentColor"
-                strokeWidth="3"
-                className="text-amber-200/80 dark:text-amber-900/60"
-              />
-              <circle
-                cx="16"
-                cy="16"
-                r={radius}
-                fill="transparent"
-                stroke="#f59e0b"
-                strokeWidth="3"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-                className="transition-all duration-300"
-              />
-            </svg>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Quick Inline Task Adder */}
