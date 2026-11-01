@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Target, 
   Play, 
@@ -10,23 +10,25 @@ import {
   Star, 
   Sparkles, 
   Clock, 
-  Folder, 
-  ChevronRight, 
+  Palette, 
   Edit3, 
   Calendar,
   Flame,
   Zap,
-  Coffee
+  Coffee,
+  RotateCw
 } from 'lucide-react';
 import { Task, Project, Priority, DensityMode } from '../types';
 import { formatDuration, checkDueDate } from '../utils/storage';
 import { playCompletionSound } from '../utils/permissions';
 import { getPostitPaperStyle } from '../utils/colorUtils';
-import { TaskRow } from './TaskRow';
+import { STICKY_COLORS } from '../constants/theme';
+import { RedPushPin } from './RedPushPin';
 import confetti from 'canvas-confetti';
 
 interface FocusViewProps {
   tasks: Task[];
+  allTasks?: Task[];
   projects: Project[];
   onToggleComplete: (id: string) => void;
   onSelectTask: (task: Task) => void;
@@ -42,6 +44,7 @@ interface FocusViewProps {
 
 export const FocusView: React.FC<FocusViewProps> = ({
   tasks,
+  allTasks = [],
   projects,
   onToggleComplete,
   onSelectTask,
@@ -57,18 +60,27 @@ export const FocusView: React.FC<FocusViewProps> = ({
   const [quickTitle, setQuickTitle] = useState('');
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
   const [newChecklistText, setNewChecklistText] = useState('');
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleInput, setTitleInput] = useState('');
 
-  // Daily Counts & Progress
-  const totalCount = tasks.length;
-  const completedCount = tasks.filter(t => t.status === 'done').length;
-  const activeTasks = tasks.filter(t => t.status !== 'done');
+  // Source pool: if current section has 0 tasks, fall back to all uncompleted tasks
+  const effectiveTasks = tasks.length > 0 
+    ? tasks 
+    : allTasks.length > 0 
+      ? allTasks.filter(t => t.status !== 'done') 
+      : [];
+
+  const totalCount = effectiveTasks.length;
+  const completedCount = effectiveTasks.filter(t => t.status === 'done').length;
+  const activeTasks = effectiveTasks.filter(t => t.status !== 'done');
   const progressRatio = totalCount > 0 ? completedCount / totalCount : 0;
   const progressPercent = Math.round(progressRatio * 100);
 
   // Today vs Later Queues
   const dayTasks = activeTasks.filter(t => !t.isThisEvening);
   const eveningTasks = activeTasks.filter(t => t.isThisEvening);
-  const completedTasks = tasks.filter(t => t.status === 'done');
+  const completedTasks = effectiveTasks.filter(t => t.status === 'done');
 
   // Determine the Hero "Now" task:
   // 1. Task currently running a stopwatch timer
@@ -87,7 +99,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
     activeTasks[0] ||
     null;
 
-  // Items remaining in Today queue (excluding the active Hero task)
+  // Remaining tasks in Today queue (excluding hero task)
   const remainingTodayQueue = dayTasks.filter(t => t.id !== heroTask?.id);
 
   // Circular progress metric
@@ -95,16 +107,24 @@ export const FocusView: React.FC<FocusViewProps> = ({
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - progressRatio * circumference;
 
+  // Paper styling for Hero Sticky Note
+  // Default color is the authentic Post-it Canary Yellow (#fef08a)
+  const defaultYellow = '#fef08a';
+  const heroColor = heroTask?.colorHex || defaultYellow;
+  const heroPaper = getPostitPaperStyle(heroColor, heroTask?.inkType || 'auto');
+  const heroProject = heroTask ? projects.find(p => p.id === heroTask.projectId) : undefined;
+  const dueInfo = heroTask ? checkDueDate(heroTask.dueDate) : null;
+
   // Handle Mark Done on Hero Task
   const handleHeroDone = () => {
     if (!heroTask) return;
     onToggleComplete(heroTask.id);
     if (audioEnabled) playCompletionSound();
     confetti({
-      particleCount: 40,
-      spread: 60,
+      particleCount: 45,
+      spread: 65,
       origin: { y: 0.6 },
-      colors: ['#10b981', '#3b82f6', '#f59e0b'],
+      colors: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'],
     });
   };
 
@@ -144,15 +164,28 @@ export const FocusView: React.FC<FocusViewProps> = ({
     if (audioEnabled) playCompletionSound();
   };
 
+  const handleChangeHeroColor = (colorHex: string) => {
+    if (!heroTask) return;
+    onUpdateTask({ ...heroTask, colorHex });
+    setShowColorPicker(false);
+  };
+
+  const handleSaveTitle = () => {
+    setIsEditingTitle(false);
+    if (!heroTask) return;
+    const trimmed = titleInput.trim();
+    if (trimmed && trimmed !== heroTask.title) {
+      onUpdateTask({ ...heroTask, title: trimmed });
+    }
+  };
+
   const isTodayClear = totalCount > 0 && activeTasks.length === 0;
-  const heroProject = heroTask ? projects.find(p => p.id === heroTask.projectId) : undefined;
-  const heroPaper = heroTask ? getPostitPaperStyle(heroTask.colorHex, heroTask.inkType || 'auto') : null;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6 font-sans">
+    <div className="max-w-2xl mx-auto px-4 py-5 font-sans">
       
       {/* 1. Header: Date + Daily Progress Ring + Density Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 mb-6 border-b border-slate-200/80 dark:border-white/10 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-5 border-b border-slate-200/80 dark:border-white/10 gap-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xl">🎯</span>
@@ -175,11 +208,11 @@ export const FocusView: React.FC<FocusViewProps> = ({
             className="px-2.5 py-1 text-xs font-semibold rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition cursor-pointer"
             title="Toggle card density"
           >
-            {density === 'compact' ? 'Compact rows' : 'Comfortable cards'}
+            {density === 'compact' ? 'Compact rows' : 'Comfortable'}
           </button>
 
           {totalCount > 0 && (
-            <div className="flex items-center gap-3 p-2 px-3 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 rounded-2xl">
+            <div className="flex items-center gap-3 p-1.5 px-3 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 rounded-2xl">
               <div className="text-right">
                 <span className="block font-mono text-xs font-extrabold text-slate-900 dark:text-white">
                   {completedCount} of {totalCount}
@@ -188,25 +221,25 @@ export const FocusView: React.FC<FocusViewProps> = ({
                   {progressPercent}% completed
                 </span>
               </div>
-              <svg className="w-8 h-8 -rotate-90">
+              <svg className="w-7 h-7 -rotate-90">
                 <circle
-                  cx="16"
-                  cy="16"
-                  r={radius}
+                  cx="14"
+                  cy="14"
+                  r={11}
                   fill="transparent"
                   stroke="currentColor"
-                  strokeWidth="3"
+                  strokeWidth="2.5"
                   className="text-amber-200/80 dark:text-amber-900/60"
                 />
                 <circle
-                  cx="16"
-                  cy="16"
-                  r={radius}
+                  cx="14"
+                  cy="14"
+                  r={11}
                   fill="transparent"
                   stroke="#f59e0b"
-                  strokeWidth="3"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
+                  strokeWidth="2.5"
+                  strokeDasharray={2 * Math.PI * 11}
+                  strokeDashoffset={(2 * Math.PI * 11) - progressRatio * (2 * Math.PI * 11)}
                   strokeLinecap="round"
                   className="transition-all duration-300"
                 />
@@ -219,14 +252,14 @@ export const FocusView: React.FC<FocusViewProps> = ({
       {/* 2. Instant Quick Capture Form */}
       <form 
         onSubmit={handleInlineAdd}
-        className="flex items-center gap-2 p-2 px-3 mb-8 bg-white dark:bg-[#151821] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xs focus-within:ring-2 focus-within:ring-blue-500/30 transition-all"
+        className="flex items-center gap-2 p-2 px-3 mb-6 bg-white dark:bg-[#151821] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xs focus-within:ring-2 focus-within:ring-blue-500/30 transition-all"
       >
         <Plus className="w-4 h-4 text-blue-500 shrink-0" />
         <input
           type="text"
           value={quickTitle}
           onChange={(e) => setQuickTitle(e.target.value)}
-          placeholder="Capture the next thing... (Press Enter to save)"
+          placeholder="+ Capture the next thing... (Press Enter to save)"
           className="flex-1 bg-transparent border-none text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none"
         />
         <button
@@ -238,175 +271,230 @@ export const FocusView: React.FC<FocusViewProps> = ({
         </button>
       </form>
 
-      {/* 3. HERO "NOW" NOTE */}
-      {heroTask && !isTodayClear && (
-        <section className="mb-10 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between mb-3 px-1">
-            <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+      {/* 3. HERO "NOW" STICKY NOTE (AUTHENTIC SIZE & CANARY YELLOW COLOR) */}
+      {heroTask && !isTodayClear ? (
+        <section className="mb-8 flex flex-col items-center">
+          <div className="w-full max-w-[390px] flex items-center justify-between mb-2 px-1 text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            <div className="flex items-center gap-1.5">
               <Zap className="w-4 h-4 fill-amber-500 text-amber-500 animate-pulse" />
               <span>Now Focusing</span>
             </div>
             {heroProject && (
-              <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: heroProject.colorHex }} />
-                <span>{heroProject.title}</span>
+              <span className="text-xs font-semibold text-slate-500 flex items-center gap-1 truncate max-w-[160px]">
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: heroProject.colorHex }} />
+                <span className="truncate">{heroProject.title}</span>
               </span>
             )}
           </div>
 
-          {/* Hero Card */}
+          {/* Centered Physical Sticky Note Pad */}
           <div 
-            className="relative rounded-3xl p-6 sm:p-7 border border-amber-300/60 dark:border-white/10 shadow-xl transition-all"
+            className="relative w-full max-w-[390px] min-h-[360px] p-6 pt-9 rounded-2xl border transition-all duration-200 select-none flex flex-col justify-between"
             style={{
-              backgroundColor: heroPaper?.baseRgb || '#fef9c3',
-              color: heroPaper?.inkColor || '#1e293b',
-              boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+              backgroundColor: heroPaper.baseRgb,
+              backgroundImage: `linear-gradient(145deg, ${heroPaper.lightRgb} 0%, ${heroPaper.baseRgb} 55%, ${heroPaper.darkRgb} 100%)`,
+              borderColor: heroPaper.borderRgb,
+              color: heroPaper.inkColor,
+              boxShadow: '0 16px 36px -10px rgba(0, 0, 0, 0.16), 0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+              transform: 'rotate(-0.8deg)',
             }}
           >
-            {/* Top row: Tags & Action bar */}
-            <div className="flex items-center justify-between pb-3 mb-4 border-b border-black/10 dark:border-white/10">
-              <div className="flex items-center gap-2 flex-wrap">
-                {heroTask.dueDate && (
-                  <span className="px-2.5 py-1 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-bold font-mono">
-                    Due {heroTask.dueDate}
+            {/* 3D Tactile Red Pushpin at Top Center */}
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
+              <RedPushPin size={34} />
+            </div>
+
+            {/* Sticky Note Top Controls Bar */}
+            <div className="flex items-center justify-between pb-2 mb-3 border-b border-black/10 dark:border-white/10 text-xs">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {dueInfo && (
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${
+                    dueInfo.isOverdue ? 'bg-red-500/15 text-red-700' : 'bg-black/5 dark:bg-white/10'
+                  }`}>
+                    {dueInfo.label}
                   </span>
                 )}
-                {heroTask.tags.map(tag => (
-                  <span key={tag} className="px-2 py-0.5 rounded-lg bg-black/5 dark:bg-white/10 text-[11px] font-semibold">
+                {heroTask.tags.slice(0, 2).map(tag => (
+                  <span key={tag} className="px-1.5 py-0.5 rounded-md bg-black/5 dark:bg-white/10 text-[10px] font-medium">
                     #{tag}
                   </span>
                 ))}
               </div>
 
-              {/* Focus Timer Pill */}
-              <button
-                onClick={() => onToggleTimer(heroTask.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer ${
-                  heroTask.isTimerRunning
-                    ? 'bg-emerald-600 text-white shadow-md animate-pulse'
-                    : 'bg-black/10 dark:bg-white/15 hover:bg-black/15 text-current'
-                }`}
-                title={heroTask.isTimerRunning ? 'Pause focus timer' : 'Start focus timer'}
-              >
-                {heroTask.isTimerRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-                <span className="font-mono">{formatDuration(heroTask.timeSpentSeconds || 0)}</span>
-              </button>
+              {/* Palette & Timer Controls */}
+              <div className="flex items-center gap-1.5">
+                {/* Color Swatch Picker Toggle */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowColorPicker(!showColorPicker)}
+                    className="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer"
+                    title="Change sticky note color"
+                  >
+                    <Palette className="w-3.5 h-3.5 opacity-75" />
+                  </button>
+
+                  {showColorPicker && (
+                    <div 
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute right-0 top-7 z-30 p-2 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 flex items-center gap-1.5"
+                    >
+                      {STICKY_COLORS.map(c => (
+                        <button
+                          key={c.id}
+                          onClick={() => handleChangeHeroColor(c.colorHex)}
+                          style={{ backgroundColor: c.colorHex }}
+                          className="w-5 h-5 rounded-full border border-black/15 hover:scale-120 transition cursor-pointer"
+                          title={c.name}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Focus Timer Button */}
+                <button
+                  onClick={() => onToggleTimer(heroTask.id)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold transition cursor-pointer ${
+                    heroTask.isTimerRunning
+                      ? 'bg-emerald-600 text-white shadow-xs animate-pulse'
+                      : 'bg-black/10 dark:bg-white/15 hover:bg-black/15'
+                  }`}
+                  title={heroTask.isTimerRunning ? 'Pause focus timer' : 'Start focus timer'}
+                >
+                  {heroTask.isTimerRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 fill-current" />}
+                  <span className="font-mono text-[11px]">{formatDuration(heroTask.timeSpentSeconds || 0)}</span>
+                </button>
+              </div>
             </div>
 
-            {/* Title & Body */}
-            <div className="mb-6">
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight leading-snug mb-2 font-display">
-                {heroTask.title}
-              </h2>
+            {/* Note Title & Body */}
+            <div className="flex-1 mb-4">
+              {isEditingTitle ? (
+                <input
+                  type="text"
+                  autoFocus
+                  value={titleInput}
+                  onChange={(e) => setTitleInput(e.target.value)}
+                  onBlur={handleSaveTitle}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveTitle();
+                    if (e.key === 'Escape') setIsEditingTitle(false);
+                  }}
+                  className="w-full bg-transparent border-b border-black/20 text-lg font-bold focus:outline-none"
+                />
+              ) : (
+                <h2 
+                  onClick={() => {
+                    setTitleInput(heroTask.title);
+                    setIsEditingTitle(true);
+                  }}
+                  className="text-lg sm:text-xl font-bold tracking-tight leading-snug cursor-pointer group flex items-start justify-between gap-2"
+                  style={{ fontFamily: "'Caveat', 'Segoe Print', cursive, sans-serif" }}
+                  title="Click to edit title"
+                >
+                  <span>{heroTask.title}</span>
+                  <Edit3 className="w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition shrink-0 mt-1" />
+                </h2>
+              )}
+
               {heroTask.notes && (
-                <p className="text-sm opacity-90 leading-relaxed whitespace-pre-wrap font-sans">
+                <p 
+                  onClick={() => onSelectTask(heroTask)}
+                  className="text-xs opacity-90 leading-relaxed mt-2 whitespace-pre-wrap cursor-pointer hover:opacity-100"
+                >
                   {heroTask.notes}
                 </p>
               )}
-            </div>
 
-            {/* Checklist Section */}
-            {heroTask.checklists.length > 0 && (
-              <div className="mb-6 space-y-2 border-t border-black/10 dark:border-white/10 pt-4">
-                <span className="text-[11px] font-bold uppercase tracking-wider opacity-70 block mb-2">
-                  Checklist ({heroTask.checklists.filter(c => c.completed).length}/{heroTask.checklists.length})
-                </span>
-                <div className="space-y-2">
+              {/* Checklist on Note */}
+              {heroTask.checklists.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-black/10 dark:border-white/10 space-y-1.5">
                   {heroTask.checklists.map(item => (
                     <div 
                       key={item.id}
                       onClick={() => handleToggleChecklist(item.id)}
-                      className="flex items-center gap-2.5 text-xs font-medium cursor-pointer select-none group"
+                      className="flex items-center gap-2 text-xs font-medium cursor-pointer select-none group"
                     >
-                      <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition ${
+                      <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center transition ${
                         item.completed 
                           ? 'bg-emerald-600 border-emerald-600 text-white' 
                           : 'border-black/30 dark:border-white/30 group-hover:border-black/60'
                       }`}>
-                        {item.completed && <Check className="w-3 h-3 stroke-[3]" />}
+                        {item.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                       </div>
-                      <span className={item.completed ? 'line-through opacity-50' : ''}>
+                      <span className={`text-[11px] ${item.completed ? 'line-through opacity-50' : ''}`}>
                         {item.text}
                       </span>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {/* Quick Add Subtask Input */}
-            <form onSubmit={handleAddHeroChecklist} className="flex items-center gap-2 mb-6">
-              <input
-                type="text"
-                value={newChecklistText}
-                onChange={(e) => setNewChecklistText(e.target.value)}
-                placeholder="+ Add subtask to this note..."
-                className="flex-1 px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/10 border-none text-xs placeholder-black/40 dark:placeholder-white/40 focus:outline-none"
-              />
-              {newChecklistText.trim() && (
-                <button
-                  type="submit"
-                  className="px-2.5 py-1.5 rounded-xl bg-black/10 dark:bg-white/20 text-xs font-bold"
-                >
-                  Add
-                </button>
               )}
-            </form>
 
-            {/* Bottom Actions: Done & Inspector */}
-            <div className="flex items-center justify-between pt-4 border-t border-black/10 dark:border-white/10 gap-3">
+              {/* Inline Subtask Adder */}
+              <form onSubmit={handleAddHeroChecklist} className="mt-2.5">
+                <input
+                  type="text"
+                  value={newChecklistText}
+                  onChange={(e) => setNewChecklistText(e.target.value)}
+                  placeholder="+ Add subtask..."
+                  className="w-full px-2 py-1 rounded-lg bg-black/5 dark:bg-white/10 border-none text-[11px] placeholder-black/40 dark:placeholder-white/40 focus:outline-none"
+                />
+              </form>
+            </div>
+
+            {/* Note Footer: Inspector & Large Mark as Done */}
+            <div className="flex items-center justify-between pt-3 border-t border-black/10 dark:border-white/10 gap-2">
               <button
                 onClick={() => onSelectTask(heroTask)}
-                className="text-xs font-bold opacity-75 hover:opacity-100 flex items-center gap-1 cursor-pointer transition"
+                className="text-[11px] font-bold opacity-70 hover:opacity-100 flex items-center gap-1 cursor-pointer transition"
               >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>Open details</span>
+                <span>Edit details</span>
               </button>
 
               <button
                 onClick={handleHeroDone}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 transition cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs shadow-md shadow-emerald-600/30 transition cursor-pointer"
               >
-                <Check className="w-4 h-4 stroke-[3]" />
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
                 <span>Mark as Done</span>
               </button>
             </div>
           </div>
         </section>
-      )}
+      ) : null}
 
       {/* 4. CELEBRATION (WHEN TODAY IS CLEARED) */}
       {isTodayClear && (
-        <div className="p-8 my-8 text-center rounded-3xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 shadow-sm animate-in zoom-in-95 duration-200">
-          <div className="w-16 h-16 rounded-3xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300 flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
+        <div className="p-8 my-6 text-center rounded-3xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 shadow-sm animate-in zoom-in-95 duration-200">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300 flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner">
             🎉
           </div>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white mb-1.5">
+          <h2 className="text-lg font-black text-slate-900 dark:text-white mb-1">
             Today is completely clear!
           </h2>
-          <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto mb-5 leading-relaxed">
-            You've completed every task scheduled for today. Great job! Take a well-deserved break or capture your next idea below.
+          <p className="text-xs text-slate-600 dark:text-slate-400 max-w-sm mx-auto mb-4 leading-relaxed">
+            You've completed every task scheduled for today. Take a well-deserved break or capture what's next.
           </p>
           <button
-            onClick={() => onQuickAdd('New note for tomorrow')}
-            className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition active:scale-95 cursor-pointer"
+            onClick={() => onQuickAdd('Plan tomorrow')}
+            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition active:scale-95 cursor-pointer"
           >
             Plan Tomorrow
           </button>
         </div>
       )}
 
-      {/* 5. EMPTY STATE (WHEN NO TASKS EXIST) */}
+      {/* 5. EMPTY STATE (WHEN NO TASKS EXIST AT ALL) */}
       {totalCount === 0 && (
-        <div className="p-10 my-8 text-center rounded-3xl bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10">
-          <div className="w-16 h-16 rounded-3xl bg-amber-100 dark:bg-amber-950/40 text-amber-500 flex items-center justify-center mx-auto mb-4 text-3xl">
+        <div className="p-8 my-6 text-center rounded-3xl bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10">
+          <div className="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950/40 text-amber-500 flex items-center justify-center mx-auto mb-3 text-2xl">
             📝
           </div>
-          <h2 className="text-base font-extrabold text-slate-900 dark:text-white mb-1">
+          <h2 className="text-sm font-extrabold text-slate-900 dark:text-white mb-1">
             Your focus queue is empty
           </h2>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto mb-5">
-            Capture your first note above or click below to start planning your day.
+          <p className="text-xs text-slate-400 max-w-xs mx-auto mb-4">
+            Type your first note above to start your daily plan.
           </p>
           <button
             onClick={() => onQuickAdd('My first focus note')}
@@ -419,17 +507,19 @@ export const FocusView: React.FC<FocusViewProps> = ({
 
       {/* 6. QUIET QUEUE: TODAY */}
       {remainingTodayQueue.length > 0 && (
-        <section className="mb-8">
-          <div className="flex items-center justify-between mb-3 px-1">
+        <section className="mb-6">
+          <div className="flex items-center justify-between mb-2.5 px-1">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
-              Today's Queue ({remainingTodayQueue.length})
+              Next in Queue ({remainingTodayQueue.length})
             </h3>
-            <span className="text-[11px] text-slate-400 font-medium">Click "Focus" to switch hero task</span>
+            <span className="text-[10px] text-slate-400 font-medium">Click "Focus" to switch hero note</span>
           </div>
 
           <div className="space-y-2">
             {remainingTodayQueue.map(task => {
               const proj = projects.find(p => p.id === task.projectId);
+              const taskPaper = getPostitPaperStyle(task.colorHex || defaultYellow, task.inkType || 'auto');
+
               return (
                 <div 
                   key={task.id}
@@ -438,9 +528,9 @@ export const FocusView: React.FC<FocusViewProps> = ({
                   <div className="flex items-center gap-3 truncate">
                     <button
                       onClick={() => onToggleComplete(task.id)}
-                      className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-emerald-500 flex items-center justify-center transition cursor-pointer shrink-0"
+                      className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-emerald-500 flex items-center justify-center transition cursor-pointer shrink-0"
                     >
-                      <Check className="w-3 h-3 text-transparent hover:text-emerald-500" />
+                      <Check className="w-2.5 h-2.5 text-transparent hover:text-emerald-500" />
                     </button>
                     <div className="truncate">
                       <span 
@@ -468,10 +558,10 @@ export const FocusView: React.FC<FocusViewProps> = ({
                     </button>
                     <button
                       onClick={() => setFocusedTaskId(task.id)}
-                      className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-600 transition cursor-pointer flex items-center gap-1"
-                      title="Make this your current Now task"
+                      className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-amber-950/40 hover:text-amber-700 transition cursor-pointer flex items-center gap-1"
+                      title="Make this your current Hero note"
                     >
-                      <Target className="w-3 h-3 text-blue-500" />
+                      <Target className="w-3 h-3 text-amber-500" />
                       <span>Focus</span>
                     </button>
                   </div>
@@ -484,9 +574,9 @@ export const FocusView: React.FC<FocusViewProps> = ({
 
       {/* 7. QUIET QUEUE: LATER / THIS EVENING */}
       {eveningTasks.length > 0 && (
-        <section className="mb-8 pt-4 border-t border-slate-200/70 dark:border-white/10">
-          <div className="flex items-center gap-2 mb-3 px-1 text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-            <Moon className="w-4 h-4 fill-indigo-400" />
+        <section className="mb-6 pt-3 border-t border-slate-200/70 dark:border-white/10">
+          <div className="flex items-center gap-2 mb-2.5 px-1 text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            <Moon className="w-3.5 h-3.5 fill-indigo-400" />
             <span>Later / This Evening ({eveningTasks.length})</span>
           </div>
 
@@ -501,9 +591,9 @@ export const FocusView: React.FC<FocusViewProps> = ({
                   <div className="flex items-center gap-3 truncate">
                     <button
                       onClick={() => onToggleComplete(task.id)}
-                      className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-emerald-500 flex items-center justify-center transition cursor-pointer shrink-0"
+                      className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-emerald-500 flex items-center justify-center transition cursor-pointer shrink-0"
                     >
-                      <Check className="w-3 h-3 text-transparent hover:text-emerald-500" />
+                      <Check className="w-2.5 h-2.5 text-transparent hover:text-emerald-500" />
                     </button>
                     <div className="truncate">
                       <span 
@@ -536,23 +626,23 @@ export const FocusView: React.FC<FocusViewProps> = ({
 
       {/* 8. COMPLETED TODAY COLLAPSIBLE SECTION */}
       {completedTasks.length > 0 && !isTodayClear && (
-        <details className="mt-8 pt-4 border-t border-slate-200/60 dark:border-white/10 group">
+        <details className="mt-6 pt-3 border-t border-slate-200/60 dark:border-white/10 group">
           <summary className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer select-none flex items-center gap-2">
             <span>Completed Today ({completedTasks.length})</span>
           </summary>
-          <div className="space-y-1.5 mt-3">
+          <div className="space-y-1 mt-2.5">
             {completedTasks.map(task => (
               <div 
                 key={task.id}
-                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/60 dark:bg-white/5 text-xs text-slate-400"
+                className="flex items-center justify-between p-2 rounded-xl bg-slate-50/60 dark:bg-white/5 text-xs text-slate-400"
               >
-                <div className="flex items-center gap-2.5 truncate">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <div className="flex items-center gap-2 truncate">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <span className="line-through truncate">{task.title}</span>
                 </div>
                 <button
                   onClick={() => onToggleComplete(task.id)}
-                  className="text-[11px] font-semibold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                  className="text-[10px] font-semibold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
                 >
                   Restore
                 </button>

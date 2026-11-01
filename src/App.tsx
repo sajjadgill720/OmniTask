@@ -180,6 +180,10 @@ export function App() {
   const handleChangeViewMode = (mode: ViewMode) => {
     setViewMode(mode);
     localStorage.setItem('omnisticky_view_mode', mode);
+    if (mode === 'focus') {
+      setSelectedProjectId(null);
+      setCurrentSection('today');
+    }
   };
 
   // Stopwatch focus timer ticker engine
@@ -475,10 +479,11 @@ export function App() {
                 section: currentSection,
               })}
             />
-          ) : currentSection === 'today' && !selectedProjectId ? (
+          ) : viewMode === 'focus' || (currentSection === 'today' && !selectedProjectId) ? (
             /* Focus View (Default): Hero "Now" note + Quiet Queue */
             <FocusView
               tasks={visibleTasks}
+              allTasks={tasks}
               projects={projects}
               onToggleComplete={handleToggleComplete}
               onSelectTask={setSelectedTask}
@@ -492,6 +497,7 @@ export function App() {
                 priority: priority || 'normal',
                 tags: [],
                 section: 'today',
+                colorHex: '#fef08a',
               })}
               density={density}
               onToggleDensity={handleToggleDensity}
