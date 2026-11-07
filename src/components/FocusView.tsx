@@ -24,6 +24,7 @@ import { playCompletionSound } from '../utils/permissions';
 import { getPostitPaperStyle } from '../utils/colorUtils';
 import { STICKY_COLORS } from '../constants/theme';
 import { RedPushPin } from './RedPushPin';
+import { HyperFocusQuoteBar } from './HyperFocusQuoteBar';
 import confetti from 'canvas-confetti';
 
 interface FocusViewProps {
@@ -251,6 +252,9 @@ export const FocusView: React.FC<FocusViewProps> = ({
         </div>
       </div>
 
+      {/* Daily Rotating Hyper-Focus Quote (Quiet, uncluttered, rotates every 24h) */}
+      <HyperFocusQuoteBar />
+
       {/* 2. Instant Quick Capture Form */}
       <form 
         onSubmit={handleInlineAdd}
@@ -291,7 +295,14 @@ export const FocusView: React.FC<FocusViewProps> = ({
 
           {/* Centered Physical Sticky Note Pad */}
           <div 
-            className="relative w-full max-w-[390px] min-h-[360px] p-6 pt-9 rounded-2xl border transition-all duration-200 select-none flex flex-col justify-between realistic-postit paper-edge"
+            className={`relative w-full max-w-[390px] min-h-[360px] p-6 pt-9 rounded-2xl border transition-all duration-200 select-none flex flex-col justify-between realistic-postit paper-edge ${
+              heroTask.lineStyle === 'lines' ? (heroPaper.isDarkNote ? 'paper-ruling-lines-dark' : 'paper-ruling-lines') :
+              heroTask.lineStyle === 'blank' ? 'paper-ruling-blank' :
+              heroTask.lineStyle === 'grid' ? (heroPaper.isDarkNote ? 'paper-ruling-grid-dark' : 'paper-ruling-grid') :
+              heroTask.lineStyle === 'dots' ? (heroPaper.isDarkNote ? 'paper-ruling-dots-dark' : 'paper-ruling-dots') :
+              heroTask.lineStyle === 'stencil' ? 'paper-ruling-stencil' :
+              (heroPaper.isDarkNote ? 'paper-ruling-ruled-dark' : 'paper-ruling-ruled')
+            }`}
             style={{
               backgroundColor: heroPaper.baseRgb,
               backgroundImage: `linear-gradient(145deg, ${heroPaper.lightRgb} 0%, ${heroPaper.baseRgb} 55%, ${heroPaper.darkRgb} 100%)`,

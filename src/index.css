@@ -419,6 +419,32 @@
   background-position: 0 32px, 0 0;
 }
 
+/* 2b. Clean Horizontal Lines (Sage Pad / Clean Notebook Ruling - User Reference Match) */
+.paper-ruling-lines {
+  background-image: 
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 27px,
+      rgba(35, 65, 45, 0.24) 27px,
+      rgba(35, 65, 45, 0.24) 28px
+    );
+  background-size: 100% 28px;
+  background-position: 0 32px;
+}
+.paper-ruling-lines-dark {
+  background-image: 
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 27px,
+      rgba(255, 255, 255, 0.16) 27px,
+      rgba(255, 255, 255, 0.16) 28px
+    );
+  background-size: 100% 28px;
+  background-position: 0 32px;
+}
+
 /* 3. Architect Grid (16px) */
 .paper-ruling-grid {
   background-image: 
@@ -568,4 +594,79 @@
 @keyframes strikeOut {
   0% { width: 0; }
   100% { width: calc(100% + 8px); }
+}
+
+/* ==========================================================================
+   Tactile Note Shapes (Square, Wide Index, Tall Checklist, Round Pad, Tabbed)
+   ========================================================================== */
+
+/* 1. Square (Classic 3x3 Post-it) */
+.note-shape-square {
+  width: 100%;
+  max-width: 280px;
+  min-height: 260px;
+  border-radius: 1rem;
+}
+
+/* 2. Wide Memo / Index Card */
+.note-shape-wide {
+  width: 100%;
+  max-width: 340px;
+  min-height: 220px;
+  border-radius: 1rem;
+}
+
+/* 3. Tall Checklist Strip */
+.note-shape-tall {
+  width: 100%;
+  max-width: 225px;
+  min-height: 350px;
+  border-radius: 1rem;
+}
+
+/* 4. Round / Circular Sticky Pad */
+.note-shape-round {
+  width: 270px !important;
+  height: 270px !important;
+  min-height: 270px !important;
+  max-width: 270px !important;
+  border-radius: 9999px !important;
+  padding: 1.75rem !important;
+  text-align: center;
+}
+.note-shape-round .paper-dogear-curl {
+  display: none !important;
+}
+.note-shape-round .sticky-adhesive-strip {
+  border-radius: 9999px 9999px 0 0;
+  height: 28px;
+}
+
+/* 5. Tabbed Index Divider Sticky */
+.note-shape-tabbed {
+  width: 100%;
+  max-width: 280px;
+  min-height: 265px;
+  border-radius: 1rem;
+  border-top-left-radius: 0.25rem !important;
+}
+.note-shape-tabbed::before {
+  content: 'MEMO';
+  position: absolute;
+  top: -12px;
+  left: 14px;
+  padding: 1px 10px;
+  font-family: inherit;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  background: inherit;
+  border: 1px solid;
+  border-color: inherit;
+  border-bottom: none;
+  color: inherit;
+  opacity: 0.85;
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.06);
 }

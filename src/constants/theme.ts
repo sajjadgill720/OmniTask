@@ -19,6 +19,15 @@ export const STICKY_COLORS: StickyColorOption[] = [
     accent: '#d97706',
   },
   {
+    id: 'sage_green',
+    name: 'Sage Paper',
+    colorHex: '#A8C3B2',
+    rgb: 'rgb(168, 195, 178)',
+    bgLight: '#A8C3B2',
+    bgDark: '#1a2920',
+    accent: '#2d6a4f',
+  },
+  {
     id: 'neon_coral',
     name: 'Neon Coral',
     colorHex: '#FF9AA2',

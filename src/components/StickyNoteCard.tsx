@@ -22,7 +22,7 @@ import {
   RotateCw,
   Tag
 } from 'lucide-react';
-import { Task, Project, LineStyle, PinStyle } from '../types';
+import { Task, Project, LineStyle, PinStyle, NoteShape } from '../types';
 import { checkDueDate, formatDuration } from '../utils/storage';
 import { playCompletionSound } from '../utils/permissions';
 import { STICKY_COLORS } from '../constants/theme';
@@ -45,6 +45,7 @@ interface StickyNoteCardProps {
 
 const AUTHENTIC_POSTIT_COLORS = [
   { id: 'canary', name: 'Canary Yellow', hex: '#FFF380', border: '#eab308' },
+  { id: 'sage', name: 'Sage Green', hex: '#A8C3B2', border: '#588157' },
   { id: 'coral', name: 'Neon Coral', hex: '#FF9AA2', border: '#f43f5e' },
   { id: 'mint', name: 'Mint Sage', hex: '#B5EAD7', border: '#10b981' },
   { id: 'sky', name: 'Sky Blue', hex: '#C7CEEA', border: '#6366f1' },
@@ -52,12 +53,21 @@ const AUTHENTIC_POSTIT_COLORS = [
   { id: 'charcoal', name: 'Charcoal Black', hex: '#2B2B2B', border: '#52525b' },
 ];
 
-const RULING_OPTIONS: { id: LineStyle; label: string; icon: string }[] = [
-  { id: 'blank', label: 'Blank Matte', icon: '📄' },
-  { id: 'ruled', label: 'College Ruled', icon: '📝' },
-  { id: 'grid', label: 'Architect Grid', icon: '📐' },
-  { id: 'dots', label: 'Bullet Dot-Grid', icon: '🔘' },
-  { id: 'stencil', label: 'Checklist Stencil', icon: '☑️' },
+const RULING_OPTIONS: { id: LineStyle; label: string; desc: string; icon: string }[] = [
+  { id: 'lines', label: 'Clean Ruled', desc: 'Serene horizontal lines', icon: '📜' },
+  { id: 'blank', label: 'Blank Matte', desc: 'Pure unlined paper', icon: '📄' },
+  { id: 'ruled', label: 'College Ruled', desc: 'Rules with red margin', icon: '📝' },
+  { id: 'grid', label: 'Architect Grid', desc: '16px blueprint grid', icon: '📐' },
+  { id: 'dots', label: 'Bullet Dot-Grid', desc: 'Minimalist dot matrix', icon: '🔘' },
+  { id: 'stencil', label: 'Checklist Stencil', desc: 'Pre-printed checkboxes', icon: '☑️' },
+];
+
+const SHAPE_OPTIONS: { id: NoteShape; label: string; desc: string; icon: string }[] = [
+  { id: 'square', label: 'Square', desc: 'Classic 3×3 Post-it', icon: '🟩' },
+  { id: 'wide', label: 'Wide Memo', desc: 'Index Card 4×3', icon: '🟨' },
+  { id: 'tall', label: 'Tall Strip', desc: 'Vertical List 2×4', icon: '📜' },
+  { id: 'round', label: 'Round Pad', desc: 'Circular Sticky 3×3', icon: '⚪' },
+  { id: 'tabbed', label: 'Tabbed', desc: 'Index Divider Tab', icon: '📑' },
 ];
 
 const FASTENER_OPTIONS: { id: PinStyle; label: string; icon: string }[] = [
@@ -79,7 +89,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   onDropOnItem,
 }) => {
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const [customizerTab, setCustomizerTab] = useState<'color' | 'ruling' | 'fastener'>('color');
+  const [customizerTab, setCustomizerTab] = useState<'color' | 'ruling' | 'shape' | 'fastener'>('color');
   const [newChecklistText, setNewChecklistText] = useState('');
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [useHandwriting, setUseHandwriting] = useState(true);
@@ -155,6 +165,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   const dueInfo = checkDueDate(task.dueDate);
 
   const lineStyle: LineStyle = task.lineStyle || 'ruled';
+  const noteShape: NoteShape = task.shape || 'square';
   const effectivePinStyle: PinStyle = task.pinStyle || (task.isPinned || task.priority === 'urgent' ? 'pin' : task.status === 'in_progress' ? 'tape' : 'adhesive');
 
   // Subtle natural angle for physical post-it note aesthetic (-2.4 deg to +2.3 deg)
@@ -162,9 +173,18 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   const naturalAngle = angles[index % angles.length];
   const currentRotation = task.rotation !== undefined ? task.rotation : naturalAngle;
 
+  // Tactile Note Shape Class
+  const shapeClass = 
+    noteShape === 'wide' ? 'note-shape-wide' :
+    noteShape === 'tall' ? 'note-shape-tall' :
+    noteShape === 'round' ? 'note-shape-round' :
+    noteShape === 'tabbed' ? 'note-shape-tabbed' :
+    'note-shape-square';
+
   // CSS Ruling Pattern
   const rulingClass = 
     lineStyle === 'blank' ? 'paper-ruling-blank' :
+    lineStyle === 'lines' ? (paperStyle.isDarkNote ? 'paper-ruling-lines-dark' : 'paper-ruling-lines') :
     lineStyle === 'grid' ? (paperStyle.isDarkNote ? 'paper-ruling-grid-dark' : 'paper-ruling-grid') :
     lineStyle === 'dots' ? (paperStyle.isDarkNote ? 'paper-ruling-dots-dark' : 'paper-ruling-dots') :
     lineStyle === 'stencil' ? 'paper-ruling-stencil' :
@@ -258,6 +278,11 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
     onUpdateTask({ ...task, lineStyle: style });
   };
 
+  const handleSelectShape = (e: React.MouseEvent, shape: NoteShape) => {
+    e.stopPropagation();
+    onUpdateTask({ ...task, shape });
+  };
+
   const handleSelectPinStyle = (e: React.MouseEvent, style: PinStyle) => {
     e.stopPropagation();
     onUpdateTask({ 
@@ -331,7 +356,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
         color: paperStyle.inkColor,
         zIndex: isDragging ? 50 : isHovered ? 40 : 1,
       }}
-      className={`group relative flex flex-col justify-between w-full max-w-[280px] min-h-[260px] mx-auto p-5 pt-8 rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing realistic-postit paper-edge select-none ${rulingClass} ${
+      className={`group relative flex flex-col justify-between mx-auto p-5 pt-8 border transition-all duration-200 cursor-grab active:cursor-grabbing realistic-postit paper-edge select-none ${shapeClass} ${rulingClass} ${
         isDone ? 'opacity-80' : ''
       } ${isDragging ? 'dragging-note' : ''} ${isDragOver ? 'drop-target-active' : ''}`}
     >
@@ -461,7 +486,16 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
                     customizerTab === 'ruling' ? 'bg-white dark:bg-slate-800 shadow-xs text-blue-600 dark:text-blue-400' : 'text-slate-500'
                   }`}
                 >
-                  Ruling
+                  Lines
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCustomizerTab('shape')}
+                  className={`flex-1 py-1 rounded-lg transition cursor-pointer ${
+                    customizerTab === 'shape' ? 'bg-white dark:bg-slate-800 shadow-xs text-blue-600 dark:text-blue-400' : 'text-slate-500'
+                  }`}
+                >
+                  Shape
                 </button>
                 <button
                   type="button"
@@ -470,7 +504,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
                     customizerTab === 'fastener' ? 'bg-white dark:bg-slate-800 shadow-xs text-blue-600 dark:text-blue-400' : 'text-slate-500'
                   }`}
                 >
-                  Fastener
+                  Pin
                 </button>
               </div>
 
@@ -558,7 +592,10 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
                     >
                       <div className="flex items-center gap-2">
                         <span>{opt.icon}</span>
-                        <span>{opt.label}</span>
+                        <div>
+                          <div className="font-semibold text-xs leading-none">{opt.label}</div>
+                          <div className="text-[9px] text-slate-400 font-normal mt-0.5">{opt.desc}</div>
+                        </div>
                       </div>
                       {lineStyle === opt.id && <Check className="w-3.5 h-3.5" />}
                     </button>
@@ -566,7 +603,37 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
                 </div>
               )}
 
-              {/* Tab 3: Fasteners & Angle */}
+              {/* Tab 3: Sticky Note Shapes */}
+              {customizerTab === 'shape' && (
+                <div className="space-y-1.5">
+                  <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    Tactile Note Shape
+                  </span>
+                  {SHAPE_OPTIONS.map(s => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={(e) => handleSelectShape(e, s.id)}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-left transition cursor-pointer ${
+                        noteShape === s.id
+                          ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-400 text-blue-700 dark:text-blue-300 font-bold'
+                          : 'bg-slate-50 dark:bg-white/5 border-slate-200/80 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{s.icon}</span>
+                        <div>
+                          <div className="font-semibold text-xs leading-none">{s.label}</div>
+                          <div className="text-[9px] text-slate-400 font-normal mt-0.5">{s.desc}</div>
+                        </div>
+                      </div>
+                      {noteShape === s.id && <Check className="w-3.5 h-3.5" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Tab 4: Fasteners & Angle */}
               {customizerTab === 'fastener' && (
                 <div className="space-y-2">
                   <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
@@ -689,7 +756,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
             }}
             className={`text-2xl sm:text-[26px] font-bold leading-tight break-words cursor-text transition rounded px-0.5 ${
               useHandwriting ? 'font-handwriting' : 'font-sans text-lg font-bold'
-            } ${lineStyle === 'ruled' || lineStyle === 'stencil' ? 'leading-[28px]' : ''} ${isDone ? 'marker-strike opacity-60' : ''}`}
+            } ${lineStyle === 'ruled' || lineStyle === 'lines' || lineStyle === 'stencil' ? 'leading-[28px]' : ''} ${isDone ? 'marker-strike opacity-60' : ''}`}
             style={{ color: paperStyle.inkColor }}
             title="Click to edit title"
           >
@@ -707,7 +774,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
               onChange={(e) => setNotesInput(e.target.value)}
               onBlur={handleSaveNotes}
               className={`w-full p-1.5 text-lg font-handwriting bg-white/70 dark:bg-black/30 border border-blue-500 rounded focus:outline-none resize-none ${
-                lineStyle === 'ruled' || lineStyle === 'stencil' ? 'leading-[28px]' : ''
+                lineStyle === 'ruled' || lineStyle === 'lines' || lineStyle === 'stencil' ? 'leading-[28px]' : ''
               }`}
               style={{ color: paperStyle.inkColor }}
               placeholder="Jot down notes in ink..."
@@ -721,7 +788,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
             }}
             className={`text-base sm:text-lg mt-1 line-clamp-4 leading-snug break-words font-medium cursor-text opacity-90 transition rounded px-0.5 ${
               useHandwriting ? 'font-handwriting' : 'font-sans text-xs'
-            } ${lineStyle === 'ruled' || lineStyle === 'stencil' ? 'leading-[28px]' : ''}`}
+            } ${lineStyle === 'ruled' || lineStyle === 'lines' || lineStyle === 'stencil' ? 'leading-[28px]' : ''}`}
             style={{ color: paperStyle.inkColor }}
             title="Click to edit notes"
           >

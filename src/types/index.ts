@@ -10,7 +10,9 @@ export type DensityMode = 'comfortable' | 'compact';
 
 export type ThemeMode = 'light' | 'dark';
 
-export type LineStyle = 'blank' | 'ruled' | 'grid' | 'dots' | 'stencil';
+export type LineStyle = 'blank' | 'ruled' | 'lines' | 'grid' | 'dots' | 'stencil';
+
+export type NoteShape = 'square' | 'wide' | 'tall' | 'round' | 'tabbed';
 
 export type PinStyle = 'auto' | 'pin' | 'tape' | 'adhesive';
 
@@ -56,8 +58,9 @@ export interface Task {
   isTimerRunning: boolean;
   contextUrl?: string; // Anchored website/doc link
   colorHex?: string;
-  paperColor?: string; // Authentic Post-it palette: #FFF380, #FF9AA2, #B5EAD7, #C7CEEA, #E6CCB2, #2B2B2B
-  lineStyle?: LineStyle; // blank | ruled | grid | dots | stencil
+  paperColor?: string; // Authentic Post-it palette: #FFF380, #A8C3B2, #FF9AA2, #B5EAD7, #C7CEEA, #E6CCB2, #2B2B2B
+  shape?: NoteShape; // square | wide | tall | round | tabbed
+  lineStyle?: LineStyle; // blank | ruled | lines | grid | dots | stencil
   pinStyle?: PinStyle; // auto | pin | tape | adhesive
   rotation?: number; // Deterministic natural imperfection angle in degrees (-2.5 to +2.5)
   inkType?: 'auto' | 'ballpoint_blue' | 'black' | 'white' | 'red'; // HCI contrast-compliant ink
