@@ -371,6 +371,32 @@
 }
 
 /* ==========================================================================
+   Photorealistic Studio Wall Environment (Plaster texture + Warm Golden Sun)
+   ========================================================================== */
+.studio-wall-background {
+  background-color: #d7cdbb;
+  background-image: 
+    radial-gradient(ellipse 90% 70% at 12% 8%, rgba(255, 248, 224, 0.55) 0%, rgba(254, 242, 195, 0.22) 45%, transparent 78%),
+    radial-gradient(circle at 85% 15%, rgba(217, 119, 6, 0.08), transparent 40%),
+    radial-gradient(circle at 50% 90%, rgba(120, 53, 15, 0.15), transparent 60%),
+    radial-gradient(circle, rgba(120, 105, 85, 0.09) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 18px 18px, 12px 12px;
+  background-position: 0 0, 0 0, 0 0, 0 0, 6px 6px;
+  box-shadow: inset 0 0 120px rgba(70, 45, 20, 0.18);
+}
+
+.dark .studio-wall-background {
+  background-color: #1f1b1a;
+  background-image: 
+    radial-gradient(ellipse 90% 70% at 12% 8%, rgba(254, 240, 138, 0.12) 0%, rgba(245, 158, 11, 0.06) 45%, transparent 78%),
+    radial-gradient(circle at 85% 15%, rgba(217, 119, 6, 0.05), transparent 40%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 18px 18px;
+  box-shadow: inset 0 0 160px rgba(0, 0, 0, 0.85);
+}
+
+/* ==========================================================================
    Paper Rulings (Blank, College Ruled, Architect Grid, Bullet Dot, Stencil)
    ========================================================================== */
 

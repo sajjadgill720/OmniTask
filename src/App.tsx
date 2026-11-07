@@ -7,6 +7,7 @@ import { TaskListView } from './components/TaskListView';
 import { CanvasView } from './components/CanvasView';
 import { NetworkGraph3DView } from './components/NetworkGraph3DView';
 import { KanbanBoardView } from './components/KanbanBoardView';
+import { StudioWallWorkspace } from './components/StudioWallWorkspace';
 import { MagicPlusButton } from './components/MagicPlusButton';
 import { TaskDetailDrawer } from './components/TaskDetailDrawer';
 import { WidgetCenterModal } from './components/WidgetCenterModal';
@@ -69,14 +70,14 @@ export function App() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // View Mode: 'focus' (default) | 'board' | 'canvas' | 'connections'
+  // View Mode: 'board' (default Studio Wall) | 'focus' | 'canvas' | 'connections'
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    const saved = localStorage.getItem('omnisticky_view_mode') as ViewMode;
-    if (saved === 'kanban') return 'board';
+    const saved = localStorage.getItem('omnisticky_view_mode');
+    if (saved === 'kanban' || saved === 'board') return 'board';
     if (saved === 'canvas_3d' || saved === 'sticky_wall') return 'canvas';
     if (saved === 'network_3d') return 'connections';
-    if (saved === 'focus' || saved === 'board' || saved === 'canvas' || saved === 'connections') return saved;
-    return 'focus';
+    if (saved === 'focus' || saved === 'canvas' || saved === 'connections') return saved as ViewMode;
+    return 'board';
   });
 
   // Density Mode: 'comfortable' | 'compact'
@@ -379,71 +380,85 @@ export function App() {
   return (
     <div className="min-h-screen bg-[#fbf8f3] dark:bg-[#141217] text-stone-900 dark:text-stone-100 flex font-sans antialiased selection:bg-amber-200 selection:text-amber-950 transition-colors duration-300">
       
-      {/* Sidebar Navigation */}
-      <Sidebar
-        currentSection={currentSection}
-        onSelectSection={setCurrentSection}
-        selectedProjectId={selectedProjectId}
-        onSelectProject={setSelectedProjectId}
-        areas={areas}
-        projects={projects}
-        tasks={tasks}
-        onOpenNewProject={() => setIsProjectModalOpen(true)}
-        onOpenNewCategory={() => setIsCategoryModalOpen(true)}
-        onOpenWidgets={() => setIsWidgetsOpen(true)}
-        onOpenPermissions={() => setIsPermissionsOpen(true)}
-        onOpenSubscription={() => setIsSubscriptionOpen(true)}
-        isProUser={isProUser}
-        permissions={permissions}
-        isOpenMobile={isMobileNavOpen}
-        onCloseMobile={() => setIsMobileNavOpen(false)}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
-      />
+      {/* Sidebar Navigation (available in Focus, Canvas, and List modes) */}
+      {viewMode !== 'board' && (
+        <Sidebar
+          currentSection={currentSection}
+          onSelectSection={setCurrentSection}
+          selectedProjectId={selectedProjectId}
+          onSelectProject={setSelectedProjectId}
+          areas={areas}
+          projects={projects}
+          tasks={tasks}
+          onOpenNewProject={() => setIsProjectModalOpen(true)}
+          onOpenNewCategory={() => setIsCategoryModalOpen(true)}
+          onOpenWidgets={() => setIsWidgetsOpen(true)}
+          onOpenPermissions={() => setIsPermissionsOpen(true)}
+          onOpenSubscription={() => setIsSubscriptionOpen(true)}
+          isProUser={isProUser}
+          permissions={permissions}
+          isOpenMobile={isMobileNavOpen}
+          onCloseMobile={() => setIsMobileNavOpen(false)}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
+        />
+      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         
-        {/* Top Header: Search (⌘K), View Switcher, Primary "New note", Settings */}
-        <ThingsHeader
-          onToggleMobileNav={() => setIsMobileNavOpen(!isMobileNavOpen)}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-          onOpenQuickAdd={() => handleMagicAdd({
-            title: 'New note',
-            priority: 'normal',
-            tags: [],
-            section: currentSection,
-          })}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          viewMode={viewMode}
-          onChangeViewMode={handleChangeViewMode}
-          isProUser={isProUser}
-        />
+        {/* Top Header (available in Focus, Canvas, and List modes) */}
+        {viewMode !== 'board' && (
+          <ThingsHeader
+            onToggleMobileNav={() => setIsMobileNavOpen(!isMobileNavOpen)}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+            onOpenQuickAdd={() => handleMagicAdd({
+              title: 'New note',
+              priority: 'normal',
+              tags: [],
+              section: currentSection,
+            })}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            viewMode={viewMode}
+            onChangeViewMode={handleChangeViewMode}
+            isProUser={isProUser}
+          />
+        )}
 
         {/* Dynamic Streamlined Views */}
-        <main className="flex-1 pb-24">
+        <main className={`flex-1 ${viewMode === 'board' ? 'p-0 pb-0' : 'pb-24'}`}>
           {viewMode === 'board' ? (
-            /* Board View: Kanban Columns with Plain Language */
-            <KanbanBoardView
-              title={currentViewMeta.title}
-              subtitle={currentViewMeta.subtitle}
-              tasks={visibleTasks}
+            /* Immersive Photorealistic Studio Wall Workspace (Reference Photo Target) */
+            <StudioWallWorkspace
+              tasks={tasks}
               projects={projects}
               onToggleComplete={handleToggleComplete}
               onSelectTask={setSelectedTask}
               onToggleTimer={handleToggleTimer}
               onUpdateTask={handleSaveTask}
               onDeleteTask={handleDeleteTask}
+              onMoveTaskStatus={handleMoveTaskStatus}
               audioEnabled={permissions.audioEnabled}
               onQuickAdd={() => handleMagicAdd({
                 title: 'New note',
                 priority: 'normal',
-                tags: [],
-                section: currentSection,
+                tags: ['Study'],
+                section: 'today',
+                colorHex: '#FFF380',
               })}
-              onMoveTaskStatus={handleMoveTaskStatus}
+              onOpenProjectModal={() => setIsProjectModalOpen(true)}
+              onOpenCategoryModal={() => setIsCategoryModalOpen(true)}
+              onOpenSettings={() => setIsSettingsOpen(true)}
+              onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+              onOpenPermissions={() => setIsPermissionsOpen(true)}
+              theme={theme}
+              onToggleTheme={handleToggleTheme}
+              viewMode={viewMode}
+              onChangeViewMode={handleChangeViewMode}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
             />
           ) : viewMode === 'canvas' || viewMode === 'canvas_3d' || viewMode === 'sticky_wall' ? (
             /* Canvas View: Merged Freeform Spatial Board with Tilt Slider */
