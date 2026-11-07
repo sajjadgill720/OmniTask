@@ -331,7 +331,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
         color: paperStyle.inkColor,
         zIndex: isDragging ? 50 : isHovered ? 40 : 1,
       }}
-      className={`group relative flex flex-col justify-between w-[270px] min-h-[280px] max-w-[285px] mx-auto p-5 pt-8 rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing realistic-postit paper-edge select-none ${rulingClass} ${
+      className={`group relative flex flex-col justify-between w-full max-w-[280px] min-h-[260px] mx-auto p-5 pt-8 rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing realistic-postit paper-edge select-none ${rulingClass} ${
         isDone ? 'opacity-80' : ''
       } ${isDragging ? 'dragging-note' : ''} ${isDragOver ? 'drop-target-active' : ''}`}
     >

@@ -8,8 +8,7 @@ import {
   Columns3, 
   LayoutGrid, 
   Network,
-  Command,
-  User
+  Sparkles
 } from 'lucide-react';
 import { ViewMode } from '../types';
 
@@ -45,106 +44,56 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-30 bg-[#f6f3eb]/95 dark:bg-[#19161e]/90 backdrop-blur-md border-b border-[#e8e2d5] dark:border-white/10 transition-colors">
-      <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+      <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-3">
         
-        {/* Left: Mobile Menu & Clean Search Bar with ⌘K Trigger */}
-        <div className="flex items-center gap-2 flex-1 max-w-sm sm:max-w-md">
-          <button
-            onClick={onToggleMobileNav}
-            className="p-1.5 rounded-xl text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-[#ece7dc]/60 dark:hover:bg-white/10 md:hidden transition cursor-pointer"
-            title="Toggle Navigation Menu"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+        {/* Left: Mobile Menu */}
+        <button
+          onClick={onToggleMobileNav}
+          className="p-1.5 rounded-xl text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-[#ece7dc]/60 dark:hover:bg-white/10 md:hidden transition cursor-pointer shrink-0"
+          title="Toggle Navigation Menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
 
-          {/* Real Interactive Search Bar with ⌘K Badge */}
-          <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search or jump to..."
-              className="w-full pl-9 pr-16 py-1.5 bg-white dark:bg-[#201c27] rounded-xl border border-[#ded7ca] dark:border-white/10 text-xs text-stone-800 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-2xs"
-            />
-            {searchQuery ? (
-              <button
-                type="button"
-                onClick={() => onSearchChange('')}
-                className="absolute right-10 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-xs cursor-pointer p-0.5"
-                title="Clear search"
-              >
-                ✕
-              </button>
-            ) : null}
+        {/* Search Bar — full-width clickable bar that also doubles as ⌘K trigger */}
+        <button
+          type="button"
+          onClick={onOpenCommandPalette}
+          className="flex items-center gap-2.5 flex-1 max-w-md px-3.5 py-2 bg-white dark:bg-[#201c27] rounded-xl border border-[#ded7ca] dark:border-white/10 shadow-2xs hover:shadow-sm hover:border-stone-300 dark:hover:border-white/20 transition-all cursor-pointer group"
+          title="Search, jump to views, or run actions (⌘K)"
+        >
+          <Search className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300 transition shrink-0" />
+          <span className="text-xs text-stone-400 group-hover:text-stone-500 dark:group-hover:text-stone-300 font-medium truncate transition">
+            Search notes, projects, actions…
+          </span>
+          <kbd className="ml-auto shrink-0 hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-bold text-stone-500 bg-[#ece7dc] dark:bg-white/5 rounded border border-[#ded7ca] dark:border-white/10">
+            ⌘K
+          </kbd>
+        </button>
+
+        {/* Center: Streamlined View Switcher */}
+        <div className="hidden md:flex items-center p-0.5 bg-[#ece7dc]/80 dark:bg-[#201c27]/90 rounded-xl border border-[#ded7ca]/60 dark:border-white/10">
+          {([
+            { id: 'focus' as const, label: 'Focus', Icon: Target },
+            { id: 'board' as const, label: 'Board', Icon: Columns3 },
+            { id: 'canvas' as const, label: 'Canvas', Icon: LayoutGrid },
+            { id: 'connections' as const, label: 'Connections', Icon: Network },
+          ] as const).map(v => (
             <button
+              key={v.id}
               type="button"
-              onClick={onOpenCommandPalette}
-              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-bold text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 bg-[#ece7dc] hover:bg-[#e4decb] dark:bg-white/5 dark:hover:bg-white/10 rounded border border-[#ded7ca] dark:border-white/10 transition cursor-pointer"
-              title="Open Command Palette (⌘K)"
+              onClick={() => onChangeViewMode(v.id)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                activeView === v.id
+                  ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-300 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
+              title={`Switch to ${v.label} view`}
             >
-              ⌘K
+              <v.Icon className="w-3.5 h-3.5" />
+              <span>{v.label}</span>
             </button>
-          </div>
-        </div>
-
-        {/* Center: Streamlined View Switcher (Focus | Board | Canvas | Connections) */}
-        <div className="hidden md:flex items-center p-1 bg-[#ece7dc]/80 dark:bg-[#201c27]/90 rounded-xl border border-[#ded7ca]/60 dark:border-white/10">
-          <button
-            type="button"
-            onClick={() => onChangeViewMode('focus')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeView === 'focus'
-                ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-300 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-            }`}
-            title="Focus: What needs attention right now"
-          >
-            <Target className="w-3.5 h-3.5" />
-            <span>Focus</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onChangeViewMode('board')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeView === 'board'
-                ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-300 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-            }`}
-            title="Board: Kanban columns for pipeline workflow"
-          >
-            <Columns3 className="w-3.5 h-3.5" />
-            <span>Board</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onChangeViewMode('canvas')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeView === 'canvas'
-                ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-300 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-            }`}
-            title="Canvas: Freeform spatial board with tilt"
-          >
-            <LayoutGrid className="w-3.5 h-3.5" />
-            <span>Canvas</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onChangeViewMode('connections')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeView === 'connections'
-                ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-300 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-            }`}
-            title="Connections: Visual task & project network graph"
-          >
-            <Network className="w-3.5 h-3.5" />
-            <span>Connections</span>
-          </button>
+          ))}
         </div>
 
         {/* Mobile View Switcher Dropdown */}
@@ -161,20 +110,20 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
           </select>
         </div>
 
-        {/* Right Suite: Primary "New note" Button & Settings/Avatar */}
-        <div className="flex items-center gap-2">
+        {/* Right Suite: Primary "New note" Button & Settings */}
+        <div className="flex items-center gap-1.5 shrink-0">
           
           {/* Primary "New note" Action Button */}
           <button
             onClick={onOpenQuickAdd}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
             title="Create a new note"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span className="hidden sm:inline">New note</span>
           </button>
 
-          {/* Unified Avatar & Settings Trigger */}
+          {/* Unified Settings Trigger */}
           <button
             onClick={onOpenSettings}
             className="p-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181a24] text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer flex items-center justify-center relative"
