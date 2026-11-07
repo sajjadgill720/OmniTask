@@ -294,3 +294,278 @@
 .animate-pop-in {
   animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
+/* ==========================================================================
+   Hyper-Realistic Physical Wall Surfaces (Corkboard, Plaster, Dark Pegboard)
+   ========================================================================== */
+
+/* 1. Warm Corkboard Texture */
+.wall-cork {
+  background-color: #c49258;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(255, 230, 180, 0.18), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 20% 30%, rgba(160, 95, 40, 0.25), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 80% 70%, rgba(130, 75, 25, 0.3), transparent 70%),
+    repeating-radial-gradient(circle at 17% 23%, rgba(110, 60, 20, 0.16) 0, rgba(110, 60, 20, 0.16) 1.5px, transparent 1.5px, transparent 12px),
+    repeating-radial-gradient(circle at 67% 73%, rgba(85, 45, 15, 0.18) 0, rgba(85, 45, 15, 0.18) 1.2px, transparent 1.2px, transparent 16px),
+    linear-gradient(135deg, rgba(196, 146, 88, 1) 0%, rgba(175, 122, 68, 1) 50%, rgba(148, 98, 48, 1) 100%);
+  box-shadow: inset 0 0 100px rgba(70, 35, 10, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+}
+
+/* 2. Textured Plaster Wall (Architectural Stucco / Drywall) */
+.wall-plaster {
+  background-color: #f5f2eb;
+  background-image: 
+    radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.8), transparent 65%),
+    radial-gradient(circle at 20% 80%, rgba(215, 205, 190, 0.4), transparent 50%),
+    radial-gradient(circle, rgba(140, 130, 115, 0.08) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.6) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 20px 20px, 14px 14px;
+  background-position: 0 0, 0 0, 0 0, 7px 7px;
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+.dark .wall-plaster {
+  background-color: #1e1e24;
+  background-image: 
+    radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.06), transparent 65%),
+    radial-gradient(circle at 20% 80%, rgba(0, 0, 0, 0.4), transparent 50%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 16px 16px;
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.7);
+}
+
+/* 3. Dark Matte Pegboard with Perforated Holes */
+.wall-pegboard {
+  background-color: #1a1c22;
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.10), transparent 60%),
+    radial-gradient(circle 3.2px at 14px 14px, #0b0c0e 100%, transparent 100%),
+    radial-gradient(circle 3.8px at 14px 14.8px, rgba(255, 255, 255, 0.12) 100%, transparent 100%);
+  background-size: 100% 100%, 28px 28px, 28px 28px;
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.85);
+}
+
+/* Ambient Overhead Directional Lighting Effect */
+.wall-ambient-lighting {
+  position: relative;
+}
+.wall-ambient-lighting::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 75% 50% at 50% 0%, rgba(255, 255, 255, 0.22) 0%, transparent 75%);
+  z-index: 10;
+  border-radius: inherit;
+}
+
+/* Soft Room Vignette */
+.wall-vignette::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.35);
+  z-index: 10;
+  border-radius: inherit;
+}
+
+/* ==========================================================================
+   Paper Rulings (Blank, College Ruled, Architect Grid, Bullet Dot, Stencil)
+   ========================================================================== */
+
+/* 1. Blank Matte */
+.paper-ruling-blank {
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.03));
+}
+
+/* 2. College Ruled (28px line-height aligned with vertical red margin) */
+.paper-ruling-ruled {
+  background-image: 
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 27px,
+      rgba(59, 130, 246, 0.26) 27px,
+      rgba(59, 130, 246, 0.26) 28px
+    ),
+    linear-gradient(
+      to right,
+      transparent 34px,
+      rgba(239, 68, 68, 0.38) 34px,
+      rgba(239, 68, 68, 0.38) 35.5px,
+      transparent 35.5px
+    );
+  background-size: 100% 28px, 100% 100%;
+  background-position: 0 32px, 0 0;
+}
+.paper-ruling-ruled-dark {
+  background-image: 
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 27px,
+      rgba(255, 255, 255, 0.14) 27px,
+      rgba(255, 255, 255, 0.14) 28px
+    ),
+    linear-gradient(
+      to right,
+      transparent 34px,
+      rgba(248, 113, 113, 0.5) 34px,
+      rgba(248, 113, 113, 0.5) 35.5px,
+      transparent 35.5px
+    );
+  background-size: 100% 28px, 100% 100%;
+  background-position: 0 32px, 0 0;
+}
+
+/* 3. Architect Grid (16px) */
+.paper-ruling-grid {
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+.paper-ruling-grid-dark {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* 4. Bullet Dot-Grid (16px) */
+.paper-ruling-dots {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.18) 1.2px, transparent 1.2px);
+  background-size: 16px 16px;
+  background-position: 8px 8px;
+}
+.paper-ruling-dots-dark {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.22) 1.2px, transparent 1.2px);
+  background-size: 16px 16px;
+  background-position: 8px 8px;
+}
+
+/* 5. Checklist Stencil */
+.paper-ruling-stencil {
+  background-image: 
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 27px,
+      rgba(100, 116, 139, 0.22) 27px,
+      rgba(100, 116, 139, 0.22) 28px
+    );
+  background-size: 100% 28px;
+  background-position: 0 32px;
+}
+
+/* ==========================================================================
+   Skeuomorphic Materiality: Adhesive Strip, Corner Curl, Washi Tape, Rubber Stamp
+   ========================================================================== */
+
+/* Top Adhesive Peel Strip */
+.sticky-adhesive-strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.05));
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
+  pointer-events: none;
+  z-index: 10;
+}
+.dark-strip {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.25));
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+/* Realistic Dog-Ear Corner Curl */
+.paper-dogear-curl {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+  background: linear-gradient(135deg, transparent 50%, rgba(0, 0, 0, 0.12) 50%, rgba(0, 0, 0, 0.25) 65%, rgba(255, 255, 255, 0.45) 100%);
+  border-bottom-right-radius: 12px;
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
+  filter: drop-shadow(-2px -2px 3px rgba(0, 0, 0, 0.22));
+  transition: transform 0.2s ease;
+  z-index: 12;
+}
+.realistic-postit:hover .paper-dogear-curl {
+  transform: scale(1.18);
+}
+
+/* Semi-translucent Masking / Washi Tape with Jagged Edges */
+.washi-tape {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1.5deg);
+  width: 90px;
+  height: 26px;
+  background: rgba(255, 255, 240, 0.75);
+  background-image: repeating-linear-gradient(90deg, rgba(220, 210, 180, 0.15) 0, rgba(220, 210, 180, 0.15) 2px, transparent 2px, transparent 4px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 0 1px rgba(255, 255, 255, 0.9);
+  border-left: 2px dashed rgba(190, 180, 150, 0.6);
+  border-right: 2px dashed rgba(190, 180, 150, 0.6);
+  pointer-events: none;
+  z-index: 30;
+  backdrop-filter: blur(1px);
+}
+
+/* Rubber "DONE" Stamp */
+.rubber-stamp-done {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-14deg);
+  border: 3.5px double #dc2626;
+  color: #dc2626;
+  font-family: -apple-system, BlinkMacSystemFont, "Impact", "Arial Black", sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  padding: 4px 14px;
+  font-size: 22px;
+  border-radius: 8px;
+  opacity: 0.92;
+  text-shadow: 0 0 1px rgba(220, 38, 38, 0.3);
+  pointer-events: none;
+  z-index: 20;
+  animation: stampIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes stampIn {
+  0% { transform: translate(-50%, -50%) rotate(-25deg) scale(2.2); opacity: 0; }
+  100% { transform: translate(-50%, -50%) rotate(-14deg) scale(1); opacity: 0.92; }
+}
+
+/* Organic Marker Strikethrough */
+.marker-strike {
+  position: relative;
+}
+.marker-strike::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 52%;
+  width: calc(100% + 8px);
+  height: 3.5px;
+  background: #ef4444;
+  opacity: 0.85;
+  border-radius: 3px;
+  transform: rotate(-1deg);
+  pointer-events: none;
+  animation: strikeOut 0.22s ease-out forwards;
+}
+
+@keyframes strikeOut {
+  0% { width: 0; }
+  100% { width: calc(100% + 8px); }
+}

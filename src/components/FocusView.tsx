@@ -291,16 +291,21 @@ export const FocusView: React.FC<FocusViewProps> = ({
 
           {/* Centered Physical Sticky Note Pad */}
           <div 
-            className="relative w-full max-w-[390px] min-h-[360px] p-6 pt-9 rounded-2xl border transition-all duration-200 select-none flex flex-col justify-between"
+            className="relative w-full max-w-[390px] min-h-[360px] p-6 pt-9 rounded-2xl border transition-all duration-200 select-none flex flex-col justify-between realistic-postit paper-edge"
             style={{
               backgroundColor: heroPaper.baseRgb,
               backgroundImage: `linear-gradient(145deg, ${heroPaper.lightRgb} 0%, ${heroPaper.baseRgb} 55%, ${heroPaper.darkRgb} 100%)`,
               borderColor: heroPaper.borderRgb,
               color: heroPaper.inkColor,
-              boxShadow: '0 16px 36px -10px rgba(0, 0, 0, 0.16), 0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
               transform: 'rotate(-0.8deg)',
             }}
           >
+            {/* Top Adhesive Peel Strip */}
+            <div className={`sticky-adhesive-strip ${heroPaper.isDarkNote ? 'dark-strip' : ''}`} />
+
+            {/* Realistic Dog-Ear Corner Curl */}
+            <div className="paper-dogear-curl" />
+
             {/* 3D Tactile Red Pushpin at Top Center */}
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
               <RedPushPin size={34} />

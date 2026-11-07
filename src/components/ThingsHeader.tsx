@@ -64,7 +64,7 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search sticky notes, #tags..."
+              placeholder="Search or jump to..."
               className="w-full pl-9 pr-16 py-1.5 bg-white dark:bg-[#201c27] rounded-xl border border-[#ded7ca] dark:border-white/10 text-xs text-stone-800 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-2xs"
             />
             {searchQuery ? (

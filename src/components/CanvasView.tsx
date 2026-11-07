@@ -11,7 +11,7 @@ import {
   Clock,
   CircleDot
 } from 'lucide-react';
-import { Task, Project } from '../types';
+import { Task, Project, WallTexture } from '../types';
 import { StickyNoteCard } from './StickyNoteCard';
 
 interface CanvasViewProps {
@@ -28,6 +28,12 @@ interface CanvasViewProps {
   debugMode?: boolean;
 }
 
+const WALL_TEXTURES: { id: WallTexture; label: string; icon: string }[] = [
+  { id: 'cork', label: 'Corkboard', icon: '🪵' },
+  { id: 'plaster', label: 'Plaster Wall', icon: '🧱' },
+  { id: 'pegboard', label: 'Matte Pegboard', icon: '🕳️' },
+];
+
 export const CanvasView: React.FC<CanvasViewProps> = ({
   tasks,
   projects,
@@ -41,6 +47,16 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
   onReorderTasks,
   debugMode = false,
 }) => {
+  // Tactile Wall Texture State persisted in localStorage
+  const [wallTexture, setWallTexture] = useState<WallTexture>(() => {
+    return (localStorage.getItem('omnisticky_wall_texture') as WallTexture) || 'cork';
+  });
+
+  const handleSelectWallTexture = (texture: WallTexture) => {
+    setWallTexture(texture);
+    localStorage.setItem('omnisticky_wall_texture', texture);
+  };
+
   // Single subtle tilt slider (0 = flat, 25 = maximum isometric depth)
   const [tiltAngle, setTiltAngle] = useState(10);
   const [yawAngle, setYawAngle] = useState(-5);
@@ -93,10 +109,30 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
         </div>
 
         {/* Controls Suite */}
-        <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
+        <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
           
+          {/* Tactile Wall Texture Switcher */}
+          <div className="flex items-center p-0.5 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-xs">
+            {WALL_TEXTURES.map(t => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => handleSelectWallTexture(t.id)}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                  wallTexture === t.id
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                }`}
+                title={`Wall surface: ${t.label}`}
+              >
+                <span>{t.icon}</span>
+                <span className="hidden md:inline">{t.label}</span>
+              </button>
+            ))}
+          </div>
+
           {/* Single Tilt Slider */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-xs">
+          <div className="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-xs">
             <Sliders className="w-3.5 h-3.5 text-slate-400" />
             <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Tilt:</span>
             <input
@@ -105,10 +141,10 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
               max="25"
               value={tiltAngle}
               onChange={(e) => setTiltAngle(Number(e.target.value))}
-              className="w-20 accent-blue-600 cursor-pointer"
+              className="w-16 accent-blue-600 cursor-pointer"
               title={`Tilt angle: ${tiltAngle}°`}
             />
-            <span className="text-[10px] font-mono text-slate-400 w-6">{tiltAngle}°</span>
+            <span className="text-[10px] font-mono text-slate-400 w-5">{tiltAngle}°</span>
           </div>
 
           {/* Reset button if tilted */}
@@ -137,13 +173,15 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
         </div>
       </div>
 
-      {/* Freeform Spatial Surface */}
+      {/* Freeform Spatial Surface on Real Wall */}
       <div
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        className={`relative w-full min-h-[640px] rounded-3xl overflow-hidden clean-canvas-surface border border-slate-200/80 dark:border-white/10 flex items-center justify-center p-6 ${
+        className={`relative w-full min-h-[680px] rounded-3xl overflow-hidden border border-black/15 dark:border-white/10 flex items-center justify-center p-6 md:p-10 ${
+          wallTexture === 'cork' ? 'wall-cork' : wallTexture === 'pegboard' ? 'wall-pegboard' : 'wall-plaster'
+        } wall-ambient-lighting wall-vignette ${
           isOrbiting ? 'cursor-grabbing' : 'cursor-grab'
         }`}
         style={{
@@ -174,12 +212,42 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
                 <Pin className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
                 <span>Top priorities ({pinnedTasks.length})</span>
               </div>
-              <div className="flex flex-wrap gap-5 items-start">
-                {pinnedTasks.map((task, idx) => (
-                  <div key={task.id} className="transition-transform duration-200 hover:scale-[1.02]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
+                {pinnedTasks.map((task, idx) => {
+                  const staggerClasses = ['sm:mt-0', 'sm:mt-3', 'sm:mt-1', 'sm:mt-4'];
+                  const stagger = staggerClasses[idx % staggerClasses.length];
+                  return (
+                    <div key={task.id} className={`transition-transform duration-200 hover:scale-[1.02] ${stagger}`}>
+                      <StickyNoteCard
+                        task={task}
+                        index={idx}
+                        project={projects.find(p => p.id === task.projectId)}
+                        onToggleComplete={onToggleComplete}
+                        onSelectTask={onSelectTask}
+                        onToggleTimer={onToggleTimer}
+                        onUpdateTask={onUpdateTask}
+                        onDeleteTask={onDeleteTask}
+                        audioEnabled={audioEnabled}
+                        onDropOnItem={onReorderTasks}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Standard Canvas Notes (Organic Wall Placement) */}
+          {otherTasks.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
+              {otherTasks.map((task, idx) => {
+                const staggerClasses = ['sm:mt-0', 'sm:mt-5', 'sm:mt-2', 'sm:mt-6', 'sm:mt-1', 'sm:mt-4'];
+                const stagger = staggerClasses[idx % staggerClasses.length];
+                return (
+                  <div key={task.id} className={`transition-transform duration-200 hover:scale-[1.02] ${stagger}`}>
                     <StickyNoteCard
                       task={task}
-                      index={idx}
+                      index={idx + pinnedTasks.length}
                       project={projects.find(p => p.id === task.projectId)}
                       onToggleComplete={onToggleComplete}
                       onSelectTask={onSelectTask}
@@ -190,30 +258,8 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
                       onDropOnItem={onReorderTasks}
                     />
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Standard Canvas Notes */}
-          {otherTasks.length > 0 && (
-            <div className="flex flex-wrap gap-5 items-start">
-              {otherTasks.map((task, idx) => (
-                <div key={task.id} className="transition-transform duration-200 hover:scale-[1.02]">
-                  <StickyNoteCard
-                    task={task}
-                    index={idx + pinnedTasks.length}
-                    project={projects.find(p => p.id === task.projectId)}
-                    onToggleComplete={onToggleComplete}
-                    onSelectTask={onSelectTask}
-                    onToggleTimer={onToggleTimer}
-                    onUpdateTask={onUpdateTask}
-                    onDeleteTask={onDeleteTask}
-                    audioEnabled={audioEnabled}
-                    onDropOnItem={onReorderTasks}
-                  />
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

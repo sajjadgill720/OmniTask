@@ -35,7 +35,11 @@ export const DEFAULT_TASKS: Task[] = [
     dueDate: new Date().toISOString().split('T')[0],
     timeSpentSeconds: 720,
     isTimerRunning: false,
-    colorHex: 'rgb(254, 240, 138)',
+    colorHex: '#FFF380',
+    paperColor: '#FFF380',
+    lineStyle: 'ruled',
+    pinStyle: 'pin',
+    rotation: -1.5,
     isPinned: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -57,6 +61,11 @@ export const DEFAULT_TASKS: Task[] = [
     dueDate: new Date().toISOString().split('T')[0],
     timeSpentSeconds: 0,
     isTimerRunning: false,
+    colorHex: '#B5EAD7',
+    paperColor: '#B5EAD7',
+    lineStyle: 'dots',
+    pinStyle: 'tape',
+    rotation: 1.8,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -75,6 +84,11 @@ export const DEFAULT_TASKS: Task[] = [
     dueDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
     timeSpentSeconds: 0,
     isTimerRunning: false,
+    colorHex: '#E6CCB2',
+    paperColor: '#E6CCB2',
+    lineStyle: 'grid',
+    pinStyle: 'adhesive',
+    rotation: -0.8,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -109,10 +123,19 @@ export function loadStoredTasks(): Task[] {
     
     // Ensure the reference photo note "Simplified Redesigned Intuitive !" is present
     const hasPhotoNote = parsed.some((t: Task) => t.id === 't_simplified');
-    if (!hasPhotoNote) {
-      return [DEFAULT_TASKS[0], ...parsed];
-    }
-    return parsed;
+    const baseList = !hasPhotoNote ? [DEFAULT_TASKS[0], ...parsed] : parsed;
+
+    return baseList.map((t: Task, idx: number) => {
+      const angleOffsets = [-1.5, 1.8, -0.9, 2.1, -1.8, 1.2, -2.2, 1.6];
+      const defaultAngle = angleOffsets[idx % angleOffsets.length];
+      return {
+        ...t,
+        paperColor: t.paperColor || t.colorHex || '#FFF380',
+        lineStyle: t.lineStyle || 'ruled',
+        pinStyle: t.pinStyle || (t.isPinned ? 'pin' : t.status === 'in_progress' ? 'tape' : 'adhesive'),
+        rotation: t.rotation !== undefined ? t.rotation : defaultAngle,
+      };
+    });
   } catch {
     return DEFAULT_TASKS;
   }

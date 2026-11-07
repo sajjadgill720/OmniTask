@@ -10,6 +10,12 @@ export type DensityMode = 'comfortable' | 'compact';
 
 export type ThemeMode = 'light' | 'dark';
 
+export type LineStyle = 'blank' | 'ruled' | 'grid' | 'dots' | 'stencil';
+
+export type PinStyle = 'auto' | 'pin' | 'tape' | 'adhesive';
+
+export type WallTexture = 'cork' | 'plaster' | 'pegboard';
+
 export interface ChecklistItem {
   id: string;
   text: string;
@@ -50,6 +56,10 @@ export interface Task {
   isTimerRunning: boolean;
   contextUrl?: string; // Anchored website/doc link
   colorHex?: string;
+  paperColor?: string; // Authentic Post-it palette: #FFF380, #FF9AA2, #B5EAD7, #C7CEEA, #E6CCB2, #2B2B2B
+  lineStyle?: LineStyle; // blank | ruled | grid | dots | stencil
+  pinStyle?: PinStyle; // auto | pin | tape | adhesive
+  rotation?: number; // Deterministic natural imperfection angle in degrees (-2.5 to +2.5)
   inkType?: 'auto' | 'ballpoint_blue' | 'black' | 'white' | 'red'; // HCI contrast-compliant ink
   isPinned?: boolean; // Google Keep & Notezilla pinning
   completedAt?: string;
