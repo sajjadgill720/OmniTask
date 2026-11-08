@@ -55,7 +55,7 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
   };
 
   const handleSendTestNotification = () => {
-    sendLocalNotification('OmniSticky Reminder', {
+    sendLocalNotification('Knovera Focus Reminder', {
       body: 'Your daily focus timer and due task notifications are working perfectly!',
     });
     setTestSent(true);

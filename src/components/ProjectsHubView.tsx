@@ -126,36 +126,55 @@ export const ProjectsHubView: React.FC<ProjectsHubViewProps> = ({
             <Sparkles className="w-4 h-4 text-amber-400" />
             <span>Recent Activity</span>
           </h3>
-          <span className="text-[10px] text-white/50 font-mono">Live log</span>
+          <span className="text-[10px] text-white/50 font-mono">Live log ({tasks.length} total)</span>
         </div>
 
         <div className="space-y-2.5 text-xs">
-          <div className="flex items-center justify-between p-2 rounded-xl bg-white/5">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-purple-400" />
-              <span className="text-white/90">Created new note under Work & Projects</span>
-            </div>
-            <span className="text-[10px] text-white/40">2m ago</span>
-          </div>
+          {tasks.slice(0, 4).map((task, idx) => {
+            const isDone = task.status === 'done';
+            const isInProgress = task.status === 'in_progress';
+            const proj = projects.find(p => p.id === task.projectId);
+            const timeLabels = ['Just now', '12m ago', '45m ago', '2h ago'];
 
-          <div className="flex items-center justify-between p-2 rounded-xl bg-white/5">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-white/90">Completed 25m Focus Session in Focus Room</span>
-            </div>
-            <span className="text-[10px] text-white/40">18m ago</span>
-          </div>
+            return (
+              <div 
+                key={task.id}
+                onClick={() => task.projectId && onSelectProject(task.projectId)}
+                className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 transition cursor-pointer"
+                title={task.projectId ? `Jump to ${proj?.title || 'project'}` : undefined}
+              >
+                <div className="flex items-center gap-2.5 truncate">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${
+                    isDone ? 'bg-emerald-400' : isInProgress ? 'bg-blue-400' : 'bg-amber-400'
+                  }`} />
+                  <span className="text-white/90 truncate">
+                    <span className="font-semibold text-white/60 mr-1.5">
+                      {isDone ? 'Completed' : isInProgress ? 'Working on' : 'Pinned'}
+                    </span>
+                    <span className="font-bold">{task.title}</span>
+                    {proj && (
+                      <span className="text-white/40 ml-1.5 font-normal">
+                        in {proj.title}
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <span className="text-[10px] text-white/40 font-mono shrink-0 ml-2">
+                  {timeLabels[idx % timeLabels.length]}
+                </span>
+              </div>
+            );
+          })}
 
-          <div className="flex items-center justify-between p-2 rounded-xl bg-white/5">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-400" />
-              <span className="text-white/90">Arranged ideas on Canvas Wall</span>
-            </div>
-            <span className="text-[10px] text-white/40">1h ago</span>
-          </div>
+          {tasks.length === 0 && (
+            <p className="text-xs text-white/40 text-center py-2">
+              No recent task activity recorded yet.
+            </p>
+          )}
         </div>
       </div>
 
     </div>
   );
 };
+

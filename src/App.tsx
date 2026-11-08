@@ -1,12 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ThingsHeader } from './components/ThingsHeader';
-import { TodayView } from './components/TodayView';
-import { FocusView } from './components/FocusView';
-import { TaskListView } from './components/TaskListView';
-import { CanvasView } from './components/CanvasView';
-import { NetworkGraph3DView } from './components/NetworkGraph3DView';
-import { KanbanBoardView } from './components/KanbanBoardView';
 import { StudioBoardView } from './components/StudioBoardView';
 import { StudioWallAtmosphere } from './components/StudioWallAtmosphere';
 import { StudioTopMural } from './components/StudioTopMural';

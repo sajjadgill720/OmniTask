@@ -321,3 +321,4 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
     </div>
   );
 };
+

@@ -44,6 +44,9 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
   // Zoom & Pan state
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [activeTool, setActiveTool] = useState<'select' | 'sticky' | 'arrow' | 'shape' | 'pen' | 'image'>('select');
+  const [arrowStyle, setArrowStyle] = useState<'curved' | 'dashed' | 'straight'>('curved');
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState<string>('');
 
   // Default brainstorm nodes from visual reference mockup
   const [nodes, setNodes] = useState<CanvasNode[]>([
@@ -161,6 +164,57 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
     setNodes(prev => [...prev, newNode]);
   };
 
+  // Add custom shape / hub on canvas
+  const handleAddShape = () => {
+    const newNode: CanvasNode = {
+      id: `shape_${Date.now()}`,
+      title: 'Milestone Hub',
+      x: 320 + (Math.random() * 60 - 30),
+      y: 220 + (Math.random() * 60 - 30),
+      colorHex: '#F8D979',
+      rotation: 0,
+      type: 'hub',
+    };
+    setNodes(prev => [...prev, newNode]);
+  };
+
+  // Add Polaroid photo
+  const handleAddPolaroid = () => {
+    const photos = [
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&auto=format&fit=crop&q=60',
+    ];
+    const newNode: CanvasNode = {
+      id: `polaroid_${Date.now()}`,
+      title: 'Studio Inspiration',
+      x: 620 + (Math.random() * 40 - 20),
+      y: 180 + (Math.random() * 40 - 20),
+      colorHex: '#ffffff',
+      rotation: (Math.random() * 6) - 3,
+      type: 'polaroid',
+      imageUrl: photos[Math.floor(Math.random() * photos.length)],
+    };
+    setNodes(prev => [...prev, newNode]);
+  };
+
+  const handleDeleteNode = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setNodes(prev => prev.filter(n => n.id !== id));
+  };
+
+  const handleStartEdit = (node: CanvasNode) => {
+    setEditingNodeId(node.id);
+    setEditTitle(node.title);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingNodeId) {
+      setNodes(prev => prev.map(n => n.id === editingNodeId ? { ...n, title: editTitle || n.title } : n));
+      setEditingNodeId(null);
+    }
+  };
+
   const hubNode = nodes.find(n => n.type === 'hub') || nodes[0];
 
   return (
@@ -220,22 +274,28 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
 
           <button
             type="button"
-            onClick={() => setActiveTool('arrow')}
+            onClick={() => {
+              setActiveTool('arrow');
+              setArrowStyle(prev => prev === 'curved' ? 'straight' : prev === 'straight' ? 'dashed' : 'curved');
+            }}
             className={`p-2 rounded-xl transition cursor-pointer ${
               activeTool === 'arrow' ? 'bg-amber-400 text-stone-950 font-bold shadow-xs' : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
-            title="Connector Arrows"
+            title={`Toggle Arrow Style (Currently: ${arrowStyle})`}
           >
             <ArrowUpRight className="w-4 h-4" />
           </button>
 
           <button
             type="button"
-            onClick={() => setActiveTool('shape')}
+            onClick={() => {
+              setActiveTool('shape');
+              handleAddShape();
+            }}
             className={`p-2 rounded-xl transition cursor-pointer ${
               activeTool === 'shape' ? 'bg-amber-400 text-stone-950 font-bold shadow-xs' : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
-            title="Mindmap Shapes"
+            title="Add Mindmap Shape Hub"
           >
             <Circle className="w-4 h-4" />
           </button>
@@ -246,18 +306,21 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
             className={`p-2 rounded-xl transition cursor-pointer ${
               activeTool === 'pen' ? 'bg-amber-400 text-stone-950 font-bold shadow-xs' : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
-            title="Pen / Marker"
+            title="Marker Highlighter Mode"
           >
             <PenTool className="w-4 h-4" />
           </button>
 
           <button
             type="button"
-            onClick={() => setActiveTool('image')}
+            onClick={() => {
+              setActiveTool('image');
+              handleAddPolaroid();
+            }}
             className={`p-2 rounded-xl transition cursor-pointer ${
               activeTool === 'image' ? 'bg-amber-400 text-stone-950 font-bold shadow-xs' : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
-            title="Attach Polaroid Image"
+            title="Attach Polaroid Image Card"
           >
             <ImageIcon className="w-4 h-4" />
           </button>
@@ -277,18 +340,18 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
             const nx = node.x + 60;
             const ny = node.y + 40;
             const mx = (hx + nx) / 2;
-            const my = (hy + ny) / 2 - 25; // curved arc
+            const my = arrowStyle === 'straight' ? (hy + ny) / 2 : (hy + ny) / 2 - 25; // straight vs curved arc
 
             return (
               <path
                 key={`line_${node.id}`}
-                d={`M ${hx} ${hy} Q ${mx} ${my} ${nx} ${ny}`}
+                d={arrowStyle === 'straight' ? `M ${hx} ${hy} L ${nx} ${ny}` : `M ${hx} ${hy} Q ${mx} ${my} ${nx} ${ny}`}
                 stroke="#25231F"
                 strokeWidth="2.5"
                 fill="none"
                 opacity="0.65"
                 markerEnd="url(#arrowhead)"
-                strokeDasharray={node.type === 'polaroid' ? '4 4' : 'none'}
+                strokeDasharray={arrowStyle === 'dashed' || node.type === 'polaroid' ? '4 4' : 'none'}
               />
             );
           })}
@@ -306,16 +369,39 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
                 <div
                   key={node.id}
                   onMouseDown={(e) => handleMouseDownNode(e, node.id)}
+                  onDoubleClick={() => handleStartEdit(node)}
                   style={{
                     left: `${node.x}px`,
                     top: `${node.y}px`,
                     transform: `rotate(${node.rotation}deg)`,
                   }}
-                  className="absolute z-20 w-36 h-24 rounded-[40px] bg-[#F8D979] border-2 border-dashed border-[#695747] shadow-xl flex items-center justify-center p-3 text-center cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
+                  className="group absolute z-20 w-36 h-24 rounded-[40px] bg-[#F8D979] border-2 border-dashed border-[#695747] shadow-xl flex items-center justify-center p-3 text-center cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
                 >
-                  <span className="font-handwriting font-extrabold text-xl text-[#25231F] leading-tight whitespace-pre-line">
-                    {node.title}
-                  </span>
+                  {editingNodeId === node.id ? (
+                    <input
+                      autoFocus
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onBlur={handleSaveEdit}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
+                      className="w-full text-center font-handwriting font-bold text-sm bg-transparent border-b border-stone-800 focus:outline-none"
+                    />
+                  ) : (
+                    <span className="font-handwriting font-extrabold text-xl text-[#25231F] leading-tight whitespace-pre-line">
+                      {node.title}
+                    </span>
+                  )}
+                  {node.id !== 'hub_main' && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteNode(e, node.id)}
+                      className="opacity-0 group-hover:opacity-100 absolute -top-1 -right-1 p-1 rounded-full bg-rose-500 text-white text-[9px] hover:bg-rose-600 transition"
+                      title="Delete node"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
               );
             }
@@ -326,12 +412,13 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
                 <div
                   key={node.id}
                   onMouseDown={(e) => handleMouseDownNode(e, node.id)}
+                  onDoubleClick={() => handleStartEdit(node)}
                   style={{
                     left: `${node.x}px`,
                     top: `${node.y}px`,
                     transform: `rotate(${node.rotation}deg)`,
                   }}
-                  className="absolute z-20 w-32 p-2 pb-3 bg-white border border-stone-200 shadow-xl rounded-sm cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
+                  className="group absolute z-20 w-32 p-2 pb-3 bg-white border border-stone-200 shadow-xl rounded-sm cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
                 >
                   {/* Washi tape pin */}
                   <div className="absolute -top-2 left-8 w-12 h-4 bg-amber-100/80 border border-amber-300/60 rotate-6 shadow-2xs" />
@@ -344,9 +431,29 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
                       className="w-full h-full object-cover" 
                     />
                   </div>
-                  <span className="block text-center font-handwriting text-xs text-stone-700 font-bold truncate">
-                    {node.title}
-                  </span>
+                  {editingNodeId === node.id ? (
+                    <input
+                      autoFocus
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onBlur={handleSaveEdit}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
+                      className="w-full text-center font-handwriting font-bold text-xs bg-transparent border-b border-stone-800 focus:outline-none"
+                    />
+                  ) : (
+                    <span className="block text-center font-handwriting text-xs text-stone-700 font-bold truncate">
+                      {node.title}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteNode(e, node.id)}
+                    className="opacity-0 group-hover:opacity-100 absolute -top-1 -right-1 p-1 rounded-full bg-rose-500 text-white text-[9px] hover:bg-rose-600 transition"
+                    title="Delete polaroid"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
                 </div>
               );
             }
@@ -356,26 +463,45 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
               <div
                 key={node.id}
                 onMouseDown={(e) => handleMouseDownNode(e, node.id)}
+                onDoubleClick={() => handleStartEdit(node)}
                 style={{
                   left: `${node.x}px`,
                   top: `${node.y}px`,
                   backgroundColor: node.colorHex,
                   transform: `rotate(${node.rotation}deg)`,
                 }}
-                className="absolute z-20 w-32 h-32 p-3 pt-5 rounded-2xl border border-black/10 shadow-lg flex flex-col justify-between cursor-grab active:cursor-grabbing hover:scale-105 hover:z-30 transition-transform select-none"
+                className="group absolute z-20 w-32 h-32 p-3 pt-5 rounded-2xl border border-black/10 shadow-lg flex flex-col justify-between cursor-grab active:cursor-grabbing hover:scale-105 hover:z-30 transition-transform select-none"
               >
                 {/* 3D Pushpin on top */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-30">
                   <RedPushPin size={24} color="cyan" />
                 </div>
 
-                <p className="font-handwriting text-sm font-bold text-stone-900 leading-snug whitespace-pre-line">
-                  {node.title}
-                </p>
+                {editingNodeId === node.id ? (
+                  <textarea
+                    autoFocus
+                    rows={2}
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onBlur={handleSaveEdit}
+                    className="w-full font-handwriting text-sm font-bold text-stone-900 bg-transparent border-b border-stone-800 focus:outline-none resize-none"
+                  />
+                ) : (
+                  <p className="font-handwriting text-sm font-bold text-stone-900 leading-snug whitespace-pre-line">
+                    {node.title}
+                  </p>
+                )}
 
                 <div className="flex items-center justify-between text-[9px] font-mono text-stone-700/80">
                   <span>Idea</span>
-                  <span>✦</span>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteNode(e, node.id)}
+                    className="opacity-0 group-hover:opacity-100 p-0.5 text-rose-700 hover:text-rose-900 transition"
+                    title="Delete idea"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
             );
@@ -421,3 +547,4 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
     </div>
   );
 };
+
