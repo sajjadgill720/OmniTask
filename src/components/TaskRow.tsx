@@ -112,14 +112,14 @@ export const TaskRow: React.FC<TaskRowProps> = ({
   };
 
   const priorityMeta = {
-    urgent: { label: 'Urgent', bg: 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800' },
-    high: { label: 'High', bg: 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800' },
-    normal: { label: 'Normal', bg: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900' },
-    low: { label: 'Low', bg: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
+    urgent: { label: 'Urgent', bg: 'bg-rose-500/20 text-rose-300 border-rose-400/40' },
+    high: { label: 'High', bg: 'bg-amber-500/20 text-amber-300 border-amber-400/40' },
+    normal: { label: 'Normal', bg: 'bg-blue-500/20 text-blue-300 border-blue-400/40' },
+    low: { label: 'Low', bg: 'bg-white/10 text-white/60 border-white/15' },
   };
 
   const currentPriority = priorityMeta[task.priority || 'normal'];
-  const noteColor = task.colorHex || '#fef08a';
+  const noteColor = task.paperColor || task.colorHex || '#FFF380';
 
   return (
     <div
@@ -146,9 +146,11 @@ export const TaskRow: React.FC<TaskRowProps> = ({
         }
       }}
       onClick={() => onSelectTask(task)}
-      className={`group relative flex items-center justify-between gap-3 px-3.5 py-3 bg-white dark:bg-[#151821] hover:bg-slate-50/90 dark:hover:bg-[#1a1e2a] border border-slate-200/90 dark:border-white/10 rounded-2xl transition-all duration-150 cursor-pointer shadow-xs hover:shadow-md ${
-        isDone ? 'opacity-60 bg-slate-50/60 dark:bg-slate-900/40' : ''
-      } ${isDragging ? 'opacity-40 scale-[0.98]' : ''} ${isDragOver ? 'ring-2 ring-blue-500 scale-[1.01]' : ''}`}
+      className={`group relative flex items-center justify-between gap-3 px-4 py-3 rounded-2xl transition-all duration-200 cursor-pointer shadow-md select-none border border-white/15 backdrop-blur-xl ${
+        isDone 
+          ? 'bg-black/30 dark:bg-black/40 opacity-70' 
+          : 'bg-black/45 hover:bg-black/55 dark:bg-black/60 dark:hover:bg-black/70 hover:scale-[1.01]'
+      } ${isDragging ? 'opacity-40 scale-[0.98]' : ''} ${isDragOver ? 'ring-2 ring-amber-400 scale-[1.01]' : ''}`}
       style={{
         borderLeftColor: noteColor,
         borderLeftWidth: '5px',
@@ -160,21 +162,21 @@ export const TaskRow: React.FC<TaskRowProps> = ({
         {/* Drag Reorder Handle */}
         {onReorderTasks && (
           <div 
-            className="p-1 -ml-1 text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition cursor-grab active:cursor-grabbing shrink-0"
+            className="p-1 -ml-1 text-white/30 group-hover:text-white/70 transition cursor-grab active:cursor-grabbing shrink-0"
             title="Drag to reorder"
           >
             <GripVertical className="w-3.5 h-3.5" />
           </div>
         )}
 
-        {/* Things 3 signature circular checkbox */}
+        {/* Circular Checkbox */}
         <button
           type="button"
           onClick={handleCheckboxClick}
           className={`w-4 h-4 rounded-full border transition-all duration-200 flex items-center justify-center shrink-0 cursor-pointer ${
             isDone 
-              ? 'bg-blue-500 border-blue-500 text-white scale-95 shadow-xs' 
-              : 'border-slate-300 dark:border-slate-600 hover:border-blue-500 group-hover:scale-105'
+              ? 'bg-emerald-500 border-emerald-500 text-white scale-95 shadow-xs' 
+              : 'border-white/40 hover:border-amber-400 group-hover:scale-105'
           }`}
           title={isDone ? 'Mark as incomplete' : 'Mark as completed'}
         >
@@ -204,7 +206,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
                       setIsEditingTitle(false);
                     }
                   }}
-                  className="w-full px-2 py-0.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-900 dark:text-white"
+                  className="w-full px-2 py-0.5 text-xs font-semibold bg-black/60 border border-amber-400 rounded-md focus:outline-none text-white"
                 />
               </form>
             ) : (
@@ -213,28 +215,28 @@ export const TaskRow: React.FC<TaskRowProps> = ({
                   e.stopPropagation();
                   setIsEditingTitle(true);
                 }}
-                className={`text-xs font-semibold truncate ${
+                className={`text-xs sm:text-sm font-semibold truncate ${
                   isDone 
-                    ? 'line-through text-slate-400 dark:text-slate-500' 
-                    : 'text-slate-800 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400'
+                    ? 'line-through text-white/40' 
+                    : 'text-white/95 hover:text-amber-300 font-handwriting tracking-wide text-sm'
                 }`}
                 title="Double-click to edit inline"
               >
-                {task.title || 'Untitled Task'}
+                {task.title || 'Untitled Note'}
               </span>
             )}
 
             {/* Pinned Note Indicator */}
             {task.isPinned && (
               <span title="Pinned to Top">
-                <Pin className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
+                <Pin className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />
               </span>
             )}
 
-            {/* Things 3 "This Evening" Indicator */}
+            {/* "This Evening" Indicator */}
             {task.isThisEvening && !isDone && (
-              <span className="flex items-center gap-0.5 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400" title="This Evening">
-                <Moon className="w-2.5 h-2.5 fill-indigo-400" />
+              <span className="flex items-center gap-0.5 text-[10px] font-semibold text-indigo-300" title="This Evening">
+                <Moon className="w-2.5 h-2.5 fill-indigo-300" />
               </span>
             )}
 
@@ -247,32 +249,32 @@ export const TaskRow: React.FC<TaskRowProps> = ({
           </div>
 
           {/* Subtext info: Project & Checklist progress & Notes preview */}
-          <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400 flex-wrap">
+          <div className="flex items-center gap-2 mt-0.5 text-[10px] text-white/50 flex-wrap">
             {project && (
               <span 
-                className="font-semibold px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10"
-                style={{ color: project.colorHex }}
+                className="font-semibold px-1.5 py-0.2 rounded-md bg-white/10 border border-white/10"
+                style={{ color: project.colorHex || '#60a5fa' }}
               >
                 {project.title}
               </span>
             )}
 
             {checklistTotal > 0 && (
-              <span className="flex items-center gap-0.5 font-mono bg-slate-100 dark:bg-white/5 px-1 rounded">
+              <span className="flex items-center gap-0.5 font-mono bg-white/10 px-1 rounded text-white/70">
                 <ListOrdered className="w-2.5 h-2.5" />
                 <span>{checklistDone}/{checklistTotal}</span>
               </span>
             )}
 
             {task.notes && (
-              <span className="flex items-center gap-1 text-slate-400 truncate max-w-xs" title={task.notes}>
+              <span className="flex items-center gap-1 text-white/50 truncate max-w-xs font-handwriting" title={task.notes}>
                 <FileText className="w-2.5 h-2.5 shrink-0" />
-                <span className="truncate italic">{task.notes}</span>
+                <span className="truncate">{task.notes}</span>
               </span>
             )}
 
             {task.tags.map(t => (
-              <span key={t} className="text-slate-400 font-medium">#{t}</span>
+              <span key={t} className="text-white/40 font-medium">#{t}</span>
             ))}
           </div>
         </div>
@@ -292,7 +294,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
                   e.stopPropagation();
                   setIsEditingTitle(true);
                 }}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
+                className="p-1 rounded-md text-white/60 hover:text-white hover:bg-white/10 transition cursor-pointer"
                 title="Edit Title"
               >
                 <Edit2 className="w-3 h-3" />
@@ -301,10 +303,10 @@ export const TaskRow: React.FC<TaskRowProps> = ({
               <button
                 type="button"
                 onClick={handleTogglePin}
-                className="p-1 rounded-md text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
+                className="p-1 rounded-md text-white/60 hover:text-amber-400 hover:bg-white/10 transition cursor-pointer"
                 title={task.isPinned ? 'Unpin Task' : 'Pin Task to Top'}
               >
-                <Pin className={`w-3 h-3 ${task.isPinned ? 'fill-amber-500 text-amber-500' : ''}`} />
+                <Pin className={`w-3 h-3 ${task.isPinned ? 'fill-amber-400 text-amber-400' : ''}`} />
               </button>
             </>
           )}
@@ -313,8 +315,8 @@ export const TaskRow: React.FC<TaskRowProps> = ({
             <button
               type="button"
               onClick={handleDelete}
-              className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
-              title="Delete Task"
+              className="p-1 rounded-md text-white/60 hover:text-rose-400 hover:bg-white/10 transition cursor-pointer"
+              title="Delete Note"
             >
               <Trash2 className="w-3 h-3" />
             </button>
@@ -325,13 +327,13 @@ export const TaskRow: React.FC<TaskRowProps> = ({
         {task.dueDate && !isDone && (
           <span className={`flex items-center gap-1 font-medium text-[10px] px-1.5 py-0.5 rounded-md ${
             dueInfo.isOverdue 
-              ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-bold' 
+              ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30' 
               : dueInfo.isToday 
-              ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 font-bold' 
-              : 'text-slate-400 bg-slate-100 dark:bg-white/5'
+              ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30' 
+              : 'text-white/50 bg-white/10'
           }`}>
             {dueInfo.isOverdue ? (
-              <AlertCircle className="w-2.5 h-2.5 text-rose-500" />
+              <AlertCircle className="w-2.5 h-2.5 text-rose-400" />
             ) : (
               <Calendar className="w-2.5 h-2.5" />
             )}
@@ -339,14 +341,14 @@ export const TaskRow: React.FC<TaskRowProps> = ({
           </span>
         )}
 
-        {/* Anchored URL */}
+        {/* Context URL */}
         {task.contextUrl && (
           <a
             href={task.contextUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="p-1 text-slate-400 hover:text-blue-500 transition"
+            className="p-1 text-white/50 hover:text-sky-300 transition"
             title={`Open: ${task.contextUrl}`}
           >
             <ExternalLink className="w-3 h-3" />
@@ -356,10 +358,10 @@ export const TaskRow: React.FC<TaskRowProps> = ({
         {/* Built-in Focus Timer */}
         <div 
           onClick={handleTimerClick}
-          className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border transition cursor-pointer ${
+          className={`flex items-center gap-1 px-2 py-0.5 rounded-xl border transition cursor-pointer ${
             task.isTimerRunning
-              ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900 animate-pulse'
-              : 'bg-slate-50 dark:bg-slate-800/80 text-slate-500 border-slate-200 dark:border-white/10 hover:text-slate-800'
+              ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
+              : 'bg-white/10 text-white/70 border-white/15 hover:text-white hover:bg-white/15'
           }`}
           title={task.isTimerRunning ? 'Pause Focus Timer' : 'Start Focus Timer'}
         >
@@ -368,7 +370,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
             {formatDuration(task.timeSpentSeconds)}
           </span>
           {task.isTimerRunning ? (
-            <Pause className="w-2.5 h-2.5 ml-0.5 text-rose-600" />
+            <Pause className="w-2.5 h-2.5 ml-0.5 text-rose-400" />
           ) : (
             <Play className="w-2.5 h-2.5 ml-0.5 opacity-60 group-hover:opacity-100" />
           )}

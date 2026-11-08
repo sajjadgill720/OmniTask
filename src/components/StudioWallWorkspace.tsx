@@ -1062,3 +1062,4 @@ export const StudioWallWorkspace: React.FC<StudioWallWorkspaceProps> = ({
     </div>
   );
 };
+

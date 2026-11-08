@@ -7,19 +7,25 @@ import {
   Archive, 
   CheckCircle2, 
   Plus, 
+  Columns3, 
+  Target, 
+  LayoutGrid, 
+  Network, 
+  Settings, 
+  ChevronDown, 
+  ChevronRight, 
+  PanelLeftClose, 
+  PanelLeftOpen, 
+  Folder, 
+  Tag, 
+  Crown, 
   Layout, 
   Bell, 
-  ChevronRight,
-  ChevronLeft,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Sun, 
-  Moon,
-  Crown,
-  Folder,
-  Tag
+  Sparkles,
+  Sun,
+  Moon
 } from 'lucide-react';
-import { ThingsSection, Area, Project, Task, AppPermissionsState, ThemeMode } from '../types';
+import { ThingsSection, Area, Project, Task, AppPermissionsState, ThemeMode, ViewMode } from '../types';
 
 interface SidebarProps {
   currentSection: ThingsSection;
@@ -29,11 +35,14 @@ interface SidebarProps {
   areas: Area[];
   projects: Project[];
   tasks: Task[];
+  viewMode: ViewMode;
+  onChangeViewMode: (mode: ViewMode) => void;
   onOpenNewProject: () => void;
   onOpenNewCategory: () => void;
   onOpenWidgets: () => void;
   onOpenPermissions: () => void;
   onOpenSubscription: () => void;
+  onOpenSettings: () => void;
   isProUser: boolean;
   permissions: AppPermissionsState;
   isOpenMobile: boolean;
@@ -42,6 +51,16 @@ interface SidebarProps {
   onToggleTheme: () => void;
 }
 
+/**
+ * Sidebar
+ * The sleek dark translucent glass navigation panel from the reference photo:
+ * - Branding: ✦ Knovera (Plan • Focus • Achieve)
+ * - Primary Views: My Board, Focus Room, Canvas Wall, Analytics
+ * - Sections: Today, Inbox, Upcoming, Anytime, Someday, Logbook
+ * - Projects & Areas with progress rings
+ * - Inspiration Card ("Small steps. Big results.")
+ * - User Profile Pill ("Sajjad Ur Rehman")
+ */
 export const Sidebar: React.FC<SidebarProps> = ({
   currentSection,
   onSelectSection,
@@ -50,11 +69,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   areas,
   projects,
   tasks,
+  viewMode,
+  onChangeViewMode,
   onOpenNewProject,
   onOpenNewCategory,
   onOpenWidgets,
   onOpenPermissions,
   onOpenSubscription,
+  onOpenSettings,
   isProUser,
   permissions,
   isOpenMobile,
@@ -63,6 +85,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleTheme,
 }) => {
   const [showAddMenu, setShowAddMenu] = useState(false);
+  const [isSectionsExpanded, setIsSectionsExpanded] = useState(true);
+  const [isProjectsExpanded, setIsProjectsExpanded] = useState(true);
+
   // Collapsed Sidebar State persisted in localStorage
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     return localStorage.getItem('omnisticky_sidebar_collapsed') === 'true';
@@ -87,6 +112,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleNavClick = (section: ThingsSection) => {
     onSelectProject(null);
     onSelectSection(section);
+    // When navigating to sections, switch to list view if not already
+    if (viewMode === 'board' && section !== 'today') {
+      // stay or switch gracefully
+    }
     onCloseMobile();
   };
 
@@ -95,55 +124,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onCloseMobile();
   };
 
-  const navItems = [
-    { 
-      id: 'inbox' as ThingsSection, 
-      label: 'Inbox', 
-      icon: Inbox, 
-      count: inboxCount, 
-      color: 'text-blue-500', 
-      activeBg: 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white' 
-    },
-    { 
-      id: 'today' as ThingsSection, 
-      label: 'Today', 
-      icon: Star, 
-      count: todayCount, 
-      color: 'text-amber-500 fill-amber-500', 
-      activeBg: 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white' 
-    },
-    { 
-      id: 'upcoming' as ThingsSection, 
-      label: 'Upcoming', 
-      icon: Calendar, 
-      count: upcomingCount, 
-      color: 'text-rose-500', 
-      activeBg: 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white' 
-    },
-    { 
-      id: 'anytime' as ThingsSection, 
-      label: 'Anytime', 
-      icon: Compass, 
-      count: anytimeCount, 
-      color: 'text-emerald-500', 
-      activeBg: 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white' 
-    },
-    { 
-      id: 'someday' as ThingsSection, 
-      label: 'Someday', 
-      icon: Archive, 
-      count: somedayCount, 
-      color: 'text-purple-400', 
-      activeBg: 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white' 
-    },
-    { 
-      id: 'logbook' as ThingsSection, 
-      label: 'Logbook', 
-      icon: CheckCircle2, 
-      count: logbookCount, 
-      color: 'text-slate-400', 
-      activeBg: 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white' 
-    },
+  const navSections = [
+    { id: 'today' as ThingsSection, label: 'Today', icon: Star, count: todayCount, color: 'text-amber-400 fill-amber-400' },
+    { id: 'inbox' as ThingsSection, label: 'Inbox', icon: Inbox, count: inboxCount, color: 'text-blue-400' },
+    { id: 'upcoming' as ThingsSection, label: 'Upcoming', icon: Calendar, count: upcomingCount, color: 'text-rose-400' },
+    { id: 'anytime' as ThingsSection, label: 'Anytime', icon: Compass, count: anytimeCount, color: 'text-emerald-400' },
+    { id: 'someday' as ThingsSection, label: 'Someday', icon: Archive, count: somedayCount, color: 'text-purple-400' },
+    { id: 'logbook' as ThingsSection, label: 'Logbook', icon: CheckCircle2, count: logbookCount, color: 'text-stone-400' },
   ];
 
   return (
@@ -152,61 +139,59 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {isOpenMobile && (
         <div 
           onClick={onCloseMobile}
-          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs md:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
         />
       )}
 
-      {/* Responsive Collapsible Sidebar */}
+      {/* Sleek Dark Translucent Glass Sidebar */}
       <aside 
         className={`
-          fixed md:sticky top-0 left-0 z-40 h-screen 
-          ${isCollapsed ? 'md:w-16' : 'md:w-56'} w-64
-          bg-[#f6f3eb] dark:bg-[#19161e]/98 
-          border-r border-[#e8e2d5] dark:border-white/10 flex flex-col justify-between 
-          select-none transition-all duration-300 ease-in-out font-sans
-          ${isOpenMobile ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          fixed lg:sticky top-4 left-0 z-40 max-h-[calc(100vh-2rem)]
+          ${isCollapsed ? 'lg:w-20' : 'lg:w-60'} w-72
+          rounded-3xl p-4 sm:p-5 flex flex-col justify-between 
+          bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/15 shadow-2xl text-white
+          select-none transition-all duration-300 ease-in-out font-sans overflow-y-auto overflow-x-hidden
+          ${isOpenMobile ? 'translate-x-4' : '-translate-x-full lg:translate-x-0'}
         `}
       >
         
         {/* Top Header & Branding */}
-        <div className="p-3 pb-2">
+        <div>
           
           {/* Header Layout: Collapsed vs Expanded */}
           {!isCollapsed ? (
-            <div className="flex items-center justify-between mb-4 px-1">
-              <div className="flex items-center gap-2 overflow-hidden">
-                <div className="w-7 h-7 shrink-0 rounded-lg bg-blue-500 shadow-sm flex items-center justify-center text-white font-black text-xs">
-                  ✓
+            <div className="flex items-center justify-between mb-5 px-1">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className="w-9 h-9 shrink-0 rounded-2xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-amber-300 shadow-md flex items-center justify-center text-white font-black text-base">
+                  ✦
                 </div>
                 <div className="truncate">
-                  <h1 className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white leading-none">
-                    OmniSticky
+                  <h1 className="font-extrabold text-base tracking-tight text-white leading-none">
+                    Knovera
                   </h1>
-                  <span className="text-[10px] text-slate-400 font-medium">Motion Suite</span>
+                  <span className="text-[10px] text-white/50 font-medium">Plan • Focus • Achieve</span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 shrink-0">
-                {/* Collapse Sidebar Toggle */}
-                <button
-                  onClick={toggleCollapsed}
-                  className="hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-white/5 transition cursor-pointer"
-                  title="Collapse sidebar (show icons only)"
-                >
-                  <PanelLeftClose className="w-4 h-4" />
-                </button>
-              </div>
+              {/* Collapse Sidebar Toggle */}
+              <button
+                onClick={toggleCollapsed}
+                className="hidden lg:flex p-1.5 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                title="Collapse sidebar"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-blue-500 shadow-sm flex items-center justify-center text-white font-black text-sm">
-                ✓
+            <div className="flex flex-col items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-amber-300 shadow-md flex items-center justify-center text-white font-black text-base">
+                ✦
               </div>
 
               {/* Expand Sidebar Toggle */}
               <button
                 onClick={toggleCollapsed}
-                className="hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-white/5 transition cursor-pointer"
+                className="hidden lg:flex p-1.5 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition cursor-pointer"
                 title="Expand sidebar"
               >
                 <PanelLeftOpen className="w-4 h-4" />
@@ -214,97 +199,183 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
-          {/* Navigation Sections */}
-          <nav className="space-y-1 text-xs font-medium">
-            {navItems.map(item => {
-              const isActive = currentSection === item.id && !selectedProjectId;
-              const Icon = item.icon;
+          {/* ===================================================================
+              PRIMARY WORKSPACE VIEWS (Reference Photo Navigation)
+              =================================================================== */}
+          <nav className="space-y-1 text-xs font-semibold pb-4 border-b border-white/10">
+            
+            {/* My Board */}
+            <button
+              type="button"
+              onClick={() => {
+                onSelectProject(null);
+                onChangeViewMode('board');
+                onCloseMobile();
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${
+                viewMode === 'board' && !selectedProjectId
+                  ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              } ${isCollapsed ? 'justify-center px-0' : ''}`}
+              title="My Board (3-Column Sticky Kanban)"
+            >
+              <Columns3 className="w-4 h-4 text-amber-300 shrink-0" />
+              {!isCollapsed && <span>My Board</span>}
+            </button>
 
-              if (isCollapsed) {
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleNavClick(item.id)}
-                    className={`relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl transition cursor-pointer ${
-                      isActive
-                        ? `${item.activeBg} font-semibold shadow-xs`
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5'
-                    }`}
-                    title={`${item.label} (${item.count})`}
-                  >
-                    <Icon className={`w-4 h-4 ${item.color}`} />
-                    {item.count > 0 && (
-                      <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-white dark:ring-[#11131a]" />
-                    )}
-                  </button>
-                );
-              }
+            {/* Focus Room */}
+            <button
+              type="button"
+              onClick={() => {
+                onSelectProject(null);
+                onChangeViewMode('focus');
+                onCloseMobile();
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${
+                viewMode === 'focus' && !selectedProjectId
+                  ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              } ${isCollapsed ? 'justify-center px-0' : ''}`}
+              title="Focus Room (Hero Note + Quiet Queue)"
+            >
+              <Target className="w-4 h-4 text-rose-300 shrink-0" />
+              {!isCollapsed && <span>Focus Room</span>}
+            </button>
 
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.id)}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl transition cursor-pointer ${
-                    isActive
-                      ? `${item.activeBg} font-semibold`
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5'
-                  }`}
-                  title={`${item.label} (${item.count})`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className={`w-4 h-4 ${item.color}`} />
-                    <span>{item.label}</span>
-                  </div>
-                  {item.count > 0 && (
-                    <span className="text-[11px] font-mono text-slate-400">{item.count}</span>
-                  )}
-                </button>
-              );
-            })}
+            {/* Canvas Wall */}
+            <button
+              type="button"
+              onClick={() => {
+                onSelectProject(null);
+                onChangeViewMode('canvas');
+                onCloseMobile();
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${
+                viewMode === 'canvas' && !selectedProjectId
+                  ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              } ${isCollapsed ? 'justify-center px-0' : ''}`}
+              title="Canvas Wall (Spatial 3D Canvas)"
+            >
+              <LayoutGrid className="w-4 h-4 text-emerald-300 shrink-0" />
+              {!isCollapsed && <span>Canvas Wall</span>}
+            </button>
+
+            {/* Analytics / Connections */}
+            <button
+              type="button"
+              onClick={() => {
+                onSelectProject(null);
+                onChangeViewMode('connections');
+                onCloseMobile();
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${
+                viewMode === 'connections' && !selectedProjectId
+                  ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              } ${isCollapsed ? 'justify-center px-0' : ''}`}
+              title="Analytics (3D Network Constellation)"
+            >
+              <Network className="w-4 h-4 text-sky-300 shrink-0" />
+              {!isCollapsed && <span>Analytics</span>}
+            </button>
           </nav>
-        </div>
 
-        {/* Areas and Projects Hierarchy */}
-        <div className="flex-1 overflow-y-auto px-2 py-2 space-y-4">
-          
-          {!isCollapsed ? (
-            <>
-              <div className="flex items-center justify-between text-[11px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-wider px-2 relative mb-1.5">
-                <span>Projects</span>
-                
+          {/* ===================================================================
+              SECTIONS / WORKFLOW LIST (Inbox, Today, Upcoming, Anytime, etc.)
+              =================================================================== */}
+          {!isCollapsed && (
+            <div className="pt-3 pb-3 border-b border-white/10">
+              <div 
+                onClick={() => setIsSectionsExpanded(!isSectionsExpanded)}
+                className="flex items-center justify-between px-2 py-1 text-[10px] text-white/50 font-bold uppercase tracking-wider cursor-pointer hover:text-white transition"
+              >
+                <span>Workflow Stages</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${isSectionsExpanded ? '' : '-rotate-90'}`} />
+              </div>
+
+              {isSectionsExpanded && (
+                <div className="space-y-0.5 mt-1">
+                  {navSections.map(sec => {
+                    const isActive = currentSection === sec.id && !selectedProjectId && viewMode !== 'board';
+                    const Icon = sec.icon;
+
+                    return (
+                      <button
+                        key={sec.id}
+                        type="button"
+                        onClick={() => handleNavClick(sec.id)}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs transition cursor-pointer ${
+                          isActive
+                            ? 'bg-white/20 text-white font-bold backdrop-blur-xs'
+                            : 'text-white/70 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 truncate">
+                          <Icon className={`w-3.5 h-3.5 ${sec.color}`} />
+                          <span className="truncate">{sec.label}</span>
+                        </div>
+                        {sec.count > 0 && (
+                          <span className="text-[10px] font-mono text-white/50">{sec.count}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ===================================================================
+              PROJECTS & CATEGORIES HIERARCHY
+              =================================================================== */}
+          {!isCollapsed && (
+            <div className="pt-3 pb-3 border-b border-white/10">
+              <div className="flex items-center justify-between px-2 py-1 text-[10px] text-white/50 font-bold uppercase tracking-wider mb-1">
+                <span 
+                  onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
+                  className="cursor-pointer hover:text-white transition flex items-center gap-1"
+                >
+                  <span>Projects</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform ${isProjectsExpanded ? '' : '-rotate-90'}`} />
+                </span>
+
                 <div className="relative">
                   <button
+                    type="button"
                     onClick={() => setShowAddMenu(!showAddMenu)}
-                    className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200/50 dark:hover:bg-white/5 rounded-md transition cursor-pointer"
+                    className="p-1 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition cursor-pointer"
                     title="Add Project or Category"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* Clean Contextual Popup */}
+                  {/* Add Contextual Dropdown */}
                   {showAddMenu && (
                     <div 
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute right-0 top-6 z-50 w-40 p-1 bg-white dark:bg-[#1f1b26] rounded-xl shadow-xl border border-stone-200 dark:border-white/10 text-xs animate-pop-in font-normal normal-case"
+                      className="absolute right-0 top-6 z-50 w-40 p-1 bg-black/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/15 text-xs font-normal normal-case animate-pop-in"
                     >
                       <button
+                        type="button"
                         onClick={() => {
                           setShowAddMenu(false);
                           onOpenNewProject();
                         }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left font-medium text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-white/5 transition cursor-pointer"
+                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left font-medium text-white hover:bg-white/15 transition cursor-pointer"
                       >
-                        <Folder className="w-3.5 h-3.5 text-indigo-500" />
+                        <Folder className="w-3.5 h-3.5 text-indigo-400" />
                         <span>New Project</span>
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setShowAddMenu(false);
                           onOpenNewCategory();
                         }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left font-medium text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-white/5 transition cursor-pointer"
+                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left font-medium text-white hover:bg-white/15 transition cursor-pointer"
                       >
-                        <Tag className="w-3.5 h-3.5 text-blue-500" />
+                        <Tag className="w-3.5 h-3.5 text-blue-400" />
                         <span>New Category</span>
                       </button>
                     </div>
@@ -312,260 +383,139 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-3 px-1">
-                {areas.map(area => {
-                  const areaProjects = projects.filter(p => p.areaId === area.id);
+              {isProjectsExpanded && (
+                <div className="space-y-2 mt-1">
+                  {areas.map(area => {
+                    const areaProjects = projects.filter(p => p.areaId === area.id);
 
-                  return (
-                    <div key={area.id} className="space-y-1">
-                      <div className="group/area flex items-center justify-between px-2 py-1 text-xs font-semibold text-stone-700 dark:text-stone-300">
-                        <div className="flex items-center gap-1.5 truncate">
-                          <span>{area.emoji}</span>
-                          <span className="truncate">{area.name}</span>
+                    return (
+                      <div key={area.id} className="space-y-0.5">
+                        <div className="flex items-center justify-between px-2 py-0.5 text-[11px] font-semibold text-white/80">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span>{area.emoji}</span>
+                            <span className="truncate">{area.name}</span>
+                          </div>
                         </div>
-                        <button
-                          onClick={onOpenNewProject}
-                          className="opacity-0 group-hover/area:opacity-100 p-0.5 text-stone-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer"
-                          title={`Add project under ${area.name}`}
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
+
+                        {areaProjects.map(proj => {
+                          const projTasks = tasks.filter(t => t.projectId === proj.id);
+                          const doneTasks = projTasks.filter(t => t.status === 'done');
+                          const isSelected = selectedProjectId === proj.id;
+
+                          const radius = 5;
+                          const circumference = 2 * Math.PI * radius;
+                          const ratio = projTasks.length > 0 ? doneTasks.length / projTasks.length : 0;
+                          const strokeDashoffset = circumference - ratio * circumference;
+
+                          return (
+                            <button
+                              key={proj.id}
+                              type="button"
+                              onClick={() => handleProjectClick(proj.id)}
+                              className={`w-full flex items-center justify-between pl-4 pr-2 py-1 rounded-xl text-xs transition cursor-pointer ${
+                                isSelected
+                                  ? 'bg-white/20 text-white font-bold backdrop-blur-xs'
+                                  : 'text-white/60 hover:text-white hover:bg-white/10'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <svg className="w-3 h-3 shrink-0 -rotate-90">
+                                  <circle
+                                    cx="6"
+                                    cy="6"
+                                    r={radius}
+                                    fill="transparent"
+                                    stroke="rgba(255,255,255,0.2)"
+                                    strokeWidth="1.8"
+                                  />
+                                  <circle
+                                    cx="6"
+                                    cy="6"
+                                    r={radius}
+                                    fill="transparent"
+                                    stroke={proj.colorHex || '#3b82f6'}
+                                    strokeWidth="1.8"
+                                    strokeDasharray={circumference}
+                                    strokeDashoffset={strokeDashoffset}
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                                <span className="truncate">{proj.title}</span>
+                              </div>
+
+                              <span className="text-[10px] font-mono text-white/40">
+                                {doneTasks.length}/{projTasks.length}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
-
-                      {areaProjects.map(proj => {
-                        const projTasks = tasks.filter(t => t.projectId === proj.id);
-                        const doneTasks = projTasks.filter(t => t.status === 'done');
-                        const isSelected = selectedProjectId === proj.id;
-
-                        const radius = 5;
-                        const circumference = 2 * Math.PI * radius;
-                        const ratio = projTasks.length > 0 ? doneTasks.length / projTasks.length : 0;
-                        const strokeDashoffset = circumference - ratio * circumference;
-
-                        return (
-                          <button
-                            key={proj.id}
-                            onClick={() => handleProjectClick(proj.id)}
-                            className={`w-full flex items-center justify-between pl-5 pr-2 py-1.5 rounded-xl text-xs transition cursor-pointer ${
-                              isSelected
-                                ? 'bg-stone-200/80 text-stone-900 dark:bg-white/10 dark:text-white font-semibold'
-                                : 'text-stone-600 dark:text-stone-400 hover:bg-stone-200/40 dark:hover:bg-white/5'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 truncate">
-                              <svg className="w-3.5 h-3.5 shrink-0 -rotate-90">
-                                <circle
-                                  cx="7"
-                                  cy="7"
-                                  r={radius}
-                                  fill="transparent"
-                                  stroke="currentColor"
-                                  strokeWidth="1.8"
-                                  className="text-stone-200 dark:text-stone-700"
-                                />
-                                <circle
-                                  cx="7"
-                                  cy="7"
-                                  r={radius}
-                                  fill="transparent"
-                                  stroke={proj.colorHex || '#3b82f6'}
-                                  strokeWidth="1.8"
-                                  strokeDasharray={circumference}
-                                  strokeDashoffset={strokeDashoffset}
-                                  strokeLinecap="round"
-                                  className="transition-all duration-300"
-                                />
-                              </svg>
-                              <span className="truncate">{proj.title}</span>
-                            </div>
-
-                            <span className="text-[10px] font-mono text-stone-400">
-                              {doneTasks.length}/{projTasks.length}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-
-                {/* Quiet Minimalist New List Action */}
-                <div className="pt-1 px-2">
-                  <button
-                    onClick={() => setShowAddMenu(true)}
-                    className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition cursor-pointer font-medium py-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>New List...</span>
-                  </button>
+                    );
+                  })}
                 </div>
-              </div>
-            </>
-          ) : (
-            /* Collapsed Projects Rail: Minimalist Icon Hub */
-            <div className="flex flex-col items-center space-y-2 border-t border-slate-200/60 dark:border-white/10 pt-3">
-              <div className="relative">
-                <button
-                  onClick={() => setShowAddMenu(!showAddMenu)}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-white/5 transition cursor-pointer"
-                  title="Add Category or Project"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-
-                {showAddMenu && (
-                  <div 
-                    onClick={(e) => e.stopPropagation()}
-                    className="absolute left-11 top-0 z-50 w-44 p-1.5 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 text-xs animate-pop-in"
-                  >
-                    <button
-                      onClick={() => {
-                        setShowAddMenu(false);
-                        onOpenNewCategory();
-                      }}
-                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left font-bold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-600 transition cursor-pointer"
-                    >
-                      <Tag className="w-3.5 h-3.5 text-blue-500" />
-                      <span>New Category</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowAddMenu(false);
-                        onOpenNewProject();
-                      }}
-                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition cursor-pointer"
-                    >
-                      <Folder className="w-3.5 h-3.5 text-indigo-500" />
-                      <span>New Project</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {projects.map(proj => {
-                const projTasks = tasks.filter(t => t.projectId === proj.id);
-                const doneTasks = projTasks.filter(t => t.status === 'done');
-                const isSelected = selectedProjectId === proj.id;
-                const radius = 6;
-                const circumference = 2 * Math.PI * radius;
-                const ratio = projTasks.length > 0 ? doneTasks.length / projTasks.length : 0;
-                const strokeDashoffset = circumference - ratio * circumference;
-
-                return (
-                  <button
-                    key={proj.id}
-                    onClick={() => handleProjectClick(proj.id)}
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition cursor-pointer ${
-                      isSelected 
-                        ? 'bg-blue-500/10 ring-2 ring-blue-500' 
-                        : 'hover:bg-slate-200/50 dark:hover:bg-white/5'
-                    }`}
-                    title={`${proj.title} (${doneTasks.length}/${projTasks.length})`}
-                  >
-                    <svg className="w-5 h-5 -rotate-90">
-                      <circle
-                        cx="10"
-                        cy="10"
-                        r={radius}
-                        fill="transparent"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className="text-slate-200 dark:text-slate-700"
-                      />
-                      <circle
-                        cx="10"
-                        cy="10"
-                        r={radius}
-                        fill="transparent"
-                        stroke={proj.colorHex || '#3b82f6'}
-                        strokeWidth="2"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={strokeDashoffset}
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </button>
-                );
-              })}
+              )}
             </div>
           )}
+
+          {/* Quick System Tools / Settings */}
+          <div className="pt-2 space-y-0.5 text-xs font-medium">
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-2xl text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
+                isCollapsed ? 'justify-center px-0' : ''
+              }`}
+              title="Settings"
+            >
+              <Settings className="w-4 h-4 text-stone-300 shrink-0" />
+              {!isCollapsed && <span>Settings</span>}
+            </button>
+          </div>
+
         </div>
 
-        {/* Bottom Minimalist Footer Strip */}
-        <div className="p-2 border-t border-[#e8e2d5] dark:border-white/10">
+        {/* ===================================================================
+            BOTTOM CARDS: Inspiration Gem & Sajjad Ur Rehman Profile Pill
+            =================================================================== */}
+        <div className="space-y-3 pt-4 border-t border-white/10 mt-4">
           
-          {!isCollapsed ? (
-            <div className="flex items-center justify-between px-1.5 py-0.5">
-              {/* Theme Toggle (Quiet Button) */}
-              <button
-                type="button"
-                onClick={onToggleTheme}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 hover:bg-stone-200/50 dark:hover:bg-white/5 transition cursor-pointer"
-                title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
-              >
-                {theme === 'dark' ? (
-                  <>
-                    <Sun className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-[11px] font-semibold">Light</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-3.5 h-3.5 text-stone-600" />
-                    <span className="text-[11px] font-semibold">Dark</span>
-                  </>
-                )}
-              </button>
-
-              {/* Utility Shortcuts: Widgets & Pro */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={onOpenWidgets}
-                  className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200/50 dark:hover:bg-white/5 transition cursor-pointer"
-                  title="Widgets Suite"
-                >
-                  <Layout className="w-4 h-4 text-stone-500" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onOpenSubscription}
-                  className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-500/10 transition cursor-pointer"
-                  title={isProUser ? 'OmniSticky Pro (Active)' : 'Upgrade to Pro'}
-                >
-                  <Crown className="w-4 h-4 fill-amber-500" />
-                </button>
+          {/* Inspiration Floating Card */}
+          {!isCollapsed && (
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-purple-950/40 via-purple-900/20 to-black/40 border border-purple-400/20 backdrop-blur-md shadow-md text-left">
+              <div className="w-6 h-6 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300 mb-1.5 text-xs">
+                💎
               </div>
-            </div>
-          ) : (
-            /* Collapsed Bottom Strip: Minimal Icons */
-            <div className="flex flex-col items-center space-y-1">
-              <button
-                type="button"
-                onClick={onOpenSubscription}
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-amber-500 hover:bg-amber-500/10 transition cursor-pointer"
-                title={isProUser ? 'OmniSticky Pro (Active)' : 'Upgrade to OmniSticky Pro'}
-              >
-                <Crown className="w-4 h-4 fill-amber-500 text-amber-500" />
-              </button>
-
-              <button
-                type="button"
-                onClick={onToggleTheme}
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-700 dark:text-amber-300 hover:bg-slate-200/50 dark:hover:bg-white/5 transition cursor-pointer"
-                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode (Ambient White Hue)'}
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-slate-600" />}
-              </button>
-
-              <button
-                onClick={onOpenWidgets}
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-300 hover:bg-slate-200/50 dark:hover:bg-white/5 transition cursor-pointer"
-                title="Interactive Widgets Hub"
-              >
-                <Layout className="w-4 h-4" />
-              </button>
+              <p className="text-xs font-bold text-white leading-tight">
+                Small steps.
+              </p>
+              <p className="text-[11px] text-white/60">
+                Big results. ↗
+              </p>
             </div>
           )}
+
+          {/* User Profile Pill */}
+          <div 
+            onClick={onOpenSettings}
+            className={`flex items-center justify-between p-2 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer ${
+              isCollapsed ? 'justify-center p-1.5' : ''
+            }`}
+            title="User Profile & Settings"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-rose-500 text-white font-extrabold text-[10px] flex items-center justify-center shadow-xs shrink-0">
+                SR
+              </div>
+              {!isCollapsed && (
+                <span className="text-xs font-semibold text-white/90 truncate">
+                  Sajjad Ur Rehman
+                </span>
+              )}
+            </div>
+            {!isCollapsed && (
+              <ChevronDown className="w-3.5 h-3.5 text-white/50 shrink-0" />
+            )}
+          </div>
 
         </div>
 

@@ -7,7 +7,10 @@ import { TaskListView } from './components/TaskListView';
 import { CanvasView } from './components/CanvasView';
 import { NetworkGraph3DView } from './components/NetworkGraph3DView';
 import { KanbanBoardView } from './components/KanbanBoardView';
-import { StudioWallWorkspace } from './components/StudioWallWorkspace';
+import { StudioBoardView } from './components/StudioBoardView';
+import { StudioWallAtmosphere } from './components/StudioWallAtmosphere';
+import { StudioTopMural } from './components/StudioTopMural';
+import { StudioRightPanel } from './components/StudioRightPanel';
 import { MagicPlusButton } from './components/MagicPlusButton';
 import { TaskDetailDrawer } from './components/TaskDetailDrawer';
 import { WidgetCenterModal } from './components/WidgetCenterModal';
@@ -378,10 +381,36 @@ export function App() {
   }, [selectedProject, currentSection]);
 
   return (
-    <div className="min-h-screen bg-[#fbf8f3] dark:bg-[#141217] text-stone-900 dark:text-stone-100 flex font-sans antialiased selection:bg-amber-200 selection:text-amber-950 transition-colors duration-300">
+    <div className="relative w-full min-h-screen overflow-x-hidden font-sans select-none studio-wall-background text-stone-900 dark:text-stone-100">
       
-      {/* Sidebar Navigation (available in Focus, Canvas, and List modes) */}
-      {viewMode !== 'board' && (
+      {/* 1. Global Photorealistic Studio Wall Atmosphere (Sunlight, Ivy Leaves, Wooden Desk, Lamp, Books, Mug, Astronaut, Terrarium) */}
+      <StudioWallAtmosphere />
+
+      {/* 2. Top Sleek Frosted Glass Search & Utilities Bar */}
+      <ThingsHeader
+        onToggleMobileNav={() => setIsMobileNavOpen(!isMobileNavOpen)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        onOpenQuickAdd={() => handleMagicAdd({
+          title: 'New note',
+          priority: 'normal',
+          tags: [],
+          section: currentSection,
+        })}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenPermissions={() => setIsPermissionsOpen(true)}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+        viewMode={viewMode}
+        onChangeViewMode={handleChangeViewMode}
+        isProUser={isProUser}
+      />
+
+      {/* 3. Main Workspace: Left Glass Sidebar + Center Wall Stage + Right Glass Panels */}
+      <div className="relative z-10 max-w-[1720px] mx-auto px-4 sm:px-6 pb-40 flex items-start gap-6">
+        
+        {/* Left Floating Translucent Glass Panel (Knovera Navigation) */}
         <Sidebar
           currentSection={currentSection}
           onSelectSection={setCurrentSection}
@@ -390,11 +419,14 @@ export function App() {
           areas={areas}
           projects={projects}
           tasks={tasks}
+          viewMode={viewMode}
+          onChangeViewMode={handleChangeViewMode}
           onOpenNewProject={() => setIsProjectModalOpen(true)}
           onOpenNewCategory={() => setIsCategoryModalOpen(true)}
           onOpenWidgets={() => setIsWidgetsOpen(true)}
           onOpenPermissions={() => setIsPermissionsOpen(true)}
           onOpenSubscription={() => setIsSubscriptionOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
           isProUser={isProUser}
           permissions={permissions}
           isOpenMobile={isMobileNavOpen}
@@ -402,146 +434,140 @@ export function App() {
           theme={theme}
           onToggleTheme={handleToggleTheme}
         />
-      )}
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        
-        {/* Top Header (available in Focus, Canvas, and List modes) */}
-        {viewMode !== 'board' && (
-          <ThingsHeader
-            onToggleMobileNav={() => setIsMobileNavOpen(!isMobileNavOpen)}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-            onOpenQuickAdd={() => handleMagicAdd({
-              title: 'New note',
-              priority: 'normal',
-              tags: [],
-              section: currentSection,
-            })}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            viewMode={viewMode}
-            onChangeViewMode={handleChangeViewMode}
-            isProUser={isProUser}
-          />
-        )}
+        {/* Center Main Stage on Wall */}
+        <main className="flex-1 min-w-0 flex flex-col items-center">
+          
+          {/* Top Wall Art: "Dream Big Plan Better" with Golden Crown + Daily Rotating Quote System */}
+          <StudioTopMural compact={viewMode === 'canvas' || viewMode === 'connections'} />
 
-        {/* Dynamic Streamlined Views */}
-        <main className={`flex-1 ${viewMode === 'board' ? 'p-0 pb-0' : 'pb-24'}`}>
-          {viewMode === 'board' ? (
-            /* Immersive Photorealistic Studio Wall Workspace (Reference Photo Target) */
-            <StudioWallWorkspace
-              tasks={tasks}
-              projects={projects}
-              onToggleComplete={handleToggleComplete}
-              onSelectTask={setSelectedTask}
-              onToggleTimer={handleToggleTimer}
-              onUpdateTask={handleSaveTask}
-              onDeleteTask={handleDeleteTask}
-              onMoveTaskStatus={handleMoveTaskStatus}
-              audioEnabled={permissions.audioEnabled}
-              onQuickAdd={() => handleMagicAdd({
-                title: 'New note',
-                priority: 'normal',
-                tags: ['Study'],
-                section: 'today',
-                colorHex: '#FFF380',
-              })}
-              onOpenProjectModal={() => setIsProjectModalOpen(true)}
-              onOpenCategoryModal={() => setIsCategoryModalOpen(true)}
-              onOpenSettings={() => setIsSettingsOpen(true)}
-              onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-              onOpenPermissions={() => setIsPermissionsOpen(true)}
-              theme={theme}
-              onToggleTheme={handleToggleTheme}
-              viewMode={viewMode}
-              onChangeViewMode={handleChangeViewMode}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-            />
-          ) : viewMode === 'canvas' || viewMode === 'canvas_3d' || viewMode === 'sticky_wall' ? (
-            /* Canvas View: Merged Freeform Spatial Board with Tilt Slider */
-            <CanvasView
-              tasks={visibleTasks}
-              projects={projects}
-              onToggleComplete={handleToggleComplete}
-              onSelectTask={setSelectedTask}
-              onToggleTimer={handleToggleTimer}
-              onUpdateTask={handleSaveTask}
-              onDeleteTask={handleDeleteTask}
-              audioEnabled={permissions.audioEnabled}
-              onQuickAdd={() => handleMagicAdd({
-                title: 'New note',
-                priority: 'normal',
-                tags: [],
-                section: currentSection,
-              })}
-              onReorderTasks={handleReorderTasks}
-              debugMode={debugMode}
-            />
-          ) : viewMode === 'connections' || viewMode === 'network_3d' ? (
-            /* Connections View: 3D Network Graph */
-            <NetworkGraph3DView
-              tasks={tasks}
-              projects={projects}
-              onSelectTask={setSelectedTask}
-              onToggleComplete={handleToggleComplete}
-              onToggleTimer={handleToggleTimer}
-              onUpdateTask={handleSaveTask}
-              onQuickAdd={() => handleMagicAdd({
-                title: 'New note',
-                priority: 'normal',
-                tags: [],
-                section: currentSection,
-              })}
-            />
-          ) : viewMode === 'focus' || (currentSection === 'today' && !selectedProjectId) ? (
-            /* Focus View (Default): Hero "Now" note + Quiet Queue */
-            <FocusView
-              tasks={visibleTasks}
-              allTasks={tasks}
-              projects={projects}
-              onToggleComplete={handleToggleComplete}
-              onSelectTask={setSelectedTask}
-              onToggleTimer={handleToggleTimer}
-              onUpdateTask={handleSaveTask}
-              onDeleteTask={handleDeleteTask}
-              onReorderTasks={handleReorderTasks}
-              audioEnabled={permissions.audioEnabled}
-              onQuickAdd={(title, priority) => handleMagicAdd({
-                title: title || 'New note',
-                priority: priority || 'normal',
-                tags: [],
-                section: 'today',
-                colorHex: '#fef08a',
-              })}
-              density={density}
-              onToggleDensity={handleToggleDensity}
-            />
-          ) : (
-            /* Focus Standard List for non-today sections or selected project */
-            <TaskListView
-              section={currentSection}
-              selectedProject={selectedProject}
-              tasks={visibleTasks}
-              projects={projects}
-              onToggleComplete={handleToggleComplete}
-              onSelectTask={setSelectedTask}
-              onToggleTimer={handleToggleTimer}
-              onUpdateTask={handleSaveTask}
-              onDeleteTask={handleDeleteTask}
-              onReorderTasks={handleReorderTasks}
-              audioEnabled={permissions.audioEnabled}
-              onQuickAdd={(title, priority) => handleMagicAdd({
-                title: title || 'New note',
-                priority: priority || 'normal',
-                tags: [],
-                section: currentSection,
-              })}
-            />
-          )}
+          {/* Active View Container */}
+          <div className="w-full flex-1">
+            {viewMode === 'board' && !selectedProjectId ? (
+              /* My Board: 3-Column Sticky Note Kanban */
+              <StudioBoardView
+                tasks={tasks}
+                projects={projects}
+                onToggleComplete={handleToggleComplete}
+                onSelectTask={setSelectedTask}
+                onToggleTimer={handleToggleTimer}
+                onUpdateTask={handleSaveTask}
+                onDeleteTask={handleDeleteTask}
+                onMoveTaskStatus={handleMoveTaskStatus}
+                audioEnabled={permissions.audioEnabled}
+                onQuickAdd={() => handleMagicAdd({
+                  title: 'New note',
+                  priority: 'normal',
+                  tags: ['Study'],
+                  section: 'today',
+                  colorHex: '#FFF380',
+                })}
+              />
+            ) : viewMode === 'focus' || (currentSection === 'today' && !selectedProjectId) ? (
+              /* Focus Room: Hero Canary Yellow Note + Quiet Queue */
+              <FocusView
+                tasks={visibleTasks}
+                allTasks={tasks}
+                projects={projects}
+                onToggleComplete={handleToggleComplete}
+                onSelectTask={setSelectedTask}
+                onToggleTimer={handleToggleTimer}
+                onUpdateTask={handleSaveTask}
+                onDeleteTask={handleDeleteTask}
+                onReorderTasks={handleReorderTasks}
+                audioEnabled={permissions.audioEnabled}
+                onQuickAdd={(title, priority) => handleMagicAdd({
+                  title: title || 'New note',
+                  priority: priority || 'normal',
+                  tags: [],
+                  section: 'today',
+                  colorHex: '#fef08a',
+                })}
+                density={density}
+                onToggleDensity={handleToggleDensity}
+              />
+            ) : viewMode === 'canvas' || viewMode === 'canvas_3d' || viewMode === 'sticky_wall' ? (
+              /* Canvas Wall: 3D Spatial Wall with Tilt */
+              <CanvasView
+                tasks={visibleTasks}
+                projects={projects}
+                onToggleComplete={handleToggleComplete}
+                onSelectTask={setSelectedTask}
+                onToggleTimer={handleToggleTimer}
+                onUpdateTask={handleSaveTask}
+                onDeleteTask={handleDeleteTask}
+                audioEnabled={permissions.audioEnabled}
+                onQuickAdd={() => handleMagicAdd({
+                  title: 'New note',
+                  priority: 'normal',
+                  tags: [],
+                  section: currentSection,
+                })}
+                onReorderTasks={handleReorderTasks}
+                debugMode={debugMode}
+              />
+            ) : viewMode === 'connections' || viewMode === 'network_3d' ? (
+              /* Analytics: 3D Constellation */
+              <NetworkGraph3DView
+                tasks={tasks}
+                projects={projects}
+                onSelectTask={setSelectedTask}
+                onToggleComplete={handleToggleComplete}
+                onToggleTimer={handleToggleTimer}
+                onUpdateTask={handleSaveTask}
+                onQuickAdd={() => handleMagicAdd({
+                  title: 'New note',
+                  priority: 'normal',
+                  tags: [],
+                  section: currentSection,
+                })}
+              />
+            ) : (
+              /* Section / Project Task List View (Inbox, Upcoming, Anytime, Someday, Logbook, or Project) */
+              <TaskListView
+                section={currentSection}
+                selectedProject={selectedProject}
+                tasks={visibleTasks}
+                projects={projects}
+                onToggleComplete={handleToggleComplete}
+                onSelectTask={setSelectedTask}
+                onToggleTimer={handleToggleTimer}
+                onUpdateTask={handleSaveTask}
+                onDeleteTask={handleDeleteTask}
+                onReorderTasks={handleReorderTasks}
+                audioEnabled={permissions.audioEnabled}
+                onQuickAdd={(title, priority) => handleMagicAdd({
+                  title: title || 'New note',
+                  priority: priority || 'normal',
+                  tags: [],
+                  section: currentSection,
+                })}
+              />
+            )}
+          </div>
+
         </main>
+
+        {/* Right Floating Translucent Glass Panels (Upcoming & Quick Actions) */}
+        <StudioRightPanel
+          tasks={tasks}
+          onSelectTask={setSelectedTask}
+          onQuickAdd={() => handleMagicAdd({
+            title: 'New note',
+            priority: 'normal',
+            tags: [],
+            section: currentSection,
+            colorHex: '#FFF380',
+          })}
+          onOpenProjectModal={() => setIsProjectModalOpen(true)}
+          onViewAllUpcoming={() => {
+            setSelectedProjectId(null);
+            setCurrentSection('upcoming');
+            if (viewMode === 'board') {
+              handleChangeViewMode('focus');
+            }
+          }}
+        />
 
       </div>
 
