@@ -137,14 +137,20 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                 draggable
                 onDragStart={(e) => handleDragStart(e, task.id)}
                 onClick={() => onSelectTask(task)}
-                className="group relative w-full max-w-[270px] mx-auto p-4 pt-6 rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.03] hover:shadow-xl hover:z-20 select-none shadow-md"
+                className="group relative w-full max-w-[270px] mx-auto p-4 pt-6 rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.03] hover:z-20 select-none shadow-[0_8px_18px_-4px_rgba(0,0,0,0.18),0_2px_5px_-1px_rgba(0,0,0,0.12)] hover:shadow-[0_18px_32px_-6px_rgba(0,0,0,0.28),0_8px_12px_-2px_rgba(0,0,0,0.16)] paper-ruling-lines overflow-hidden"
                 style={{
                   backgroundColor: task.paperColor || (isPeach ? '#FF9AA2' : '#FFF380'),
-                  borderColor: isPeach ? '#f43f5e' : '#eab308',
+                  borderColor: isPeach ? 'rgba(244,63,94,0.4)' : 'rgba(234,179,8,0.4)',
                   color: '#1c1917',
                   transform: `rotate(${angle}deg)`,
                 }}
               >
+                {/* Physical Top Adhesive Strip */}
+                <div className="sticky-adhesive-strip" />
+
+                {/* Bottom Right Corner Curl */}
+                <div className="paper-dogear-curl" />
+
                 {/* Pushpin */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
                   <RedPushPin color={pinColor} size={28} />
@@ -264,14 +270,20 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                 draggable
                 onDragStart={(e) => handleDragStart(e, task.id)}
                 onClick={() => onSelectTask(task)}
-                className="group relative w-full max-w-[270px] mx-auto p-4 pt-6 rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.03] hover:shadow-xl hover:z-20 select-none shadow-md"
+                className="group relative w-full max-w-[270px] mx-auto p-4 pt-6 rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.03] hover:z-20 select-none shadow-[0_8px_18px_-4px_rgba(0,0,0,0.18),0_2px_5px_-1px_rgba(0,0,0,0.12)] hover:shadow-[0_18px_32px_-6px_rgba(0,0,0,0.28),0_8px_12px_-2px_rgba(0,0,0,0.16)] paper-ruling-lines overflow-hidden"
                 style={{
-                  backgroundColor: task.paperColor || (isBlue ? '#C7CEEA' : '#B5EAD7'),
-                  borderColor: isBlue ? '#6366f1' : '#10b981',
+                  backgroundColor: task.paperColor || (isBlue ? '#A9C9E9' : '#C6DF9C'),
+                  borderColor: isBlue ? 'rgba(99,102,241,0.4)' : 'rgba(16,185,129,0.4)',
                   color: '#1c1917',
                   transform: `rotate(${angle}deg)`,
                 }}
               >
+                {/* Physical Top Adhesive Strip */}
+                <div className="sticky-adhesive-strip" />
+
+                {/* Bottom Right Corner Curl */}
+                <div className="paper-dogear-curl" />
+
                 {/* Pushpin */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
                   <RedPushPin color={isBlue ? 'blue' : 'green'} size={28} />
@@ -391,7 +403,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                 draggable
                 onDragStart={(e) => handleDragStart(e, task.id)}
                 onClick={() => onSelectTask(task)}
-                className="group relative w-full max-w-[270px] mx-auto p-4 pt-6 rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.02] select-none shadow-sm opacity-90 hover:opacity-100"
+                className="group relative w-full max-w-[270px] mx-auto p-4 pt-6 rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.02] hover:z-20 select-none shadow-[0_6px_14px_-3px_rgba(0,0,0,0.15),0_2px_4px_-1px_rgba(0,0,0,0.1)] opacity-90 hover:opacity-100 paper-ruling-lines overflow-hidden"
                 style={{
                   backgroundColor: task.paperColor || bgColor,
                   borderColor: 'rgba(0,0,0,0.15)',
@@ -399,6 +411,12 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                   transform: `rotate(${angle}deg)`,
                 }}
               >
+                {/* Physical Top Adhesive Strip */}
+                <div className="sticky-adhesive-strip" />
+
+                {/* Bottom Right Corner Curl */}
+                <div className="paper-dogear-curl" />
+
                 {/* Pushpin */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
                   <RedPushPin color="purple" size={28} />
