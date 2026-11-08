@@ -11,6 +11,12 @@ import { StudioBoardView } from './components/StudioBoardView';
 import { StudioWallAtmosphere } from './components/StudioWallAtmosphere';
 import { StudioTopMural } from './components/StudioTopMural';
 import { StudioRightPanel } from './components/StudioRightPanel';
+import { FocusRoomView } from './components/FocusRoomView';
+import { CanvasWallView } from './components/CanvasWallView';
+import { AnalyticsDashboardView } from './components/AnalyticsDashboardView';
+import { WorkflowStageView } from './components/WorkflowStageView';
+import { ProjectsHubView } from './components/ProjectsHubView';
+import { ProjectDetailView } from './components/ProjectDetailView';
 import { MagicPlusButton } from './components/MagicPlusButton';
 import { TaskDetailDrawer } from './components/TaskDetailDrawer';
 import { WidgetCenterModal } from './components/WidgetCenterModal';
@@ -334,6 +340,7 @@ export function App() {
     section: ThingsSection;
     colorHex?: string;
     status?: Task['status'];
+    projectId?: string;
   }) => {
     const defaultColor = parsed.colorHex || '#fef08a';
 
@@ -344,7 +351,7 @@ export function App() {
       checklists: [],
       section: parsed.section,
       isThisEvening: parsed.isThisEvening || false,
-      projectId: selectedProjectId || undefined,
+      projectId: parsed.projectId || selectedProjectId || undefined,
       priority: parsed.priority,
       status: parsed.status || 'todo',
       tags: parsed.tags,
@@ -443,7 +450,33 @@ export function App() {
 
           {/* Active View Container */}
           <div className="w-full flex-1">
-            {viewMode === 'board' && !selectedProjectId ? (
+            {selectedProject ? (
+              /* Project Details View */
+              <ProjectDetailView
+                project={selectedProject}
+                tasks={tasks}
+                onBack={() => setSelectedProjectId(null)}
+                onSelectTask={setSelectedTask}
+                onToggleComplete={handleToggleComplete}
+                onQuickAdd={(title, priority) => handleMagicAdd({
+                  title,
+                  priority: priority || 'normal',
+                  tags: [],
+                  section: 'today',
+                  projectId: selectedProject.id,
+                })}
+                onOpenEditProject={() => setIsProjectModalOpen(true)}
+              />
+            ) : viewMode === 'projects' ? (
+              /* Projects Hub Overview */
+              <ProjectsHubView
+                projects={projects}
+                tasks={tasks}
+                areas={areas}
+                onSelectProject={(id) => setSelectedProjectId(id)}
+                onOpenNewProject={() => setIsProjectModalOpen(true)}
+              />
+            ) : viewMode === 'board' ? (
               /* My Board: 3-Column Sticky Note Kanban */
               <StudioBoardView
                 tasks={tasks}
@@ -460,87 +493,55 @@ export function App() {
                   priority: 'normal',
                   tags: ['Study'],
                   section: 'today',
-                  colorHex: '#FFF380',
+                  colorHex: '#F8D979',
                 })}
               />
-            ) : viewMode === 'focus' || (currentSection === 'today' && !selectedProjectId) ? (
-              /* Focus Room: Hero Canary Yellow Note + Quiet Queue */
-              <FocusView
+            ) : viewMode === 'focus' ? (
+              /* Focus Room: Immersive Study Room with Circular Timer, Sounds & Progress */
+              <FocusRoomView
                 tasks={visibleTasks}
-                allTasks={tasks}
                 projects={projects}
-                onToggleComplete={handleToggleComplete}
                 onSelectTask={setSelectedTask}
-                onToggleTimer={handleToggleTimer}
+                onToggleComplete={handleToggleComplete}
                 onUpdateTask={handleSaveTask}
-                onDeleteTask={handleDeleteTask}
-                onReorderTasks={handleReorderTasks}
                 audioEnabled={permissions.audioEnabled}
-                onQuickAdd={(title, priority) => handleMagicAdd({
-                  title: title || 'New note',
-                  priority: priority || 'normal',
-                  tags: [],
-                  section: 'today',
-                  colorHex: '#fef08a',
-                })}
-                density={density}
-                onToggleDensity={handleToggleDensity}
               />
-            ) : viewMode === 'canvas' || viewMode === 'canvas_3d' || viewMode === 'sticky_wall' ? (
-              /* Canvas Wall: 3D Spatial Wall with Tilt */
-              <CanvasView
+            ) : viewMode === 'canvas' ? (
+              /* Canvas Wall: Visual Thinking Studio & Brainstorming Ideas Board */
+              <CanvasWallView
                 tasks={visibleTasks}
                 projects={projects}
-                onToggleComplete={handleToggleComplete}
                 onSelectTask={setSelectedTask}
-                onToggleTimer={handleToggleTimer}
-                onUpdateTask={handleSaveTask}
-                onDeleteTask={handleDeleteTask}
-                audioEnabled={permissions.audioEnabled}
                 onQuickAdd={() => handleMagicAdd({
                   title: 'New note',
                   priority: 'normal',
                   tags: [],
                   section: currentSection,
+                  colorHex: '#F8D979',
                 })}
-                onReorderTasks={handleReorderTasks}
-                debugMode={debugMode}
               />
-            ) : viewMode === 'connections' || viewMode === 'network_3d' ? (
-              /* Analytics: 3D Constellation */
-              <NetworkGraph3DView
+            ) : viewMode === 'analytics' || viewMode === 'connections' ? (
+              /* Analytics & Interactive Network Graph */
+              <AnalyticsDashboardView
                 tasks={tasks}
                 projects={projects}
                 onSelectTask={setSelectedTask}
-                onToggleComplete={handleToggleComplete}
-                onToggleTimer={handleToggleTimer}
-                onUpdateTask={handleSaveTask}
-                onQuickAdd={() => handleMagicAdd({
-                  title: 'New note',
-                  priority: 'normal',
-                  tags: [],
-                  section: currentSection,
-                })}
               />
             ) : (
-              /* Section / Project Task List View (Inbox, Upcoming, Anytime, Someday, Logbook, or Project) */
-              <TaskListView
+              /* Workflow Stages: Today, Inbox, Upcoming, Anytime, Someday, Logbook */
+              <WorkflowStageView
                 section={currentSection}
-                selectedProject={selectedProject}
-                tasks={visibleTasks}
+                tasks={tasks}
                 projects={projects}
                 onToggleComplete={handleToggleComplete}
                 onSelectTask={setSelectedTask}
                 onToggleTimer={handleToggleTimer}
-                onUpdateTask={handleSaveTask}
-                onDeleteTask={handleDeleteTask}
-                onReorderTasks={handleReorderTasks}
-                audioEnabled={permissions.audioEnabled}
                 onQuickAdd={(title, priority) => handleMagicAdd({
                   title: title || 'New note',
                   priority: priority || 'normal',
                   tags: [],
                   section: currentSection,
+                  colorHex: '#F8D979',
                 })}
               />
             )}

@@ -107,3 +107,4 @@ export const StudioTopMural: React.FC<StudioTopMuralProps> = ({ compact = false 
     </div>
   );
 };
+

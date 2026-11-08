@@ -261,22 +261,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {!isCollapsed && <span>Canvas Wall</span>}
             </button>
 
-            {/* Analytics / Connections */}
+            {/* Analytics */}
             <button
               type="button"
               onClick={() => {
                 onSelectProject(null);
-                onChangeViewMode('connections');
+                onChangeViewMode('analytics');
                 onCloseMobile();
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${
-                viewMode === 'connections' && !selectedProjectId
+                (viewMode === 'analytics' || viewMode === 'connections' || viewMode === 'network_3d') && !selectedProjectId
                   ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
               } ${isCollapsed ? 'justify-center px-0' : ''}`}
-              title="Analytics (3D Network Constellation)"
+              title="Analytics & Network Graph"
             >
-              <Network className="w-4 h-4 text-sky-300 shrink-0" />
+              <Network className="w-4 h-4 text-cyan-300 shrink-0" />
               {!isCollapsed && <span>Analytics</span>}
             </button>
           </nav>
@@ -332,13 +332,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && (
             <div className="pt-3 pb-3 border-b border-white/10">
               <div className="flex items-center justify-between px-2 py-1 text-[10px] text-white/50 font-bold uppercase tracking-wider mb-1">
-                <span 
-                  onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
-                  className="cursor-pointer hover:text-white transition flex items-center gap-1"
-                >
-                  <span>Projects</span>
-                  <ChevronDown className={`w-3 h-3 transition-transform ${isProjectsExpanded ? '' : '-rotate-90'}`} />
-                </span>
+                <div className="flex items-center gap-1">
+                  <span 
+                    onClick={() => {
+                      onSelectProject(null);
+                      onChangeViewMode('projects');
+                      onCloseMobile();
+                    }}
+                    className={`cursor-pointer transition flex items-center gap-1 ${
+                      viewMode === 'projects' && !selectedProjectId ? 'text-amber-300 font-black' : 'hover:text-white'
+                    }`}
+                    title="View all projects hub"
+                  >
+                    <span>Projects</span>
+                  </span>
+                  <button 
+                    type="button"
+                    onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
+                    className="p-0.5 text-white/50 hover:text-white"
+                  >
+                    <ChevronDown className={`w-3 h-3 transition-transform ${isProjectsExpanded ? '' : '-rotate-90'}`} />
+                  </button>
+                </div>
 
                 <div className="relative">
                   <button

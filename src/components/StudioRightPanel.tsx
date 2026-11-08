@@ -142,3 +142,4 @@ export const StudioRightPanel: React.FC<StudioRightPanelProps> = ({
     </aside>
   );
 };
+

@@ -8,7 +8,65 @@ export interface StickyColorOption {
   accent: string;
 }
 
+// Knovera Master Physical Creative Studio Palette
+export const KNOVERA_PALETTE = {
+  warmCream: '#F6EBDD',
+  sand: '#D8C5A8',
+  deepCharcoal: '#25231F',
+  mutedBrown: '#695747',
+  stickyYellow: '#F8D979',
+  pastelGreen: '#C6DF9C',
+  pastelPink: '#F1A6A6',
+  lavender: '#D7B7EE',
+  softBlue: '#A9C9E9',
+} as const;
+
 export const STICKY_COLORS: StickyColorOption[] = [
+  {
+    id: 'sticky_yellow',
+    name: 'Sticky Yellow',
+    colorHex: '#F8D979',
+    rgb: 'rgb(248, 217, 121)',
+    bgLight: '#F8D979',
+    bgDark: '#2a2412',
+    accent: '#d97706',
+  },
+  {
+    id: 'pastel_green',
+    name: 'Pastel Green',
+    colorHex: '#C6DF9C',
+    rgb: 'rgb(198, 223, 156)',
+    bgLight: '#C6DF9C',
+    bgDark: '#1a2914',
+    accent: '#4d7c0f',
+  },
+  {
+    id: 'pastel_pink',
+    name: 'Pastel Pink',
+    colorHex: '#F1A6A6',
+    rgb: 'rgb(241, 166, 166)',
+    bgLight: '#F1A6A6',
+    bgDark: '#331a1a',
+    accent: '#e11d48',
+  },
+  {
+    id: 'lavender',
+    name: 'Lavender',
+    colorHex: '#D7B7EE',
+    rgb: 'rgb(215, 183, 238)',
+    bgLight: '#D7B7EE',
+    bgDark: '#241a2e',
+    accent: '#7c3aed',
+  },
+  {
+    id: 'soft_blue',
+    name: 'Soft Blue',
+    colorHex: '#A9C9E9',
+    rgb: 'rgb(169, 201, 233)',
+    bgLight: '#A9C9E9',
+    bgDark: '#14202e',
+    accent: '#2563eb',
+  },
   {
     id: 'canary_yellow',
     name: 'Canary Yellow',
@@ -28,33 +86,6 @@ export const STICKY_COLORS: StickyColorOption[] = [
     accent: '#2d6a4f',
   },
   {
-    id: 'neon_coral',
-    name: 'Neon Coral',
-    colorHex: '#FF9AA2',
-    rgb: 'rgb(255, 154, 162)',
-    bgLight: '#FF9AA2',
-    bgDark: '#33191b',
-    accent: '#e11d48',
-  },
-  {
-    id: 'mint_sage',
-    name: 'Mint Sage',
-    colorHex: '#B5EAD7',
-    rgb: 'rgb(181, 234, 215)',
-    bgLight: '#B5EAD7',
-    bgDark: '#12251e',
-    accent: '#059669',
-  },
-  {
-    id: 'sky_blue',
-    name: 'Sky Blue',
-    colorHex: '#C7CEEA',
-    rgb: 'rgb(199, 206, 234)',
-    bgLight: '#C7CEEA',
-    bgDark: '#181b2c',
-    accent: '#3b82f6',
-  },
-  {
     id: 'kraft_brown',
     name: 'Kraft Brown',
     colorHex: '#E6CCB2',
@@ -66,9 +97,9 @@ export const STICKY_COLORS: StickyColorOption[] = [
   {
     id: 'charcoal_black',
     name: 'Charcoal Black',
-    colorHex: '#2B2B2B',
-    rgb: 'rgb(43, 43, 43)',
-    bgLight: '#2B2B2B',
+    colorHex: '#25231F',
+    rgb: 'rgb(37, 35, 31)',
+    bgLight: '#25231F',
     bgDark: '#1a1a1a',
     accent: '#ffffff',
   },
@@ -82,7 +113,7 @@ export const STICKY_COLORS: StickyColorOption[] = [
     accent: '#d97706',
   },
   {
-    id: 'lavender',
+    id: 'lavender_mist',
     name: 'Lavender Mist',
     colorHex: '#e9d5ff',
     rgb: 'rgb(233, 213, 255)',

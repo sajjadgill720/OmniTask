@@ -175,3 +175,4 @@ export const StudioWallAtmosphere: React.FC = () => {
     </>
   );
 };
+

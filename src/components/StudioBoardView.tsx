@@ -456,3 +456,4 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
     </div>
   );
 };
+
