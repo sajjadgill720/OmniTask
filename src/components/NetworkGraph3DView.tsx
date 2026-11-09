@@ -35,6 +35,7 @@ interface NetworkGraph3DViewProps {
   onToggleTimer?: (id: string) => void;
   onUpdateTask?: (task: Task) => void;
   onQuickAdd: () => void;
+  onBack?: () => void;
 }
 
 interface Node3D {
@@ -67,6 +68,7 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
   onToggleTimer,
   onUpdateTask,
   onQuickAdd,
+  onBack,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [selectedNode, setSelectedNode] = useState<Node3D | null>(null);
@@ -438,10 +440,19 @@ export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
       {/* 3D Network Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-slate-200/80 dark:border-white/10 gap-3">
         <div>
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition mb-1 flex items-center gap-1 cursor-pointer"
+            >
+              <span>‹ Back to Analytics Dashboard</span>
+            </button>
+          )}
           <div className="flex items-center gap-2 mb-0.5">
             <span className="text-xl">🕸️</span>
             <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
-              Connections — 3D Network
+              Connections — 3D Network Galaxy
             </h2>
             <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300/40 dark:border-amber-900/50 text-xs font-bold font-mono">
               {nodes.length} Nodes • {edges.length} Edges

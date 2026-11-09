@@ -14,7 +14,8 @@ import {
   Trash2,
   X,
   Sparkles,
-  Link2
+  Link2,
+  Box
 } from 'lucide-react';
 import { Task, Project } from '../types';
 import { RedPushPin } from './RedPushPin';
@@ -43,6 +44,7 @@ interface CanvasWallViewProps {
   projects: Project[];
   onSelectTask: (task: Task) => void;
   onQuickAdd: () => void;
+  onToggle3DSpatial?: () => void;
 }
 
 /**
@@ -96,6 +98,7 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
   projects,
   onSelectTask,
   onQuickAdd,
+  onToggle3DSpatial,
 }) => {
   // Zoom & Pan state
   const [zoomLevel, setZoomLevel] = useState<number>(100);
@@ -454,6 +457,20 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
           >
             <ImageIcon className="w-4 h-4" />
           </button>
+
+          {onToggle3DSpatial && (
+            <>
+              <div className="w-full h-px bg-white/20 my-1" />
+              <button
+                type="button"
+                onClick={onToggle3DSpatial}
+                className="p-2 rounded-xl text-amber-300 hover:text-white hover:bg-amber-500/20 transition cursor-pointer group relative"
+                title="Launch 3D Spatial Canvas Stage ↗"
+              >
+                <Box className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
 
         {/* Dynamic Instruction Banner for Flow Mode */}

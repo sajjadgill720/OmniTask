@@ -33,6 +33,7 @@ interface SpatialCanvas3DViewProps {
   onQuickAdd: (status?: Task['status']) => void;
   onReorderTasks?: (sourceId: string, targetId: string) => void;
   onMoveTaskStatus?: (taskId: string, newStatus: Task['status']) => void;
+  onBack?: () => void;
 }
 
 export type Preset3D = 'isometric' | 'gyro' | 'flat';
@@ -52,6 +53,7 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
   onQuickAdd,
   onReorderTasks,
   onMoveTaskStatus,
+  onBack,
 }) => {
   const [arrangement, setArrangement] = useState<SpatialArrangement>('pedestals');
   const [preset, setPreset] = useState<Preset3D>('isometric');
@@ -140,6 +142,15 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
       {/* 3D Canvas Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-slate-200/80 dark:border-white/10 gap-3">
         <div>
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="text-xs font-semibold text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 transition mb-1.5 flex items-center gap-1 cursor-pointer"
+            >
+              <span>‹ Back to Canvas Wall</span>
+            </button>
+          )}
           <div className="flex items-center gap-2 mb-0.5">
             <span className="text-xl">🪐</span>
             <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">

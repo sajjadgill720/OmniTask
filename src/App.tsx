@@ -7,7 +7,9 @@ import { StudioTopMural } from './components/StudioTopMural';
 import { StudioRightPanel } from './components/StudioRightPanel';
 import { FocusRoomView } from './components/FocusRoomView';
 import { CanvasWallView } from './components/CanvasWallView';
+import { SpatialCanvas3DView } from './components/SpatialCanvas3DView';
 import { AnalyticsDashboardView } from './components/AnalyticsDashboardView';
+import { NetworkGraph3DView } from './components/NetworkGraph3DView';
 import { WorkflowStageView } from './components/WorkflowStageView';
 import { ProjectsHubView } from './components/ProjectsHubView';
 import { ProjectDetailView } from './components/ProjectDetailView';
@@ -513,13 +515,57 @@ export function App() {
                   section: currentSection,
                   colorHex: '#F8D979',
                 })}
+                onToggle3DSpatial={() => handleChangeViewMode('canvas_3d')}
               />
-            ) : viewMode === 'analytics' || viewMode === 'connections' ? (
+            ) : viewMode === 'canvas_3d' ? (
+              /* Spatial Canvas 3D: Isometric & Gyro 3D Pedestal Wall */
+              <SpatialCanvas3DView
+                title="Knovera Wall"
+                subtitle="Visual Brainstorming Studio"
+                tasks={visibleTasks}
+                projects={projects}
+                onToggleComplete={handleToggleComplete}
+                onSelectTask={setSelectedTask}
+                onToggleTimer={handleToggleTimer}
+                onUpdateTask={handleSaveTask}
+                onDeleteTask={handleDeleteTask}
+                audioEnabled={permissions.audioEnabled}
+                onQuickAdd={(status) => handleMagicAdd({
+                  title: 'New note',
+                  priority: 'normal',
+                  tags: [],
+                  section: currentSection,
+                  status: status || 'todo',
+                  colorHex: '#F8D979',
+                })}
+                onMoveTaskStatus={handleMoveTaskStatus}
+                onBack={() => handleChangeViewMode('canvas')}
+              />
+            ) : viewMode === 'connections' || viewMode === 'network_3d' ? (
+              /* 3D Constellation Galaxy View */
+              <NetworkGraph3DView
+                tasks={tasks}
+                projects={projects}
+                onSelectTask={setSelectedTask}
+                onToggleComplete={handleToggleComplete}
+                onToggleTimer={handleToggleTimer}
+                onUpdateTask={handleSaveTask}
+                onQuickAdd={() => handleMagicAdd({
+                  title: 'New note',
+                  priority: 'normal',
+                  tags: [],
+                  section: currentSection,
+                  colorHex: '#F8D979',
+                })}
+                onBack={() => handleChangeViewMode('analytics')}
+              />
+            ) : viewMode === 'analytics' ? (
               /* Analytics & Interactive Network Graph */
               <AnalyticsDashboardView
                 tasks={tasks}
                 projects={projects}
                 onSelectTask={setSelectedTask}
+                onOpen3DConstellation={() => handleChangeViewMode('connections')}
               />
             ) : (
               /* Workflow Stages: Today, Inbox, Upcoming, Anytime, Someday, Logbook */

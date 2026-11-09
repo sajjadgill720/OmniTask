@@ -12,7 +12,8 @@ import {
   Filter, 
   Star,
   Activity,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from 'lucide-react';
 import { Task, Project } from '../types';
 
@@ -20,12 +21,14 @@ interface AnalyticsDashboardViewProps {
   tasks: Task[];
   projects: Project[];
   onSelectTask: (task: Task) => void;
+  onOpen3DConstellation?: () => void;
 }
 
 export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
   tasks,
   projects,
   onSelectTask,
+  onOpen3DConstellation,
 }) => {
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'year'>('week');
   const [graphFilter, setGraphFilter] = useState<'all' | 'tasks' | 'projects' | 'notes'>('all');
@@ -411,8 +414,21 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
             </div>
           </div>
 
-          {/* Filter Pills with real counts */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/5 border border-white/10 text-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            {onOpen3DConstellation && (
+              <button
+                type="button"
+                onClick={onOpen3DConstellation}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-bold text-xs flex items-center gap-1.5 shadow-md transition cursor-pointer"
+                title="Launch full 3D interactive orbit constellation"
+              >
+                <Sparkles className="w-3.5 h-3.5 fill-stone-950" />
+                <span>Launch 3D Constellation ↗</span>
+              </button>
+            )}
+
+            {/* Filter Pills with real counts */}
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/5 border border-white/10 text-xs">
             {(['all', 'tasks', 'projects', 'notes'] as const).map(tab => {
               const count = tab === 'all' 
                 ? (tasks.length + projects.length)
@@ -435,6 +451,7 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
                 </button>
               );
             })}
+            </div>
           </div>
         </div>
 

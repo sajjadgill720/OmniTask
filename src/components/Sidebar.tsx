@@ -249,7 +249,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onCloseMobile();
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${
-                viewMode === 'canvas' && !selectedProjectId
+                (viewMode === 'canvas' || viewMode === 'canvas_3d') && !selectedProjectId
                   ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
               } ${isCollapsed ? 'justify-center px-0' : ''}`}
