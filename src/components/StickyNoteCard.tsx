@@ -745,10 +745,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
                 }
               }}
               className="w-full p-1 text-2xl font-handwriting bg-white/70 dark:bg-black/30 border border-blue-500 rounded focus:outline-none"
-              style={{ 
-              color: paperStyle.inkColor,
-              textShadow: useHandwriting ? '0 0 0.35px rgba(0,0,0,0.3), 0.2px 0.2px 0.5px rgba(0,0,0,0.1)' : undefined,
-            }}
+              style={{ color: paperStyle.inkColor }}
             />
           </form>
         ) : (
@@ -760,10 +757,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
             className={`text-2xl sm:text-[26px] font-bold leading-tight break-words cursor-text transition rounded px-0.5 ${
               useHandwriting ? 'font-handwriting' : 'font-sans text-lg font-bold'
             } ${lineStyle === 'ruled' || lineStyle === 'lines' || lineStyle === 'stencil' ? 'leading-[28px]' : ''} ${isDone ? 'marker-strike opacity-60' : ''}`}
-            style={{ 
-              color: paperStyle.inkColor,
-              textShadow: useHandwriting ? '0 0 0.4px rgba(0,0,0,0.35), 0.2px 0.2px 0.6px rgba(0,0,0,0.12)' : undefined,
-            }}
+            style={{ color: paperStyle.inkColor }}
             title="Click to edit title"
           >
             {task.title || 'Untitled Post-it'}
@@ -782,10 +776,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
               className={`w-full p-1.5 text-lg font-handwriting bg-white/70 dark:bg-black/30 border border-blue-500 rounded focus:outline-none resize-none ${
                 lineStyle === 'ruled' || lineStyle === 'lines' || lineStyle === 'stencil' ? 'leading-[28px]' : ''
               }`}
-              style={{ 
-              color: paperStyle.inkColor,
-              textShadow: useHandwriting ? '0 0 0.35px rgba(0,0,0,0.3), 0.2px 0.2px 0.5px rgba(0,0,0,0.1)' : undefined,
-            }}
+              style={{ color: paperStyle.inkColor }}
               placeholder="Jot down notes in ink..."
             />
           </div>
@@ -798,10 +789,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
             className={`text-base sm:text-lg mt-1 line-clamp-4 leading-snug break-words font-medium cursor-text opacity-90 transition rounded px-0.5 ${
               useHandwriting ? 'font-handwriting' : 'font-sans text-xs'
             } ${lineStyle === 'ruled' || lineStyle === 'lines' || lineStyle === 'stencil' ? 'leading-[28px]' : ''}`}
-            style={{ 
-              color: paperStyle.inkColor,
-              textShadow: useHandwriting ? '0 0 0.35px rgba(0,0,0,0.3), 0.2px 0.2px 0.5px rgba(0,0,0,0.1)' : undefined,
-            }}
+            style={{ color: paperStyle.inkColor }}
             title="Click to edit notes"
           >
             {task.notes || <span className="opacity-30 italic text-sm">Write notes here...</span>}
@@ -827,10 +815,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
                   className={`text-base leading-tight ${
                     useHandwriting ? 'font-handwriting' : 'text-xs'
                   } ${c.completed ? 'line-through opacity-55' : ''}`}
-                  style={{ 
-              color: paperStyle.inkColor,
-              textShadow: useHandwriting ? '0 0 0.35px rgba(0,0,0,0.3), 0.2px 0.2px 0.5px rgba(0,0,0,0.1)' : undefined,
-            }}
+                  style={{ color: paperStyle.inkColor }}
                 >
                   {c.text}
                 </span>
@@ -870,10 +855,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
               setIsAddingItem(true);
             }}
             className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition flex items-center gap-1 text-sm font-handwriting hover:underline cursor-pointer mt-1"
-            style={{ 
-              color: paperStyle.inkColor,
-              textShadow: useHandwriting ? '0 0 0.35px rgba(0,0,0,0.3), 0.2px 0.2px 0.5px rgba(0,0,0,0.1)' : undefined,
-            }}
+            style={{ color: paperStyle.inkColor }}
           >
             <Plus className="w-3 h-3" />
             <span>+ add item</span>
