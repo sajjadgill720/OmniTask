@@ -103,11 +103,11 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({
                 className="w-3.5 h-3.5 rounded-full shrink-0 shadow-md"
                 style={{ backgroundColor: project.colorHex || '#3b82f6' }}
               />
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-xs">
+              <h1 className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-white tracking-tight drop-shadow-xs">
                 {project.title}
               </h1>
             </div>
-            <p className="text-xs text-white/60 pl-6.5 max-w-xl">
+            <p className="text-xs text-stone-600 dark:text-white/60 pl-6.5 max-w-xl">
               {project.description || 'Build, ship and grow. Focus on delivering measurable impact.'}
             </p>
           </div>

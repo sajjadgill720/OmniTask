@@ -125,39 +125,41 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
     <div className="w-full max-w-5xl mx-auto px-4 py-4 select-none space-y-6">
       
       {/* Top Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-white/10 gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-stone-300/60 dark:border-white/10 gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-2xl bg-amber-400/20 border border-amber-400/40">
             {meta.icon}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-xs">
+              <h1 className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-white tracking-tight drop-shadow-xs">
                 {meta.title}
               </h1>
-              <span className="text-xs font-mono font-bold text-white/50">
+              <span className="text-xs font-mono font-bold text-stone-500 dark:text-white/50">
                 {totalCount} {totalCount === 1 ? 'task' : 'tasks'}
               </span>
             </div>
-            <p className="text-xs text-white/60 font-medium">{meta.subtitle}</p>
+            <p className="text-xs text-stone-600 dark:text-white/60 font-medium">{meta.subtitle}</p>
           </div>
         </div>
 
         {/* Date Pill & Filter */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/40 border border-white/15 text-xs text-white/80 font-mono">
-            <Calendar className="w-3.5 h-3.5 text-amber-400" />
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900/10 dark:bg-black/40 border border-stone-300 dark:border-white/15 text-xs text-stone-800 dark:text-white/80 font-mono">
+            <Calendar className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
             <span>{todayDateString}</span>
           </div>
 
-          <div className="flex items-center p-0.5 rounded-xl bg-black/40 border border-white/15 text-xs">
+          <div className="flex items-center p-0.5 rounded-xl bg-stone-900/10 dark:bg-black/40 border border-stone-300 dark:border-white/15 text-xs">
             {(['all', 'active', 'completed'] as const).map(tab => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setActiveFilter(tab)}
-                className={`px-2.5 py-1 rounded-lg font-bold transition capitalize ${
-                  activeFilter === tab ? 'bg-amber-400 text-stone-950' : 'text-white/60 hover:text-white'
+                className={`px-2.5 py-1 rounded-lg font-bold transition capitalize cursor-pointer ${
+                  activeFilter === tab 
+                    ? 'bg-amber-400 text-stone-950 shadow-xs' 
+                    : 'text-stone-600 dark:text-white/60 hover:text-stone-900 dark:hover:text-white'
                 }`}
               >
                 {tab}
@@ -169,14 +171,14 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
 
       {/* Progress Metric Bar */}
       {totalCount > 0 && (
-        <div className="p-4 rounded-2xl bg-black/45 dark:bg-black/60 backdrop-blur-xl border border-white/15 shadow-md">
-          <div className="flex items-center justify-between text-xs font-bold text-white mb-1.5">
-            <span className="text-white/70">
+        <div className="p-4 rounded-2xl bg-white/80 dark:bg-black/60 backdrop-blur-xl border border-stone-200/90 dark:border-white/15 shadow-md">
+          <div className="flex items-center justify-between text-xs font-bold text-stone-900 dark:text-white mb-1.5">
+            <span className="text-stone-600 dark:text-white/70">
               {completedCount} of {totalCount} completed
             </span>
-            <span className="font-mono text-emerald-400">{progressPercent}%</span>
+            <span className="font-mono text-emerald-600 dark:text-emerald-400">{progressPercent}%</span>
           </div>
-          <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+          <div className="w-full h-2 rounded-full bg-stone-200 dark:bg-white/10 overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
@@ -194,15 +196,15 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
           {/* Quick Capture Input */}
           <form 
             onSubmit={handleInlineAdd}
-            className="flex items-center gap-2.5 p-2 px-3 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/15 shadow-md text-white focus-within:ring-2 focus-within:ring-amber-400/40 transition-all"
+            className="flex items-center gap-2.5 p-2 px-3 rounded-2xl bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-stone-300/80 dark:border-white/15 shadow-md text-stone-900 dark:text-white focus-within:ring-2 focus-within:ring-amber-400/40 transition-all"
           >
-            <Plus className="w-4 h-4 text-amber-400 shrink-0" />
+            <Plus className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />
             <input
               type="text"
               value={quickTitle}
               onChange={(e) => setQuickTitle(e.target.value)}
               placeholder={`Add task to ${meta.title}... (Press Enter)`}
-              className="flex-1 bg-transparent border-none text-xs sm:text-sm text-white placeholder-white/50 focus:outline-none"
+              className="flex-1 bg-transparent border-none text-xs sm:text-sm text-stone-900 dark:text-white placeholder-stone-500 dark:placeholder-white/50 focus:outline-none"
             />
             <button
               type="submit"
@@ -225,7 +227,7 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
                 <div
                   key={task.id}
                   onClick={() => onSelectTask(task)}
-                  className={`flex items-center justify-between p-3.5 rounded-2xl bg-black/45 dark:bg-black/60 backdrop-blur-xl border border-white/15 shadow-md transition-all cursor-pointer hover:bg-black/55 ${
+                  className={`flex items-center justify-between p-3.5 rounded-2xl bg-white/85 dark:bg-black/60 backdrop-blur-xl border border-stone-200/90 dark:border-white/15 shadow-md transition-all cursor-pointer hover:bg-white dark:hover:bg-black/75 text-stone-900 dark:text-white ${
                     isDone ? 'opacity-60' : 'hover:scale-[1.01]'
                   }`}
                   style={{
@@ -248,7 +250,7 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
                       className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition shrink-0 ${
                         isDone 
                           ? 'bg-emerald-500 border-emerald-500 text-white' 
-                          : 'border-white/40 hover:border-emerald-400'
+                          : 'border-stone-400 dark:border-white/40 hover:border-emerald-500'
                       }`}
                     >
                       {isDone && <Check className="w-2.5 h-2.5 stroke-[3]" />}
@@ -256,12 +258,12 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
 
                     <div className="truncate flex-1">
                       <span className={`text-xs sm:text-sm font-semibold truncate block ${
-                        isDone ? 'line-through text-white/50' : 'text-white font-handwriting text-sm tracking-wide'
+                        isDone ? 'line-through text-stone-400 dark:text-white/50' : 'text-stone-900 dark:text-white font-handwriting text-sm tracking-wide'
                       }`}>
                         {task.title}
                       </span>
                       {proj && (
-                        <span className="text-[10px] text-white/50 block">
+                        <span className="text-[10px] text-stone-500 dark:text-white/50 block">
                           {proj.title}
                         </span>
                       )}
@@ -271,19 +273,19 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
                   {/* Metadata: Category Pill + Due Date + Scheduled Time */}
                   <div className="flex items-center gap-2.5 shrink-0 text-xs">
                     {task.dueDate && (
-                      <span className="font-mono text-[10px] text-amber-300 font-bold flex items-center gap-1 bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-400/30">
+                      <span className="font-mono text-[10px] text-amber-700 dark:text-amber-300 font-bold flex items-center gap-1 bg-amber-400/20 dark:bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-500/30 dark:border-amber-400/30">
                         <span>📅</span>
                         <span>{task.dueDate}</span>
                       </span>
                     )}
 
                     {task.tags.slice(0, 1).map(tag => (
-                      <span key={tag} className="px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 text-[10px] font-bold">
+                      <span key={tag} className="px-2 py-0.5 rounded-lg bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-400/30 text-[10px] font-bold">
                         {tag}
                       </span>
                     ))}
 
-                    <span className="font-mono text-[10px] text-white/60">
+                    <span className="font-mono text-[10px] text-stone-500 dark:text-white/60">
                       {scheduledTime}
                     </span>
                   </div>
@@ -292,7 +294,7 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
             })}
 
             {filteredTasks.length === 0 && (
-              <div className="py-12 text-center rounded-2xl bg-black/20 border border-dashed border-white/15 text-white/50 text-xs">
+              <div className="py-12 text-center rounded-2xl bg-stone-900/5 dark:bg-black/20 border border-dashed border-stone-300/80 dark:border-white/15 text-stone-500 dark:text-white/50 text-xs">
                 <span>No notes in this stage. Capture one above!</span>
               </div>
             )}

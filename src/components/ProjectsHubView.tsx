@@ -30,12 +30,12 @@ export const ProjectsHubView: React.FC<ProjectsHubViewProps> = ({
     <div className="w-full max-w-6xl mx-auto px-4 py-4 select-none space-y-6">
       
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-white/10 gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-stone-300/60 dark:border-white/10 gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-xs">
+          <h1 className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-white tracking-tight drop-shadow-xs">
             Projects
           </h1>
-          <p className="text-xs text-white/60 font-medium">
+          <p className="text-xs text-stone-600 dark:text-white/60 font-medium">
             Organize. Build. Grow.
           </p>
         </div>

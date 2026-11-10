@@ -177,18 +177,18 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
       {/* =======================================================================
           1. HEADER WITH TIMEFRAME PILLS
           ======================================================================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-stone-300/60 dark:border-white/10">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-xs">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900 dark:text-white drop-shadow-xs">
             Your Productivity Insights
           </h1>
-          <p className="text-xs font-medium text-white/60">
+          <p className="text-xs font-medium text-stone-600 dark:text-white/60">
             Track. Improve. Achieve.
           </p>
         </div>
 
         {/* Timeframe Filter Pills */}
-        <div className="flex items-center p-1 rounded-2xl bg-black/45 dark:bg-black/60 backdrop-blur-xl border border-white/15 shadow-md">
+        <div className="flex items-center p-1 rounded-2xl bg-stone-900/10 dark:bg-black/60 backdrop-blur-xl border border-stone-300 dark:border-white/15 shadow-md">
           {(['week', 'month', 'year'] as const).map(tf => (
             <button
               key={tf}
@@ -197,7 +197,7 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer capitalize ${
                 timeframe === tf
                   ? 'bg-amber-400 text-stone-950 shadow-sm'
-                  : 'text-white/70 hover:text-white'
+                  : 'text-stone-600 dark:text-white/70 hover:text-stone-900 dark:hover:text-white'
               }`}
             >
               {tf === 'week' ? 'This Week' : tf === 'month' ? 'This Month' : 'This Year'}
