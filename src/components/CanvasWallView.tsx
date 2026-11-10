@@ -1249,7 +1249,7 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
                   backgroundColor: node.colorHex,
                   transform: `rotate(${node.rotation}deg)`,
                 }}
-                className={`canvas-node group absolute z-20 p-3 pt-5 rounded-2xl border border-black/10 shadow-lg flex flex-col justify-between transition-shadow select-none paper-ruling-lines overflow-hidden ${
+                className={`canvas-node group absolute z-20 p-3 pt-5 rounded-2xl border border-black/10 shadow-lg flex flex-col justify-between transition-shadow select-none paper-ruling-lines realistic-postit paper-edge ${
                   isSource 
                     ? 'ring-4 ring-amber-400 ring-offset-2 scale-105 shadow-2xl animate-pulse' 
                     : isSelected 
