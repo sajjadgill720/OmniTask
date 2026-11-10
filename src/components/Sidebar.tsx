@@ -105,7 +105,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Section task counts
   const inboxCount = tasks.filter(t => t.section === 'inbox' && t.status !== 'done').length;
   const todayCount = tasks.filter(t => t.section === 'today' && t.status !== 'done').length;
-  const upcomingCount = tasks.filter(t => t.section === 'upcoming' && t.status !== 'done').length;
+  const upcomingCount = tasks.filter(t => (t.section === 'upcoming' || Boolean(t.dueDate)) && t.status !== 'done').length;
   const anytimeCount = tasks.filter(t => t.section === 'anytime' && t.status !== 'done').length;
   const somedayCount = tasks.filter(t => t.section === 'someday' && t.status !== 'done').length;
   const logbookCount = tasks.filter(t => t.status === 'done').length;

@@ -287,3 +287,4 @@ export async function deleteImageFromStorage(id: string): Promise<void> {
     console.error('Failed to delete image from IndexedDB:', err);
   }
 }
+

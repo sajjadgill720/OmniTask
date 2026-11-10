@@ -630,9 +630,7 @@ export function App() {
           onViewAllUpcoming={() => {
             setSelectedProjectId(null);
             setCurrentSection('upcoming');
-            if (viewMode === 'board') {
-              handleChangeViewMode('focus');
-            }
+            handleChangeViewMode('things_list');
           }}
         />
 

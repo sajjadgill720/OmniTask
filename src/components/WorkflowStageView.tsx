@@ -42,6 +42,14 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
 
   // Filter tasks belonging to current section
   const sectionTasks = useMemo(() => {
+    if (section === 'upcoming') {
+      return tasks
+        .filter(t => t.section === 'upcoming' || Boolean(t.dueDate))
+        .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+    }
+    if (section === 'logbook') {
+      return tasks.filter(t => t.status === 'done');
+    }
     return tasks.filter(t => t.section === section);
   }, [tasks, section]);
 
@@ -260,8 +268,15 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Metadata: Category Pill + Scheduled Time */}
+                  {/* Metadata: Category Pill + Due Date + Scheduled Time */}
                   <div className="flex items-center gap-2.5 shrink-0 text-xs">
+                    {task.dueDate && (
+                      <span className="font-mono text-[10px] text-amber-300 font-bold flex items-center gap-1 bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-400/30">
+                        <span>📅</span>
+                        <span>{task.dueDate}</span>
+                      </span>
+                    )}
+
                     {task.tags.slice(0, 1).map(tag => (
                       <span key={tag} className="px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 text-[10px] font-bold">
                         {tag}
