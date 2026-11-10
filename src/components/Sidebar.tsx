@@ -1,26 +1,26 @@
 import React, { useState } from 'react';
-import { 
-  Inbox, 
-  Star, 
-  Calendar, 
-  Compass, 
-  Archive, 
-  CheckCircle2, 
-  Plus, 
-  Columns3, 
-  Target, 
-  LayoutGrid, 
-  Network, 
-  Settings, 
-  ChevronDown, 
-  ChevronRight, 
-  PanelLeftClose, 
-  PanelLeftOpen, 
-  Folder, 
-  Tag, 
-  Crown, 
-  Layout, 
-  Bell, 
+import {
+  Inbox,
+  Star,
+  Calendar,
+  Compass,
+  Archive,
+  CheckCircle2,
+  Plus,
+  Columns3,
+  Target,
+  LayoutGrid,
+  Network,
+  Settings,
+  ChevronDown,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Folder,
+  Tag,
+  Crown,
+  Layout,
+  Bell,
   Sparkles,
   Sun,
   Moon
@@ -135,14 +135,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <>
       {/* Mobile Backdrop */}
       {isOpenMobile && (
-        <div 
+        <div
           onClick={onCloseMobile}
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
         />
       )}
 
       {/* Sleek Dark Translucent Glass Sidebar */}
-      <aside 
+      <aside
         className={`
           fixed lg:sticky top-4 left-0 z-40 max-h-[calc(100vh-2rem)]
           ${isCollapsed ? 'lg:w-20' : 'lg:w-60'} w-72
@@ -152,10 +152,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ${isOpenMobile ? 'translate-x-4' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        
+
         {/* Top Header & Branding */}
         <div>
-          
+
           {/* Header Layout: Collapsed vs Expanded */}
           {!isCollapsed ? (
             <div className="flex items-center justify-between mb-5 px-1">
@@ -201,7 +201,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               PRIMARY WORKSPACE VIEWS (Reference Photo Navigation)
               =================================================================== */}
           <nav className="space-y-1 text-xs font-semibold pb-4 border-b border-white/10">
-            
+
             {/* My Board */}
             <button
               type="button"
@@ -210,11 +210,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onChangeViewMode('board');
                 onCloseMobile();
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${
-                viewMode === 'board' && !selectedProjectId
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${viewMode === 'board' && !selectedProjectId
                   ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
-              } ${isCollapsed ? 'justify-center px-0' : ''}`}
+                } ${isCollapsed ? 'justify-center px-0' : ''}`}
               title="My Board (3-Column Sticky Kanban)"
             >
               <Columns3 className="w-4 h-4 text-amber-300 shrink-0" />
@@ -229,11 +228,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onChangeViewMode('focus');
                 onCloseMobile();
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${
-                viewMode === 'focus' && !selectedProjectId
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${viewMode === 'focus' && !selectedProjectId
                   ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
-              } ${isCollapsed ? 'justify-center px-0' : ''}`}
+                } ${isCollapsed ? 'justify-center px-0' : ''}`}
               title="Focus Room (Hero Note + Quiet Queue)"
             >
               <Target className="w-4 h-4 text-rose-300 shrink-0" />
@@ -248,11 +246,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onChangeViewMode('canvas');
                 onCloseMobile();
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${
-                (viewMode === 'canvas' || viewMode === 'canvas_3d') && !selectedProjectId
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${(viewMode === 'canvas' || viewMode === 'canvas_3d') && !selectedProjectId
                   ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
-              } ${isCollapsed ? 'justify-center px-0' : ''}`}
+                } ${isCollapsed ? 'justify-center px-0' : ''}`}
               title="Canvas Wall (Spatial 3D Canvas)"
             >
               <LayoutGrid className="w-4 h-4 text-emerald-300 shrink-0" />
@@ -267,11 +264,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onChangeViewMode('analytics');
                 onCloseMobile();
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${
-                (viewMode === 'analytics' || viewMode === 'connections' || viewMode === 'network_3d') && !selectedProjectId
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${(viewMode === 'analytics' || viewMode === 'connections' || viewMode === 'network_3d') && !selectedProjectId
                   ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
-              } ${isCollapsed ? 'justify-center px-0' : ''}`}
+                } ${isCollapsed ? 'justify-center px-0' : ''}`}
               title="Analytics & Network Graph"
             >
               <Network className="w-4 h-4 text-cyan-300 shrink-0" />
@@ -284,7 +280,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               =================================================================== */}
           {!isCollapsed && (
             <div className="pt-3 pb-3 border-b border-white/10">
-              <div 
+              <div
                 onClick={() => setIsSectionsExpanded(!isSectionsExpanded)}
                 className="flex items-center justify-between px-2 py-1 text-[10px] text-white/50 font-bold uppercase tracking-wider cursor-pointer hover:text-white transition"
               >
@@ -303,11 +299,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         key={sec.id}
                         type="button"
                         onClick={() => handleNavClick(sec.id)}
-                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs transition cursor-pointer ${
-                          isActive
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs transition cursor-pointer ${isActive
                             ? 'bg-white/20 text-white font-bold backdrop-blur-xs'
                             : 'text-white/70 hover:text-white hover:bg-white/10'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-2.5 truncate">
                           <Icon className={`w-3.5 h-3.5 ${sec.color}`} />
@@ -331,20 +326,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="pt-3 pb-3 border-b border-white/10">
               <div className="flex items-center justify-between px-2 py-1 text-[10px] text-white/50 font-bold uppercase tracking-wider mb-1">
                 <div className="flex items-center gap-1">
-                  <span 
+                  <span
                     onClick={() => {
                       onSelectProject(null);
                       onChangeViewMode('projects');
                       onCloseMobile();
                     }}
-                    className={`cursor-pointer transition flex items-center gap-1 ${
-                      viewMode === 'projects' && !selectedProjectId ? 'text-amber-300 font-black' : 'hover:text-white'
-                    }`}
+                    className={`cursor-pointer transition flex items-center gap-1 ${viewMode === 'projects' && !selectedProjectId ? 'text-amber-300 font-black' : 'hover:text-white'
+                      }`}
                     title="View all projects hub"
                   >
                     <span>Projects</span>
                   </span>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
                     className="p-0.5 text-white/50 hover:text-white"
@@ -365,7 +359,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                   {/* Add Contextual Dropdown */}
                   {showAddMenu && (
-                    <div 
+                    <div
                       onClick={(e) => e.stopPropagation()}
                       className="absolute right-0 top-6 z-50 w-40 p-1 bg-black/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/15 text-xs font-normal normal-case animate-pop-in"
                     >
@@ -425,11 +419,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               key={proj.id}
                               type="button"
                               onClick={() => handleProjectClick(proj.id)}
-                              className={`w-full flex items-center justify-between pl-4 pr-2 py-1 rounded-xl text-xs transition cursor-pointer ${
-                                isSelected
+                              className={`w-full flex items-center justify-between pl-4 pr-2 py-1 rounded-xl text-xs transition cursor-pointer ${isSelected
                                   ? 'bg-white/20 text-white font-bold backdrop-blur-xs'
                                   : 'text-white/60 hover:text-white hover:bg-white/10'
-                              }`}
+                                }`}
                             >
                               <div className="flex items-center gap-2 truncate">
                                 <svg className="w-3 h-3 shrink-0 -rotate-90">
@@ -482,14 +475,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Quick System Tools / Utilities */}
           <div className="pt-2 space-y-1 text-xs font-medium">
-            
+
             {/* Upgrade to Pro */}
             <button
               type="button"
               onClick={onOpenSubscription}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-amber-300 hover:text-amber-200 hover:bg-amber-400/10 border border-amber-400/20 transition cursor-pointer ${
-                isCollapsed ? 'justify-center px-0' : ''
-              }`}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-amber-300 hover:text-amber-200 hover:bg-amber-400/10 border border-amber-400/20 transition cursor-pointer ${isCollapsed ? 'justify-center px-0' : ''
+                }`}
               title="Upgrade to Pro"
             >
               <div className="flex items-center gap-2.5">
@@ -507,9 +499,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               type="button"
               onClick={onOpenWidgets}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
-                isCollapsed ? 'justify-center px-0' : ''
-              }`}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${isCollapsed ? 'justify-center px-0' : ''
+                }`}
               title="Widgets Suite"
             >
               <div className="flex items-center gap-3">
@@ -523,9 +514,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               type="button"
               onClick={onToggleTheme}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
-                isCollapsed ? 'justify-center px-0' : ''
-              }`}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${isCollapsed ? 'justify-center px-0' : ''
+                }`}
               title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
             >
               <div className="flex items-center gap-3">
@@ -543,9 +533,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               type="button"
               onClick={onOpenPermissions}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-2xl text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
-                isCollapsed ? 'justify-center px-0' : ''
-              }`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-2xl text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${isCollapsed ? 'justify-center px-0' : ''
+                }`}
               title="Permissions & Notifications"
             >
               <Bell className="w-4 h-4 text-rose-300 shrink-0" />
@@ -556,9 +545,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               type="button"
               onClick={onOpenSettings}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-2xl text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
-                isCollapsed ? 'justify-center px-0' : ''
-              }`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-2xl text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${isCollapsed ? 'justify-center px-0' : ''
+                }`}
               title="Settings"
             >
               <Settings className="w-4 h-4 text-stone-300 shrink-0" />
@@ -572,10 +560,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             BOTTOM CARDS: Inspiration Gem & Sajjad Ur Rehman Profile Pill
             =================================================================== */}
         <div className="space-y-3 pt-4 border-t border-white/10 mt-4">
-          
+
           {/* Inspiration Floating Card with Click Interaction */}
           {!isCollapsed && (
-            <div 
+            <div
               onClick={() => {
                 confetti({ particleCount: 35, spread: 55, origin: { y: 0.85, x: 0.1 } });
               }}
@@ -595,11 +583,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
 
           {/* User Profile Pill */}
-          <div 
+          <div
             onClick={onOpenSettings}
-            className={`flex items-center justify-between p-2 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer ${
-              isCollapsed ? 'justify-center p-1.5' : ''
-            }`}
+            className={`flex items-center justify-between p-2 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer ${isCollapsed ? 'justify-center p-1.5' : ''
+              }`}
             title="User Profile & Settings"
           >
             <div className="flex items-center gap-2 min-w-0">

@@ -22,6 +22,7 @@ import { CategoryModal } from './components/CategoryModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { SettingsModal } from './components/SettingsModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
+import { ToastProvider } from './components/ToastNotification';
 import { 
   Task, 
   Area, 
@@ -31,7 +32,9 @@ import {
   Priority,
   ViewMode,
   DensityMode,
-  ThemeMode
+  ThemeMode,
+  CanvasElement,
+  CanvasConnection
 } from './types';
 import { 
   loadStoredTasks, 
@@ -40,6 +43,10 @@ import {
   saveStoredAreas, 
   loadStoredProjects, 
   saveStoredProjects, 
+  loadStoredCanvasElements,
+  saveStoredCanvasElements,
+  loadStoredCanvasConnections,
+  saveStoredCanvasConnections,
   generateId 
 } from './utils/storage';
 import { checkPermissions, updateAppBadge } from './utils/permissions';
@@ -50,6 +57,8 @@ export function App() {
   const [tasks, setTasks] = useState<Task[]>(() => loadStoredTasks());
   const [areas, setAreas] = useState<Area[]>(() => loadStoredAreas());
   const [projects, setProjects] = useState<Project[]>(() => loadStoredProjects());
+  const [canvasElements, setCanvasElements] = useState<CanvasElement[]>(() => loadStoredCanvasElements());
+  const [canvasConnections, setCanvasConnections] = useState<CanvasConnection[]>(() => loadStoredCanvasConnections());
 
   // Theme Mode: 'light' | 'dark' (Dark features ambient luminous white hue)
   const [theme, setTheme] = useState<ThemeMode>(() => {
@@ -181,6 +190,14 @@ export function App() {
   useEffect(() => {
     saveStoredProjects(projects);
   }, [projects]);
+
+  useEffect(() => {
+    saveStoredCanvasElements(canvasElements);
+  }, [canvasElements]);
+
+  useEffect(() => {
+    saveStoredCanvasConnections(canvasConnections);
+  }, [canvasConnections]);
 
   // Persist view mode preference
   const handleChangeViewMode = (mode: ViewMode) => {
@@ -384,7 +401,8 @@ export function App() {
   }, [selectedProject, currentSection]);
 
   return (
-    <div className="relative w-full min-h-screen overflow-x-hidden font-sans select-none studio-wall-background text-stone-900 dark:text-stone-100">
+    <ToastProvider>
+      <div className="relative w-full min-h-screen overflow-x-hidden font-sans select-none studio-wall-background text-stone-900 dark:text-stone-100">
       
       {/* 1. Global Photorealistic Studio Wall Atmosphere (Sunlight, Ivy Leaves, Wooden Desk, Lamp, Books, Mug, Astronaut, Terrarium) */}
       <StudioWallAtmosphere />
@@ -507,6 +525,10 @@ export function App() {
               <CanvasWallView
                 tasks={visibleTasks}
                 projects={projects}
+                elements={canvasElements}
+                onUpdateElements={setCanvasElements}
+                connections={canvasConnections}
+                onUpdateConnections={setCanvasConnections}
                 onSelectTask={setSelectedTask}
                 onQuickAdd={() => handleMagicAdd({
                   title: 'New note',
@@ -524,6 +546,10 @@ export function App() {
                 subtitle="Visual Brainstorming Studio"
                 tasks={visibleTasks}
                 projects={projects}
+                elements={canvasElements}
+                onUpdateElements={setCanvasElements}
+                connections={canvasConnections}
+                onUpdateConnections={setCanvasConnections}
                 onToggleComplete={handleToggleComplete}
                 onSelectTask={setSelectedTask}
                 onToggleTimer={handleToggleTimer}
@@ -721,7 +747,8 @@ export function App() {
         theme={theme}
       />
 
-    </div>
+      </div>
+    </ToastProvider>
   );
 }
 

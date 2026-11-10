@@ -27,18 +27,18 @@ export function parseNaturalLanguageTask(rawInput: string): ParsedTaskInput {
   }
 
   // 2. Extract Priority (p1, p2, p3, p4 or !urgent, !high)
-  if (/\b(p1|!urgent|!1)\b/i.test(text)) {
+  if (/(?:^|\s)(p1|!urgent|!1)(?:\s|$)/i.test(text)) {
     priority = 'urgent';
-    text = text.replace(/\b(p1|!urgent|!1)\b/gi, '').trim();
-  } else if (/\b(p2|!high|!2)\b/i.test(text)) {
+    text = text.replace(/(?:^|\s)(p1|!urgent|!1)(?:\s|$)/gi, ' ').trim();
+  } else if (/(?:^|\s)(p2|!high|!2)(?:\s|$)/i.test(text)) {
     priority = 'high';
-    text = text.replace(/\b(p2|!high|!2)\b/gi, '').trim();
-  } else if (/\b(p3|!normal|!3)\b/i.test(text)) {
+    text = text.replace(/(?:^|\s)(p2|!high|!2)(?:\s|$)/gi, ' ').trim();
+  } else if (/(?:^|\s)(p3|!normal|!3)(?:\s|$)/i.test(text)) {
     priority = 'normal';
-    text = text.replace(/\b(p3|!normal|!3)\b/gi, '').trim();
-  } else if (/\b(p4|!low|!4)\b/i.test(text)) {
+    text = text.replace(/(?:^|\s)(p3|!normal|!3)(?:\s|$)/gi, ' ').trim();
+  } else if (/(?:^|\s)(p4|!low|!4)(?:\s|$)/i.test(text)) {
     priority = 'low';
-    text = text.replace(/\b(p4|!low|!4)\b/gi, '').trim();
+    text = text.replace(/(?:^|\s)(p4|!low|!4)(?:\s|$)/gi, ' ').trim();
   }
 
   // 3. Extract Things 3 "This Evening" flag

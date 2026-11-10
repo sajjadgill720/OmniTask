@@ -115,9 +115,20 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
               <Circle className="w-4 h-4 text-stone-700 stroke-[2.5]" />
               <span className="font-extrabold">To Do</span>
             </div>
-            <span className="w-6 h-6 rounded-full bg-amber-400/60 text-stone-900 text-xs font-mono font-black flex items-center justify-center">
-              {todoTasks.length}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={onQuickAdd}
+                className="p-1 rounded-full hover:bg-amber-400/50 text-stone-800 transition cursor-pointer"
+                title="Add note to To Do"
+                aria-label="Add note to To Do"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              </button>
+              <span className="w-6 h-6 rounded-full bg-amber-400/60 text-stone-900 text-xs font-mono font-black flex items-center justify-center">
+                {todoTasks.length}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -134,10 +145,18 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
             return (
               <div
                 key={task.id}
+                role="button"
+                tabIndex={0}
                 draggable
                 onDragStart={(e) => handleDragStart(e, task.id)}
                 onClick={() => onSelectTask(task)}
-                className="group relative w-full max-w-[270px] mx-auto p-4 pt-6 rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.03] hover:z-20 select-none shadow-[0_8px_18px_-4px_rgba(0,0,0,0.18),0_2px_5px_-1px_rgba(0,0,0,0.12)] hover:shadow-[0_18px_32px_-6px_rgba(0,0,0,0.28),0_8px_12px_-2px_rgba(0,0,0,0.16)] paper-ruling-lines overflow-hidden"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelectTask(task);
+                  }
+                }}
+                className="group relative w-full max-w-[270px] mx-auto p-4 pt-6 rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.03] hover:z-20 select-none shadow-[0_8px_18px_-4px_rgba(0,0,0,0.18),0_2px_5px_-1px_rgba(0,0,0,0.12)] hover:shadow-[0_18px_32px_-6px_rgba(0,0,0,0.28),0_8px_12px_-2px_rgba(0,0,0,0.16)] paper-ruling-lines overflow-hidden focus-visible:ring-4 focus-visible:ring-amber-500 focus-visible:outline-none"
                 style={{
                   backgroundColor: task.paperColor || (isPeach ? '#FF9AA2' : '#FFF380'),
                   borderColor: isPeach ? 'rgba(244,63,94,0.4)' : 'rgba(234,179,8,0.4)',
@@ -267,10 +286,18 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
             return (
               <div
                 key={task.id}
+                role="button"
+                tabIndex={0}
                 draggable
                 onDragStart={(e) => handleDragStart(e, task.id)}
                 onClick={() => onSelectTask(task)}
-                className="group relative w-full max-w-[270px] mx-auto p-4 pt-6 rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.03] hover:z-20 select-none shadow-[0_8px_18px_-4px_rgba(0,0,0,0.18),0_2px_5px_-1px_rgba(0,0,0,0.12)] hover:shadow-[0_18px_32px_-6px_rgba(0,0,0,0.28),0_8px_12px_-2px_rgba(0,0,0,0.16)] paper-ruling-lines overflow-hidden"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelectTask(task);
+                  }
+                }}
+                className="group relative w-full max-w-[270px] mx-auto p-4 pt-6 rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.03] hover:z-20 select-none shadow-[0_8px_18px_-4px_rgba(0,0,0,0.18),0_2px_5px_-1px_rgba(0,0,0,0.12)] hover:shadow-[0_18px_32px_-6px_rgba(0,0,0,0.28),0_8px_12px_-2px_rgba(0,0,0,0.16)] paper-ruling-lines overflow-hidden focus-visible:ring-4 focus-visible:ring-amber-500 focus-visible:outline-none"
                 style={{
                   backgroundColor: task.paperColor || (isBlue ? '#A9C9E9' : '#C6DF9C'),
                   borderColor: isBlue ? 'rgba(99,102,241,0.4)' : 'rgba(16,185,129,0.4)',

@@ -21,6 +21,7 @@ import {
 import { Task, Project } from '../types';
 import { soundscape } from '../utils/audioSoundscape';
 import { playCompletionSound } from '../utils/permissions';
+import { useToast } from './ToastNotification';
 import confetti from 'canvas-confetti';
 
 interface FocusRoomViewProps {
@@ -40,6 +41,8 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
   onUpdateTask,
   audioEnabled,
 }) => {
+  const { toast } = useToast();
+
   // Timer state
   const [sessionType, setSessionType] = useState<'focus' | 'break'>('focus');
   const [totalSeconds, setTotalSeconds] = useState<number>(25 * 60); // 25 mins
@@ -70,6 +73,14 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
     return projects.find(p => p.id === currentTask.projectId) || null;
   }, [currentTask, projects]);
 
+  const setFocusDurationPreset = (minutes: number) => {
+    setIsActive(false);
+    setSessionType('focus');
+    setTotalSeconds(minutes * 60);
+    setSecondsRemaining(minutes * 60);
+    toast.info(`Focus session set to ${minutes} minutes`);
+  };
+
   // Timer interval effect
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -83,10 +94,24 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
         if (audioEnabled) playCompletionSound();
         confetti({ particleCount: 40, spread: 60, origin: { y: 0.6 } });
         setCompletedSessions(prev => prev + 1);
+
+        // Accumulate focus time to the task for real analytics tracking
+        if (currentTask) {
+          onUpdateTask({
+            ...currentTask,
+            timeSpentSeconds: (currentTask.timeSpentSeconds || 0) + totalSeconds,
+            updatedAt: new Date().toISOString(),
+          });
+          toast.success(`Completed ${Math.round(totalSeconds / 60)}m focus on "${currentTask.title}"!`);
+        } else {
+          toast.success(`Completed ${Math.round(totalSeconds / 60)}m focus session!`);
+        }
+
         setSessionType('break');
         setTotalSeconds(5 * 60);
         setSecondsRemaining(5 * 60);
       } else {
+        toast.info('Break finished! Ready for next focus block?');
         setSessionType('focus');
         setTotalSeconds(25 * 60);
         setSecondsRemaining(25 * 60);
@@ -96,7 +121,7 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isActive, secondsRemaining, sessionType, audioEnabled]);
+  }, [isActive, secondsRemaining, sessionType, audioEnabled, currentTask, totalSeconds, onUpdateTask, toast]);
 
   // Ambient Sound Controller
   useEffect(() => {
@@ -254,6 +279,24 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
                 </button>
               </div>
 
+              {/* Duration Presets */}
+              <div className="flex items-center gap-1.5 mt-3">
+                {[15, 25, 45, 60].map(mins => (
+                  <button
+                    key={mins}
+                    type="button"
+                    onClick={() => setFocusDurationPreset(mins)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition cursor-pointer ${
+                      totalSeconds === mins * 60 && sessionType === 'focus'
+                        ? 'bg-amber-400 text-stone-950 shadow-xs'
+                        : 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'
+                    }`}
+                  >
+                    {mins}m
+                  </button>
+                ))}
+              </div>
+
             </div>
 
           </div>
@@ -317,9 +360,29 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
                     </span>
                   ))}
                   <span className="px-2 py-0.5 rounded-lg bg-white/10 text-[10px] font-mono text-white/70">
-                    25m focus
+                    {Math.round(totalSeconds / 60)}m focus
                   </span>
                 </div>
+
+                {/* Task Switcher Selector */}
+                {activeTasks.length > 1 && (
+                  <div className="pt-2 border-t border-white/10 mt-2">
+                    <label className="text-[10px] text-white/50 block mb-1 font-mono uppercase">
+                      Switch Focus Task:
+                    </label>
+                    <select
+                      value={currentTask?.id || ''}
+                      onChange={(e) => setSelectedTaskId(e.target.value)}
+                      className="w-full text-xs font-semibold bg-white/10 border border-white/15 rounded-xl px-2.5 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
+                    >
+                      {activeTasks.map(t => (
+                        <option key={t.id} value={t.id} className="bg-stone-900 text-white">
+                          {t.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="py-4 text-center text-white/50 text-xs">

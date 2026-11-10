@@ -1,8 +1,10 @@
-import { Task, Area, Project } from '../types';
+import { Task, Area, Project, CanvasElement, CanvasConnection } from '../types';
 
 const TASKS_STORAGE_KEY = 'omnisticky_tasks_v2';
 const AREAS_STORAGE_KEY = 'omnisticky_areas_v2';
 const PROJECTS_STORAGE_KEY = 'omnisticky_projects_v2';
+const CANVAS_ELEMENTS_STORAGE_KEY = 'omnisticky_canvas_elements_v1';
+const CANVAS_CONNECTIONS_STORAGE_KEY = 'omnisticky_canvas_connections_v1';
 
 export const DEFAULT_AREAS: Area[] = [
   { id: 'area_work', name: 'Work & Projects', emoji: '💼', colorHex: '#3b82f6' },
@@ -509,3 +511,174 @@ export function exportTasksMarkdown(tasks: Task[], areas: Area[], projects: Proj
   a.click();
   URL.revokeObjectURL(url);
 }
+
+export const DEFAULT_CANVAS_ELEMENTS: CanvasElement[] = [
+  {
+    id: 'hub_main',
+    type: 'hub',
+    title: 'Knovera\nVision',
+    category: 'Mission',
+    x: 440,
+    y: 220,
+    width: 144,
+    height: 96,
+    rotation: 0,
+    colorHex: '#F8D979',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'node_ai',
+    type: 'sticky',
+    title: 'AI Powered\nProductivity',
+    category: 'Feature',
+    x: 170,
+    y: 90,
+    width: 130,
+    height: 130,
+    rotation: -2,
+    colorHex: '#F8D979',
+    lineStyle: 'ruled',
+    pinStyle: 'pin',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'node_gamified',
+    type: 'sticky',
+    title: 'Gamified\nLearning',
+    category: 'Feature',
+    x: 440,
+    y: 50,
+    width: 130,
+    height: 130,
+    rotation: 1.5,
+    colorHex: '#F1A6A6',
+    lineStyle: 'ruled',
+    pinStyle: 'pin',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'node_growth',
+    type: 'sticky',
+    title: 'Personal\nGrowth',
+    category: 'Goal',
+    x: 710,
+    y: 80,
+    width: 130,
+    height: 130,
+    rotation: -1.2,
+    colorHex: '#C6DF9C',
+    lineStyle: 'ruled',
+    pinStyle: 'pin',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'node_financial',
+    type: 'sticky',
+    title: 'Financial\nLiteracy',
+    category: 'Goal',
+    x: 180,
+    y: 350,
+    width: 130,
+    height: 130,
+    rotation: 2.2,
+    colorHex: '#D7B7EE',
+    lineStyle: 'ruled',
+    pinStyle: 'pin',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'node_impact',
+    type: 'sticky',
+    title: 'Global\nImpact',
+    category: 'Goal',
+    x: 450,
+    y: 400,
+    width: 130,
+    height: 130,
+    rotation: -1.8,
+    colorHex: '#A9C9E9',
+    lineStyle: 'ruled',
+    pinStyle: 'pin',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'polaroid_mountains',
+    type: 'photo',
+    title: 'Aspiration 2026',
+    caption: 'Aspiration 2026',
+    x: 720,
+    y: 270,
+    width: 140,
+    height: 175,
+    rotation: 2.8,
+    colorHex: '#ffffff',
+    pinStyle: 'tape',
+    imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=200&auto=format&fit=crop&q=60',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
+export const DEFAULT_CANVAS_CONNECTIONS: CanvasConnection[] = [
+  { id: 'c1', fromId: 'hub_main', toId: 'node_ai', style: 'curved' },
+  { id: 'c2', fromId: 'hub_main', toId: 'node_gamified', style: 'curved' },
+  { id: 'c3', fromId: 'hub_main', toId: 'node_growth', style: 'curved' },
+  { id: 'c4', fromId: 'hub_main', toId: 'node_financial', style: 'curved' },
+  { id: 'c5', fromId: 'hub_main', toId: 'node_impact', style: 'curved' },
+  { id: 'c6', fromId: 'hub_main', toId: 'polaroid_mountains', style: 'dashed' },
+];
+
+export function loadStoredCanvasElements(): CanvasElement[] {
+  try {
+    const raw = localStorage.getItem(CANVAS_ELEMENTS_STORAGE_KEY);
+    if (!raw) return DEFAULT_CANVAS_ELEMENTS;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_CANVAS_ELEMENTS;
+  } catch (err) {
+    console.error('Failed to load canvas elements from localStorage:', err);
+    return DEFAULT_CANVAS_ELEMENTS;
+  }
+}
+
+export function saveStoredCanvasElements(elements: CanvasElement[]): void {
+  try {
+    // Exclude full-resolution dataUrls from localStorage to avoid quota limits
+    const sanitized = elements.map(el => {
+      if (el.imageUrl && el.imageUrl.startsWith('data:') && el.imageUrl.length > 50000) {
+        return { ...el, imageUrl: el.thumbnailUrl || '' };
+      }
+      return el;
+    });
+    localStorage.setItem(CANVAS_ELEMENTS_STORAGE_KEY, JSON.stringify(sanitized));
+  } catch (err) {
+    console.error('Failed to save canvas elements to localStorage:', err);
+  }
+}
+
+export function loadStoredCanvasConnections(): CanvasConnection[] {
+  try {
+    const raw = localStorage.getItem(CANVAS_CONNECTIONS_STORAGE_KEY);
+    if (!raw) return DEFAULT_CANVAS_CONNECTIONS;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : DEFAULT_CANVAS_CONNECTIONS;
+  } catch (err) {
+    console.error('Failed to load canvas connections from localStorage:', err);
+    return DEFAULT_CANVAS_CONNECTIONS;
+  }
+}
+
+export function saveStoredCanvasConnections(connections: CanvasConnection[]): void {
+  try {
+    localStorage.setItem(CANVAS_CONNECTIONS_STORAGE_KEY, JSON.stringify(connections));
+  } catch (err) {
+    console.error('Failed to save canvas connections to localStorage:', err);
+  }
+}
+

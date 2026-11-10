@@ -80,3 +80,41 @@ export interface AppPermissionsState {
 export type WidgetType = 'today_focus' | 'standby_clock' | 'pomodoro' | 'sticky_pad';
 
 export type SubscriptionPlan = 'free' | 'pro_monthly' | 'pro_annual' | 'pro_lifetime';
+
+export type CanvasElementType = 'sticky' | 'photo' | 'hub' | 'shape';
+
+export interface CanvasElement {
+  id: string;
+  type: CanvasElementType;
+  title: string;
+  category?: string;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  rotation: number;
+  colorHex: string;
+  lineStyle?: LineStyle;
+  pinStyle?: PinStyle;
+  shape?: NoteShape;
+  imageUrl?: string;
+  thumbnailUrl?: string;
+  imageStorageId?: string; // Pointer to IndexedDB Blob record
+  aspectRatio?: number;
+  caption?: string;
+  tags?: string[];
+  isPinned?: boolean;
+  zIndex?: number;
+  taskId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CanvasConnection {
+  id: string;
+  fromId: string;
+  toId: string;
+  style: 'curved' | 'straight' | 'dashed';
+  label?: string;
+  color?: string;
+}
