@@ -7,7 +7,6 @@ import {
   Move, 
   Sparkles, 
   Plus, 
-  Eye, 
   Layers, 
   Compass,
   Pin,
@@ -44,8 +43,12 @@ interface SpatialCanvas3DViewProps {
   onBack?: () => void;
 }
 
-export type Preset3D = 'isometric' | 'gyro' | 'desk';
 export type SpatialArrangement = 'canvas_projection' | 'pedestals';
+
+// Fixed default Desk camera perspective
+const DEFAULT_DESK_PITCH = 4; // degrees rotateX
+const DEFAULT_DESK_YAW = 0;   // degrees rotateY
+const DEFAULT_DESK_ZOOM = 0.95;
 
 export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
   title,
@@ -68,10 +71,9 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
   onBack,
 }) => {
   const [arrangement, setArrangement] = useState<SpatialArrangement>('pedestals');
-  const [preset, setPreset] = useState<Preset3D>('desk');
-  const [pitch, setPitch] = useState(4); // degrees rotateX (default Desk mode)
-  const [yaw, setYaw] = useState(0);    // degrees rotateY
-  const [zoom, setZoom] = useState(0.95);
+  const [pitch, setPitch] = useState(DEFAULT_DESK_PITCH); // Default Desk perspective: 4°
+  const [yaw, setYaw] = useState(DEFAULT_DESK_YAW);       // Default Desk perspective: 0°
+  const [zoom, setZoom] = useState(DEFAULT_DESK_ZOOM);   // Default Desk perspective: 95%
   const [isOrbiting, setIsOrbiting] = useState(false);
   const [dragOverZone, setDragOverZone] = useState<Task['status'] | null>(null);
   const [selected3DElementId, setSelected3DElementId] = useState<string | null>(null);
@@ -106,26 +108,11 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
     lastMousePos.current = null;
   };
 
-  const setPresetAngle = (mode: Preset3D) => {
-    setPreset(mode);
-    if (mode === 'isometric') {
-      setPitch(22);
-      setYaw(-15);
-      setZoom(0.88);
-    } else if (mode === 'desk') {
-      setPitch(4);
-      setYaw(0);
-      setZoom(0.95);
-    } else {
-      // Gyro mode
-      setPitch(12);
-      setYaw(-6);
-      setZoom(0.92);
-    }
-  };
-
+  // Reset camera back to default Desk perspective
   const resetCamera = () => {
-    setPresetAngle('isometric');
+    setPitch(DEFAULT_DESK_PITCH);
+    setYaw(DEFAULT_DESK_YAW);
+    setZoom(DEFAULT_DESK_ZOOM);
   };
 
   // Drag and drop onto 3D Pedestals
@@ -150,18 +137,6 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
   return (
     <div className="w-full px-2 sm:px-4 py-4 select-none font-sans">
       
-      {/* Top Wall Quote */}
-      <div className="flex justify-end mb-2 pr-2">
-        <div className="text-right">
-          <p className="font-handwriting text-xl font-bold tracking-wide italic text-[#25231F] dark:text-[#E8DDD0]">
-            "The price of anything is the amount of life you exchange for it."
-          </p>
-          <p className="text-xs text-stone-500 font-handwriting mt-0.5">
-            — Henry David Thoreau
-          </p>
-        </div>
-      </div>
-
       {/* 3D Canvas Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-black/10 dark:border-white/10 gap-3">
         <div>
@@ -222,47 +197,7 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
             </button>
           </div>
 
-          {/* Perspective Preset Buttons */}
-          <div className="flex items-center p-1 bg-black/60 rounded-xl border border-white/15 text-xs font-bold text-white shadow-md">
-            <button
-              onClick={() => setPresetAngle('isometric')}
-              className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1 ${
-                preset === 'isometric'
-                  ? 'bg-[#F8D979] text-[#25231F] font-extrabold shadow-sm'
-                  : 'text-stone-300 hover:text-white'
-              }`}
-              title="Cinematic Isometric 3D Perspective"
-            >
-              <Eye className="w-3 h-3" />
-              <span>Isometric</span>
-            </button>
-
-            <button
-              onClick={() => setPresetAngle('gyro')}
-              className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1 ${
-                preset === 'gyro'
-                  ? 'bg-[#F8D979] text-[#25231F] font-extrabold shadow-sm'
-                  : 'text-stone-300 hover:text-white'
-              }`}
-              title="Soft Angle Perspective"
-            >
-              <span>Angle</span>
-            </button>
-
-            <button
-              onClick={() => setPresetAngle('desk')}
-              className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1 ${
-                preset === 'desk'
-                  ? 'bg-[#F8D979] text-[#25231F] font-extrabold shadow-sm'
-                  : 'text-stone-300 hover:text-white'
-              }`}
-              title="Desk Top-Down Projection"
-            >
-              <span>Desk</span>
-            </button>
-          </div>
-
-          {/* Zoom controls */}
+          {/* Zoom & Reset Suite */}
           <div className="flex items-center gap-1 p-1 bg-black/60 rounded-xl border border-white/15 text-xs font-bold text-white shadow-md">
             <button
               onClick={() => setZoom(z => Math.max(0.55, z - 0.1))}
@@ -282,7 +217,7 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
             <button
               onClick={resetCamera}
               className="p-1.5 rounded-lg text-stone-300 hover:text-white hover:bg-white/10 transition cursor-pointer ml-0.5"
-              title="Reset 3D Camera"
+              title="Reset View to Default Desk Angle"
             >
               <RotateCw className="w-3.5 h-3.5" />
             </button>
