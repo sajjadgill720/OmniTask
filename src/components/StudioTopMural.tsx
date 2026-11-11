@@ -16,7 +16,7 @@ export const StudioTopMural: React.FC<StudioTopMuralProps> = ({ compact = false 
   const currentQuote: FocusQuote = useMemo(() => getDailyHyperFocusQuote(0), []);
 
   return (
-    <div className={`text-center relative select-none w-full max-w-3xl mx-auto px-4 ${compact ? 'mb-2' : 'mb-6'}`}>
+    <div className={`text-center relative select-none w-full max-w-3xl mx-auto px-4 ${compact ? 'mb-1' : 'mb-3'}`}>
       {/* Hyperrealistic Handwritten Quote Directly on the Stucco Wall */}
       <div className="relative inline-block py-1">
         <h2 

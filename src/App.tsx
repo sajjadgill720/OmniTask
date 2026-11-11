@@ -429,7 +429,7 @@ export function App() {
       />
 
       {/* 3. Main Workspace: Left Glass Sidebar + Center Wall Stage + Right Glass Panels */}
-      <div className="relative z-10 max-w-[1720px] mx-auto px-4 sm:px-6 pb-40 flex items-start gap-6">
+      <div className={`relative z-10 max-w-[1720px] mx-auto px-4 sm:px-6 flex items-start gap-6 ${viewMode === 'board' ? 'pb-8' : 'pb-24'}`}>
         
         {/* Left Floating Translucent Glass Panel (Knovera Navigation) */}
         <Sidebar
