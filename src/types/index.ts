@@ -4,7 +4,7 @@ export type Status = 'todo' | 'in_progress' | 'done';
 
 export type ThingsSection = 'inbox' | 'today' | 'upcoming' | 'anytime' | 'someday' | 'logbook';
 
-export type ViewMode = 'focus' | 'board' | 'canvas' | 'connections' | 'analytics' | 'projects' | 'sticky_wall' | 'canvas_3d' | 'network_3d' | 'kanban' | 'things_list';
+export type ViewMode = 'focus' | 'board' | 'canvas' | 'analytics' | 'projects' | 'canvas_3d' | 'things_list' | 'sticky_wall' | 'kanban';
 
 export type DensityMode = 'comfortable' | 'compact';
 

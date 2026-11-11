@@ -8,7 +8,6 @@ import { StudioRightPanel } from './components/StudioRightPanel';
 import { FocusRoomView } from './components/FocusRoomView';
 import { CanvasWallView } from './components/CanvasWallView';
 import { AnalyticsDashboardView } from './components/AnalyticsDashboardView';
-import { NetworkGraph3DView } from './components/NetworkGraph3DView';
 import { SpatialCanvas3DView } from './components/SpatialCanvas3DView';
 import { WorkflowStageView } from './components/WorkflowStageView';
 import { ProjectsHubView } from './components/ProjectsHubView';
@@ -84,13 +83,12 @@ export function App() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // View Mode: 'board' (default Studio Wall) | 'focus' | 'canvas' | 'connections'
+  // View Mode: 'board' (default Studio Wall) | 'focus' | 'canvas' | 'canvas_3d' | 'analytics' | 'projects'
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const saved = localStorage.getItem('omnisticky_view_mode');
     if (saved === 'kanban' || saved === 'board') return 'board';
-    if (saved === 'canvas_3d' || saved === 'sticky_wall') return 'canvas';
-    if (saved === 'network_3d') return 'connections';
-    if (saved === 'focus' || saved === 'canvas' || saved === 'connections') return saved as ViewMode;
+    if (saved === 'sticky_wall') return 'canvas';
+    if (saved === 'focus' || saved === 'canvas' || saved === 'canvas_3d' || saved === 'analytics' || saved === 'projects') return saved as ViewMode;
     return 'board';
   });
 
@@ -460,7 +458,7 @@ export function App() {
         <main className="flex-1 min-w-0 flex flex-col items-center">
           
           {/* Top Wall Art: "Dream Big Plan Better" with Golden Crown + Daily Rotating Quote System */}
-          <StudioTopMural compact={viewMode === 'canvas' || viewMode === 'connections'} />
+          <StudioTopMural compact={viewMode === 'canvas' || viewMode === 'canvas_3d'} />
 
           {/* Active View Container */}
           <div className="w-full flex-1">
@@ -502,7 +500,7 @@ export function App() {
                 onDeleteTask={handleDeleteTask}
                 onMoveTaskStatus={handleMoveTaskStatus}
                 audioEnabled={permissions.audioEnabled}
-                onNavigateToNetwork={() => handleChangeViewMode('connections')}
+                onNavigateToNetwork={() => handleChangeViewMode('analytics')}
                 onQuickAdd={() => handleMagicAdd({
                   title: 'New note',
                   priority: 'normal',
@@ -569,32 +567,12 @@ export function App() {
                 onMoveTaskStatus={handleMoveTaskStatus}
                 onBack={() => handleChangeViewMode('canvas')}
               />
-            ) : viewMode === 'connections' || viewMode === 'network_3d' ? (
-              /* Connections — 3D Network View (Unified clean 3D experience) */
-              <NetworkGraph3DView
-                tasks={tasks}
-                projects={projects}
-                onSelectTask={setSelectedTask}
-                onToggleComplete={handleToggleComplete}
-                onToggleTimer={handleToggleTimer}
-                onUpdateTask={handleSaveTask}
-                onQuickAdd={() => handleMagicAdd({
-                  title: 'New note',
-                  priority: 'normal',
-                  tags: [],
-                  section: currentSection,
-                  colorHex: '#F8D979',
-                })}
-                onBack={() => handleChangeViewMode('analytics')}
-                onSwitchTo2D={() => handleChangeViewMode('canvas')}
-              />
             ) : viewMode === 'analytics' ? (
               /* Analytics & Interactive Network Graph */
               <AnalyticsDashboardView
                 tasks={tasks}
                 projects={projects}
                 onSelectTask={setSelectedTask}
-                onOpen3DConstellation={() => handleChangeViewMode('connections')}
               />
             ) : (
               /* Workflow Stages: Today, Inbox, Upcoming, Anytime, Someday, Logbook */

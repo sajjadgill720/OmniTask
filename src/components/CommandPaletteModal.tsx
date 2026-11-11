@@ -17,7 +17,8 @@ import {
   Compass, 
   Archive,
   Flame,
-  ArrowRight
+  ArrowRight,
+  Box
 } from 'lucide-react';
 import { Task, Project, ThingsSection, ViewMode } from '../types';
 
@@ -121,13 +122,13 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       },
     },
     {
-      id: 'view_connections',
-      title: 'Go to Connections Graph',
+      id: 'view_canvas_3d',
+      title: 'Go to 3D Spatial Canvas',
       category: 'views',
-      icon: Network,
-      detail: 'Interactive 3D network',
+      icon: Box,
+      detail: 'Interactive 3D status pedestals and wall',
       action: () => {
-        onChangeViewMode('connections');
+        onChangeViewMode('canvas_3d');
         onClose();
       },
     }
