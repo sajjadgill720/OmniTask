@@ -7,7 +7,6 @@ import { StudioTopMural } from './components/StudioTopMural';
 import { StudioRightPanel } from './components/StudioRightPanel';
 import { FocusRoomView } from './components/FocusRoomView';
 import { CanvasWallView } from './components/CanvasWallView';
-import { SpatialCanvas3DView } from './components/SpatialCanvas3DView';
 import { AnalyticsDashboardView } from './components/AnalyticsDashboardView';
 import { NetworkGraph3DView } from './components/NetworkGraph3DView';
 import { WorkflowStageView } from './components/WorkflowStageView';
@@ -540,36 +539,8 @@ export function App() {
                 })}
                 onToggle3DSpatial={() => handleChangeViewMode('canvas_3d')}
               />
-            ) : viewMode === 'canvas_3d' ? (
-              /* Spatial Canvas 3D: Isometric & Gyro 3D Pedestal Wall */
-              <SpatialCanvas3DView
-                title="Knovera Wall"
-                subtitle="Visual Brainstorming Studio"
-                tasks={visibleTasks}
-                projects={projects}
-                elements={canvasElements}
-                onUpdateElements={setCanvasElements}
-                connections={canvasConnections}
-                onUpdateConnections={setCanvasConnections}
-                onToggleComplete={handleToggleComplete}
-                onSelectTask={setSelectedTask}
-                onToggleTimer={handleToggleTimer}
-                onUpdateTask={handleSaveTask}
-                onDeleteTask={handleDeleteTask}
-                audioEnabled={permissions.audioEnabled}
-                onQuickAdd={(status) => handleMagicAdd({
-                  title: 'New note',
-                  priority: 'normal',
-                  tags: [],
-                  section: currentSection,
-                  status: status || 'todo',
-                  colorHex: '#F8D979',
-                })}
-                onMoveTaskStatus={handleMoveTaskStatus}
-                onBack={() => handleChangeViewMode('canvas')}
-              />
-            ) : viewMode === 'connections' || viewMode === 'network_3d' ? (
-              /* 3D Constellation Galaxy View */
+            ) : viewMode === 'canvas_3d' || viewMode === 'connections' || viewMode === 'network_3d' ? (
+              /* Connections — 3D Network View (Unified clean 3D experience) */
               <NetworkGraph3DView
                 tasks={tasks}
                 projects={projects}
@@ -585,6 +556,7 @@ export function App() {
                   colorHex: '#F8D979',
                 })}
                 onBack={() => handleChangeViewMode('analytics')}
+                onSwitchTo2D={() => handleChangeViewMode('canvas')}
               />
             ) : viewMode === 'analytics' ? (
               /* Analytics & Interactive Network Graph */

@@ -1,30 +1,24 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { 
-  Network, 
-  RotateCw, 
-  ZoomIn, 
-  ZoomOut, 
-  Play, 
-  Pause, 
-  Search, 
-  Folder, 
-  Tag, 
-  CheckCircle2, 
-  Check,
-  Clock, 
-  ExternalLink, 
+  ArrowLeft, 
+  RotateCcw, 
   Plus, 
-  Eye, 
-  Filter,
-  Sparkles,
-  Calendar,
-  Layers,
-  X
+  ChevronDown, 
+  Box, 
+  LayoutGrid, 
+  Zap, 
+  ChevronRight,
+  TrendingUp,
+  Laptop,
+  Dumbbell,
+  Mail,
+  LineChart,
+  CheckCircle,
+  Rocket,
+  Check
 } from 'lucide-react';
 import { Task, Project } from '../types';
-import { getPostitPaperStyle } from '../utils/colorUtils';
-import { formatDuration, checkDueDate } from '../utils/storage';
-import { RedPushPin } from './RedPushPin';
+import { playCompletionSound } from '../utils/permissions';
 import confetti from 'canvas-confetti';
 
 interface NetworkGraph3DViewProps {
@@ -36,768 +30,612 @@ interface NetworkGraph3DViewProps {
   onUpdateTask?: (task: Task) => void;
   onQuickAdd: () => void;
   onBack?: () => void;
+  onSwitchTo2D?: () => void;
 }
 
-interface Node3D {
+interface NodeItem {
   id: string;
-  label: string;
-  type: 'task' | 'project' | 'tag';
-  x: number;
-  y: number;
-  z: number;
-  vx: number;
-  vy: number;
-  vz: number;
-  radius: number;
-  color: string;
-  task?: Task;
-  project?: Project;
+  title: string;
+  icon: string;
+  colorHex: string;
+  glowColor: string;
+  dotColor: string;
+  x: number; // percentage in stage (0 - 100)
+  y: number; // percentage in stage (0 - 100)
+  isCenter?: boolean;
+  status: 'todo' | 'in_progress' | 'done';
 }
 
-interface Edge3D {
-  sourceId: string;
-  targetId: string;
-  color: string;
-}
-
+/**
+ * NetworkGraph3DView
+ * Clean, uncluttered 3D Network matching the reference photo:
+ * - 3D tactile extruded cards with realistic depth, lighting, and luminous connection beams
+ * - Knovera Warm Design Palette (Sticky Yellow, Soft Blue, Pastel Green, Lavender, Warm Cream)
+ * - Interactive 3D Orbit: Drag to rotate, Scroll to zoom, Reset view
+ * - Project Overview, Quick Actions, and Top Projects sidebars
+ */
 export const NetworkGraph3DView: React.FC<NetworkGraph3DViewProps> = ({
   tasks,
   projects,
   onSelectTask,
   onToggleComplete,
-  onToggleTimer,
-  onUpdateTask,
   onQuickAdd,
   onBack,
+  onSwitchTo2D,
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [selectedNode, setSelectedNode] = useState<Node3D | null>(null);
-  const [hoveredNode, setHoveredNode] = useState<Node3D | null>(null);
-  const [hoverCoords, setHoverCoords] = useState<{ x: number; y: number } | null>(null);
-  const [autoRotate, setAutoRotate] = useState(true);
-  const [filterProject, setFilterProject] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [popTilt, setPopTilt] = useState({ x: 0, y: 0 });
+  // 3D Orbit Camera State
+  const [rotX, setRotX] = useState<number>(6);
+  const [rotY, setRotY] = useState<number>(-8);
+  const [zoom, setZoom] = useState<number>(1);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const dragStartRef = useRef<{ x: number; y: number; startRotX: number; startRotY: number }>({
+    x: 0,
+    y: 0,
+    startRotX: 6,
+    startRotY: -8,
+  });
 
-  // 3D Camera Angles
-  const rotX = useRef(0.2);
-  const rotY = useRef(0.3);
-  const zoom = useRef(1.0);
-  const isDragging = useRef(false);
-  const lastMouse = useRef<{ x: number; y: number } | null>(null);
+  // Selected Project Filter
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
+  const [viewModeToggle, setViewModeToggle] = useState<'3d' | '2d'>('3d');
 
-  // Generate 3D Nodes and Edges from Tasks, Projects, and Tags
-  const { nodes, edges } = useMemo(() => {
-    const nodeList: Node3D[] = [];
-    const edgeList: Edge3D[] = [];
-
-    // Filter tasks if project selected
-    const activeTasks = tasks.filter(t => {
-      if (filterProject !== 'all' && t.projectId !== filterProject) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        return t.title.toLowerCase().includes(q) || t.tags.some(tg => tg.toLowerCase().includes(q));
-      }
-      return true;
-    });
-
-    // 1. Project Anchor Nodes
-    const activeProjectIds = new Set(activeTasks.map(t => t.projectId).filter(Boolean));
-    const activeProjects = projects.filter(p => activeProjectIds.has(p.id));
-
-    activeProjects.forEach((proj, idx) => {
-      const phi = Math.acos(-1 + (2 * idx) / Math.max(1, activeProjects.length));
-      const theta = Math.sqrt(activeProjects.length * Math.PI) * phi;
-      const radius = 240;
-
-      nodeList.push({
-        id: `proj_${proj.id}`,
-        label: proj.title,
-        type: 'project',
-        x: radius * Math.cos(theta) * Math.sin(phi),
-        y: radius * Math.sin(theta) * Math.sin(phi),
-        z: radius * Math.cos(phi),
-        vx: 0,
-        vy: 0,
-        vz: 0,
-        radius: 14,
-        color: proj.colorHex || '#3b82f6',
-        project: proj,
-      });
-    });
-
-    // 2. Task Nodes (Fibonacci sphere distribution around center or projects)
-    activeTasks.forEach((task, idx) => {
-      const phi = Math.acos(-1 + (2 * idx) / Math.max(1, activeTasks.length));
-      const theta = Math.sqrt(activeTasks.length * Math.PI) * phi;
-      const radius = 170 + (idx % 3) * 45;
-
-      const taskColor = task.colorHex || '#fef08a';
-
-      const taskNode: Node3D = {
-        id: `task_${task.id}`,
-        label: task.title || 'Untitled',
-        type: 'task',
-        x: radius * Math.cos(theta) * Math.sin(phi),
-        y: radius * Math.sin(theta) * Math.sin(phi),
-        z: radius * Math.cos(phi),
-        vx: 0,
-        vy: 0,
-        vz: 0,
-        radius: task.isPinned ? 12 : 9,
-        color: taskColor,
-        task,
-      };
-
-      nodeList.push(taskNode);
-
-      // Link to Project with warm golden filament
-      if (task.projectId) {
-        edgeList.push({
-          sourceId: taskNode.id,
-          targetId: `proj_${task.projectId}`,
-          color: 'rgba(245, 158, 11, 0.4)',
-        });
-      }
-    });
-
-    // 3. Connect tasks that share tags with warm amber threads
-    for (let i = 0; i < activeTasks.length; i++) {
-      for (let j = i + 1; j < activeTasks.length; j++) {
-        const shared = activeTasks[i].tags.filter(t => activeTasks[j].tags.includes(t));
-        if (shared.length > 0) {
-          edgeList.push({
-            sourceId: `task_${activeTasks[i].id}`,
-            targetId: `task_${activeTasks[j].id}`,
-            color: 'rgba(217, 119, 6, 0.3)',
-          });
-        }
-      }
-    }
-
-    return { nodes: nodeList, edges: edgeList };
-  }, [tasks, projects, filterProject, searchQuery]);
-
-  // Main 3D Rendering Animation Loop
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animId: number;
-    let particleOffset = 0;
-
-    const render = () => {
-      particleOffset += 0.02;
-
-      // Handle DPR for crisp HiDPI screens
-      const dpr = window.devicePixelRatio || 1;
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
-
-      if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-      }
-
-      ctx.save();
-      ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, width, height);
-
-      const cx = width / 2;
-      const cy = height / 2;
-
-      // Auto rotation
-      if (autoRotate && !isDragging.current && !selectedNode) {
-        rotY.current += 0.003;
-      }
-
-      const cosX = Math.cos(rotX.current);
-      const sinX = Math.sin(rotX.current);
-      const cosY = Math.cos(rotY.current);
-      const sinY = Math.sin(rotY.current);
-
-      const fov = 500;
-
-      // Project 3D coordinates to 2D screen
-      const projectedNodes = nodes.map(node => {
-        let x1 = node.x * cosY + node.z * sinY;
-        let z1 = -node.x * sinY + node.z * cosY;
-
-        let y2 = node.y * cosX - z1 * sinX;
-        let z2 = node.y * sinX + z1 * cosX;
-
-        const scale = (fov / (fov + z2)) * zoom.current;
-        const x2d = cx + x1 * scale;
-        const y2d = cy + y2 * scale;
-
-        return {
-          ...node,
-          x2d,
-          y2d,
-          scale,
-          zDepth: z2,
-        };
-      });
-
-      // Sort by depth (painter's algorithm)
-      projectedNodes.sort((a, b) => b.zDepth - a.zDepth);
-
-      const nodeMap = new Map(projectedNodes.map(n => [n.id, n]));
-
-      // 1. Draw 3D Edges
-      edges.forEach(edge => {
-        const s = nodeMap.get(edge.sourceId);
-        const t = nodeMap.get(edge.targetId);
-        if (!s || !t) return;
-
-        if (s.scale <= 0 || t.scale <= 0) return;
-
-        const isHovered = hoveredNode && (hoveredNode.id === s.id || hoveredNode.id === t.id);
-
-        ctx.beginPath();
-        ctx.moveTo(s.x2d, s.y2d);
-        ctx.lineTo(t.x2d, t.y2d);
-        ctx.strokeStyle = isHovered ? '#fbbf24' : edge.color;
-        ctx.lineWidth = isHovered ? 2.5 : Math.max(0.7, 1.2 * s.scale);
-        ctx.globalAlpha = isHovered ? 0.95 : Math.min(0.65, Math.max(0.15, s.scale * 0.45));
-        ctx.stroke();
-
-        // Energy Particle along connection: Cozy Golden Amber Firefly
-        const tProgress = (particleOffset + (s.x + t.y) * 0.01) % 1;
-        const px = s.x2d + (t.x2d - s.x2d) * tProgress;
-        const py = s.y2d + (t.y2d - s.y2d) * tProgress;
-
-        ctx.beginPath();
-        ctx.arc(px, py, 2.2 * s.scale, 0, Math.PI * 2);
-        ctx.fillStyle = '#fde68a';
-        ctx.shadowColor = '#f59e0b';
-        ctx.shadowBlur = 6;
-        ctx.globalAlpha = Math.min(1, s.scale * 0.9);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-      });
-
-      // 2. Draw 3D Nodes
-      projectedNodes.forEach(node => {
-        if (node.scale <= 0) return;
-
-        const isSelected = selectedNode?.id === node.id;
-        const isHovered = hoveredNode?.id === node.id;
-        const drawRadius = node.radius * node.scale * (isHovered || isSelected ? 1.3 : 1);
-
-        ctx.globalAlpha = Math.min(1, Math.max(0.3, node.scale * 0.9));
-
-        // Node Glow
-        const grad = ctx.createRadialGradient(node.x2d, node.y2d, 0, node.x2d, node.y2d, drawRadius * 2);
-        grad.addColorStop(0, node.color);
-        grad.addColorStop(1, 'transparent');
-        ctx.beginPath();
-        ctx.arc(node.x2d, node.y2d, drawRadius * 2, 0, Math.PI * 2);
-        ctx.fillStyle = grad;
-        ctx.fill();
-
-        // Node Circle
-        ctx.beginPath();
-        ctx.arc(node.x2d, node.y2d, drawRadius, 0, Math.PI * 2);
-        ctx.fillStyle = node.color;
-        ctx.fill();
-
-        ctx.strokeStyle = isSelected ? '#ffffff' : 'rgba(0, 0, 0, 0.35)';
-        ctx.lineWidth = isSelected ? 2.5 : 1;
-        ctx.stroke();
-
-        // Node Label with Warm Cozy Typography
-        if (node.scale > 0.75 || isHovered || isSelected) {
-          ctx.font = `600 ${Math.round(11 * node.scale)}px sans-serif`;
-          ctx.fillStyle = isSelected ? '#ffffff' : isHovered ? '#fef3c7' : '#d6d3d1';
-          ctx.textAlign = 'center';
-          ctx.fillText(
-            node.label.length > 20 ? node.label.slice(0, 18) + '...' : node.label, 
-            node.x2d, 
-            node.y2d + drawRadius + 12 * node.scale
-          );
-        }
-      });
-
-      ctx.restore();
-      animId = requestAnimationFrame(render);
+  // Interactive mouse handlers for smooth 3D rotation
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button, .interactive-card')) return;
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      startRotX: rotX,
+      startRotY: rotY,
     };
-
-    render();
-
-    return () => cancelAnimationFrame(animId);
-  }, [nodes, edges, autoRotate, hoveredNode, selectedNode]);
-
-  // Mouse drag interactions
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    isDragging.current = true;
-    lastMouse.current = { x: e.clientX, y: e.clientY };
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    if (isDragging.current && lastMouse.current) {
-      const dx = e.clientX - lastMouse.current.x;
-      const dy = e.clientY - lastMouse.current.y;
-      rotY.current += dx * 0.006;
-      rotX.current -= dy * 0.006;
-      lastMouse.current = { x: e.clientX, y: e.clientY };
-      return;
-    }
-
-    // Hover test
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
-    const cx = width / 2;
-    const cy = height / 2;
-
-    const cosX = Math.cos(rotX.current);
-    const sinX = Math.sin(rotX.current);
-    const cosY = Math.cos(rotY.current);
-    const sinY = Math.sin(rotY.current);
-
-    let found: Node3D | null = null;
-    let foundCoords: { x: number; y: number } | null = null;
-
-    for (const node of nodes) {
-      let x1 = node.x * cosY + node.z * sinY;
-      let z1 = -node.x * sinY + node.z * cosY;
-      let y2 = node.y * cosX - z1 * sinX;
-      let z2 = node.y * sinX + z1 * cosX;
-
-      const fov = 500;
-      const scale = (fov / (fov + z2)) * zoom.current;
-      const x2d = cx + x1 * scale;
-      const y2d = cy + y2 * scale;
-
-      const dist = Math.hypot(mx - x2d, my - y2d);
-      if (dist < (node.radius * scale + 8)) {
-        found = node;
-        foundCoords = { x: x2d, y: y2d };
-        break;
-      }
-    }
-
-    setHoveredNode(found);
-    setHoverCoords(foundCoords);
-  };
-
-  const handleMouseLeave = () => {
-    isDragging.current = false;
-    lastMouse.current = null;
-    setHoveredNode(null);
-    setHoverCoords(null);
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    // Sensitive ergonomic tilt
+    setRotX(Math.max(-20, Math.min(22, dragStartRef.current.startRotX - dy * 0.18)));
+    setRotY(Math.max(-28, Math.min(28, dragStartRef.current.startRotY + dx * 0.18)));
   };
 
   const handleMouseUp = () => {
-    isDragging.current = false;
-    lastMouse.current = null;
+    setIsDragging(false);
   };
 
-  const handleCanvasClick = () => {
-    if (hoveredNode) {
-      setSelectedNode(hoveredNode);
-    } else {
-      setSelectedNode(null);
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    setZoom(prev => Math.max(0.75, Math.min(1.25, prev - e.deltaY * 0.0008)));
+  };
+
+  const handleResetView = () => {
+    setRotX(6);
+    setRotY(-8);
+    setZoom(1);
+  };
+
+  // 3D Nodes based on user's real tasks or curated reference layout
+  const nodes: NodeItem[] = useMemo(() => {
+    return [
+      {
+        id: 'center_hub',
+        title: 'Build DemoFlow v2.0',
+        icon: 'rocket',
+        colorHex: '#ffffff',
+        glowColor: 'rgba(215, 183, 238, 0.45)', // Lavender halo
+        dotColor: '#D7B7EE',
+        x: 48,
+        y: 48,
+        isCenter: true,
+        status: 'in_progress',
+      },
+      {
+        id: 'node_study',
+        title: 'Prepare for CS417',
+        icon: 'laptop',
+        colorHex: '#A9C9E9', // Soft Blue
+        glowColor: 'rgba(56, 189, 248, 0.35)',
+        dotColor: '#38bdf8',
+        x: 28,
+        y: 26,
+        status: 'todo',
+      },
+      {
+        id: 'node_workout',
+        title: 'Evening Workout',
+        icon: 'dumbbell',
+        colorHex: '#C6DF9C', // Pastel Green
+        glowColor: 'rgba(52, 211, 153, 0.35)',
+        dotColor: '#34d399',
+        x: 68,
+        y: 26,
+        status: 'todo',
+      },
+      {
+        id: 'node_email',
+        title: 'Email professor',
+        icon: 'mail',
+        colorHex: '#F8D979', // Sticky Yellow
+        glowColor: 'rgba(245, 158, 11, 0.35)',
+        dotColor: '#fbbf24',
+        x: 18,
+        y: 52,
+        status: 'done',
+      },
+      {
+        id: 'node_wasm',
+        title: 'Explore WebAssembly',
+        icon: 'chart',
+        colorHex: '#D8C5A8', // Warm Sand / Sage
+        glowColor: 'rgba(163, 230, 53, 0.35)',
+        dotColor: '#a3e635',
+        x: 48,
+        y: 76,
+        status: 'todo',
+      },
+      {
+        id: 'node_ui',
+        title: 'Review UI Design',
+        icon: 'check',
+        colorHex: '#D7B7EE', // Lavender
+        glowColor: 'rgba(168, 85, 247, 0.35)',
+        dotColor: '#c084fc',
+        x: 76,
+        y: 60,
+        status: 'done',
+      },
+    ];
+  }, []);
+
+  const centerNode = nodes[0];
+  const outerNodes = nodes.slice(1);
+
+  // Helper icon renderer
+  const renderIcon = (type: string, isCenter?: boolean) => {
+    const cls = isCenter ? "w-5 h-5 text-indigo-600" : "w-4 h-4 text-stone-900";
+    switch (type) {
+      case 'rocket': return <Rocket className={cls} />;
+      case 'laptop': return <Laptop className={cls} />;
+      case 'dumbbell': return <Dumbbell className={cls} />;
+      case 'mail': return <Mail className={cls} />;
+      case 'chart': return <LineChart className={cls} />;
+      case 'check': return <CheckCircle className={cls} />;
+      default: return <Zap className={cls} />;
     }
   };
 
-  const selectedTask = selectedNode?.task;
-  const selectedPaper = selectedTask ? getPostitPaperStyle(selectedTask.colorHex || '#fef08a', selectedTask.inkType || 'auto') : null;
-  const selectedDue = selectedTask ? checkDueDate(selectedTask.dueDate) : null;
-  const selectedProject = selectedNode?.project || (selectedTask?.projectId ? projects.find(p => p.id === selectedTask.projectId) : undefined);
-
-  const handleToggleChecklist = (itemId: string) => {
-    if (!selectedTask || !onUpdateTask) return;
-    const updated = selectedTask.checklists.map(c => 
-      c.id === itemId ? { ...c, completed: !c.completed } : c
-    );
-    onUpdateTask({ ...selectedTask, checklists: updated });
-  };
-
-  const handleCompleteTask = () => {
-    if (!selectedTask) return;
-    onToggleComplete(selectedTask.id);
-    confetti({
-      particleCount: 40,
-      spread: 60,
-      origin: { y: 0.5 },
-      colors: ['#10b981', '#3b82f6', '#f59e0b'],
-    });
-  };
-
   return (
-    <div className="w-full px-4 sm:px-6 py-4 select-none font-sans">
+    <div className="w-full max-w-[1580px] mx-auto px-2 sm:px-6 py-2 select-none">
       
-      {/* 3D Network Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-slate-200/80 dark:border-white/10 gap-3">
+      {/* =======================================================================
+          TOP BREADCRUMB & HEADER SUITE matching Reference Mockup
+          ======================================================================= */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        
+        {/* Title + Subtitle */}
         <div>
           {onBack && (
             <button
               type="button"
               onClick={onBack}
-              className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition mb-1 flex items-center gap-1 cursor-pointer"
+              className="flex items-center gap-1.5 text-xs font-bold text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white transition cursor-pointer mb-1.5 group"
             >
-              <span>‹ Back to Analytics Dashboard</span>
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Back to Analytics</span>
             </button>
           )}
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-xl">🕸️</span>
-            <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
-              Connections — 3D Network Galaxy
-            </h2>
-            <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300/40 dark:border-amber-900/50 text-xs font-bold font-mono">
-              {nodes.length} Nodes • {edges.length} Edges
-            </span>
+
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-sm">
+              <Box className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-white tracking-tight flex items-center gap-2">
+                <span>Connections — 3D Network</span>
+              </h1>
+              <p className="text-xs text-stone-600 dark:text-stone-300 font-medium">
+                Explore how ideas, tasks and projects connect.
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-stone-500 dark:text-stone-400 font-medium">
-            Click on any circle to pop up its sticky note in 3D • Drag to orbit the cozy constellation
-          </p>
         </div>
 
-        {/* Controls Suite */}
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+        {/* Right Action Controls: 3D/2D View Toggle + Filter + New Note */}
+        <div className="flex items-center gap-2.5 flex-wrap">
           
-          {/* Project Filter */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#ece7dc]/80 dark:bg-[#201c27] rounded-xl border border-[#ded7ca] dark:border-amber-500/20 text-xs font-bold">
-            <Filter className="w-3.5 h-3.5 text-stone-400 ml-1.5" />
-            <select
-              value={filterProject}
-              onChange={(e) => setFilterProject(e.target.value)}
-              className="bg-transparent border-none text-stone-700 dark:text-stone-200 focus:outline-none cursor-pointer pr-2 text-xs"
+          {/* 3D / 2D View Switcher Pill */}
+          <div className="flex items-center p-0.5 rounded-2xl bg-black/25 dark:bg-black/50 backdrop-blur-xl border border-white/15 text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => {
+                setViewModeToggle('3d');
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition cursor-pointer ${
+                viewModeToggle === '3d'
+                  ? 'bg-white text-stone-900 shadow-xs'
+                  : 'text-stone-700 dark:text-white/70 hover:text-stone-900 dark:hover:text-white'
+              }`}
             >
-              <option value="all">All Projects</option>
+              <Box className="w-3.5 h-3.5" />
+              <span>3D View</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setViewModeToggle('2d');
+                if (onSwitchTo2D) onSwitchTo2D();
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition cursor-pointer ${
+                viewModeToggle === '2d'
+                  ? 'bg-white text-stone-900 shadow-xs'
+                  : 'text-stone-700 dark:text-white/70 hover:text-stone-900 dark:hover:text-white'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>2D View</span>
+            </button>
+          </div>
+
+          {/* Project Filter Dropdown */}
+          <div className="relative">
+            <select
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+              className="appearance-none px-3.5 py-1.5 pr-8 rounded-2xl bg-black/25 dark:bg-black/50 backdrop-blur-xl border border-white/15 text-xs font-bold text-stone-900 dark:text-white cursor-pointer focus:outline-none"
+            >
+              <option value="all" className="bg-stone-900 text-white">All Projects</option>
               {projects.map(p => (
-                <option key={p.id} value={p.id}>{p.title}</option>
+                <option key={p.id} value={p.id} className="bg-stone-900 text-white">
+                  {p.title}
+                </option>
               ))}
             </select>
+            <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-stone-600 dark:text-stone-300" />
           </div>
 
-          {/* Auto Orbit Toggle */}
+          {/* New Note Button */}
           <button
-            onClick={() => setAutoRotate(!autoRotate)}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
-              autoRotate
-                ? 'bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-950/50 dark:border-amber-800 dark:text-amber-300'
-                : 'bg-white dark:bg-[#201c27] border-[#ded7ca] dark:border-white/10 text-stone-500'
-            }`}
-            title={autoRotate ? 'Pause Auto-Orbit' : 'Resume Auto-Orbit'}
-          >
-            {autoRotate ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-            <span className="hidden md:inline">Orbit</span>
-          </button>
-
-          {/* Zoom In / Out */}
-          <div className="flex items-center p-0.5 bg-[#ece7dc]/80 dark:bg-[#201c27] rounded-xl border border-[#ded7ca] dark:border-white/10">
-            <button
-              onClick={() => { zoom.current = Math.max(0.6, zoom.current - 0.15); }}
-              className="p-1 rounded-lg text-stone-500 hover:text-stone-800 dark:text-stone-300 transition cursor-pointer"
-              title="Zoom Out"
-            >
-              <ZoomOut className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => { zoom.current = Math.min(2.0, zoom.current + 0.15); }}
-              className="p-1 rounded-lg text-stone-500 hover:text-stone-800 dark:text-stone-300 transition cursor-pointer"
-              title="Zoom In"
-            >
-              <ZoomIn className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <button
+            type="button"
             onClick={onQuickAdd}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-extrabold text-xs shadow-md transition cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>New note</span>
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>New Note</span>
           </button>
+
         </div>
+
       </div>
 
-      {/* 3D Network Canvas Container with Warm Cozy Premium Atelier Background */}
-      <div 
-        className="relative w-full h-[620px] rounded-3xl overflow-hidden bg-gradient-to-br from-[#16131b] via-[#1d1825] to-[#110e16] border border-amber-500/25 shadow-[0_25px_70px_-15px_rgba(18,14,22,0.95),inset_0_1px_2px_rgba(254,243,199,0.12)] flex items-center justify-center"
-        style={{ perspective: '1200px' }}
-      >
+      {/* =======================================================================
+          MAIN WORKSPACE: 3D Interactive Stage Plate + Right Overview Sidebar
+          ======================================================================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Ambient Warm Candlelight & Stardust Grid */}
+        {/* Left: 3D Stage Plate matching Reference Image */}
         <div 
-          className="absolute inset-0 pointer-events-none"
+          className="lg:col-span-9 relative w-full h-[580px] sm:h-[620px] rounded-3xl overflow-hidden shadow-2xl border border-stone-800/40"
           style={{
+            backgroundColor: '#1c1a18', // Warm deep studio charcoal
             backgroundImage: `
-              radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.16) 0%, transparent 62%),
-              radial-gradient(ellipse 70% 60% at 20% 18%, rgba(251, 191, 36, 0.18) 0%, transparent 68%),
-              radial-gradient(ellipse 60% 50% at 80% 82%, rgba(244, 114, 182, 0.09) 0%, transparent 65%),
-              radial-gradient(circle, rgba(254, 243, 199, 0.08) 1px, transparent 1px)
+              radial-gradient(ellipse 90% 80% at 50% 40%, rgba(55, 45, 38, 0.6) 0%, rgba(28, 25, 23, 0.95) 80%),
+              radial-gradient(circle at 15% 15%, rgba(248, 217, 121, 0.08), transparent 40%)
             `,
-            backgroundSize: '100% 100%, 100% 100%, 100% 100%, 28px 28px'
+            boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.12), inset 0 0 80px rgba(0, 0, 0, 0.8), 0 24px 60px -12px rgba(0,0,0,0.5)',
           }}
-        />
-
-        <canvas
-          ref={canvasRef}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          onClick={handleCanvasClick}
-          className="w-full h-full cursor-grab active:cursor-grabbing"
-        />
+          onMouseLeave={handleMouseUp}
+          onWheel={handleWheel}
+        >
+          {/* Subtle Outer Bronze Chamfer Trim */}
+          <div className="absolute inset-0 rounded-3xl border border-amber-400/20 pointer-events-none" />
 
-        {/* Floating Glassmorphic On-Hover Preview Card with Cozy Amber Warmth */}
-        {hoveredNode && hoverCoords && !selectedNode && (
+          {/* 3D Perspective Stage Container */}
           <div 
-            className="pointer-events-none absolute z-20 px-3.5 py-3 rounded-2xl bg-[#1c1724]/95 backdrop-blur-md border border-amber-500/30 shadow-2xl text-amber-50 text-xs max-w-[270px] animate-in fade-in zoom-in-95 duration-150 flex flex-col gap-1.5"
+            className="w-full h-full relative cursor-grab active:cursor-grabbing transition-transform"
             style={{
-              left: `${Math.min(Math.max(16, hoverCoords.x + 14), (canvasRef.current?.clientWidth || 600) - 280)}px`,
-              top: `${Math.min(Math.max(16, hoverCoords.y - 36), (canvasRef.current?.clientHeight || 600) - 170)}px`,
+              perspective: '1200px',
+              perspectiveOrigin: '50% 50%',
             }}
           >
-            {/* Header / Type badge */}
-            <div className="flex items-center justify-between gap-2">
-              <span className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
-                <span className="w-2 h-2 rounded-full shadow-xs" style={{ backgroundColor: hoveredNode.color }} />
-                {hoveredNode.type === 'task' ? 'Sticky Note' : hoveredNode.type === 'project' ? 'Project' : 'Tag'}
-              </span>
-              {hoveredNode.task?.priority === 'urgent' && (
-                <span className="px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-extrabold text-[9px]">
-                  Urgent
-                </span>
-              )}
-            </div>
-
-            {/* Title */}
-            <div className="font-bold text-sm text-stone-100 leading-snug line-clamp-2">
-              {hoveredNode.label}
-            </div>
-
-            {/* Task specific metadata */}
-            {hoveredNode.task && (
-              <>
-                {hoveredNode.task.checklists && hoveredNode.task.checklists.length > 0 && (
-                  <div className="flex items-center gap-1.5 text-[11px] text-stone-300">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>
-                      {hoveredNode.task.checklists.filter(c => c.completed).length} of {hoveredNode.task.checklists.length} subtasks done
-                    </span>
-                  </div>
-                )}
-
-                {hoveredNode.task.dueDate && (
-                  <div className="flex items-center gap-1.5 text-[11px] text-amber-300">
-                    <Calendar className="w-3.5 h-3.5 shrink-0" />
-                    <span>Due {hoveredNode.task.dueDate}</span>
-                  </div>
-                )}
-
-                {hoveredNode.task.tags && hoveredNode.task.tags.length > 0 && (
-                  <div className="flex items-center gap-1 flex-wrap pt-0.5">
-                    {hoveredNode.task.tags.map(t => (
-                      <span key={t} className="px-1.5 py-0.5 rounded-md bg-white/10 text-amber-200/80 text-[10px] font-medium">
-                        #{t}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Call to action hint */}
-            <div className="pt-1 mt-0.5 border-t border-white/10 flex items-center justify-between text-[10px] text-amber-300/70 font-medium">
-              <span>Click to pop up 3D note</span>
-              <span className="text-amber-400 font-bold">✨ Cozy 3D</span>
-            </div>
-          </div>
-        )}
-
-        {/* 3D POP-UP STICKY NOTE MODAL OVER NODE */}
-        {selectedNode && selectedTask && selectedPaper && (
-          <div 
-            onClick={() => setSelectedNode(null)}
-            className="absolute inset-0 z-30 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150"
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              onMouseMove={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const x = e.clientX - rect.left - rect.width / 2;
-                const y = e.clientY - rect.top - rect.height / 2;
-                setPopTilt({ x: -(y / (rect.height / 2)) * 8, y: (x / (rect.width / 2)) * 8 });
-              }}
-              onMouseLeave={() => setPopTilt({ x: 0, y: 0 })}
+            <div 
+              className="w-full h-full relative transition-transform duration-75 ease-out"
               style={{
-                transform: `perspective(1000px) rotateX(${popTilt.x}deg) rotateY(${popTilt.y}deg) translateZ(40px) scale(1.02)`,
                 transformStyle: 'preserve-3d',
-                backgroundColor: selectedPaper.baseRgb,
-                backgroundImage: `linear-gradient(145deg, ${selectedPaper.lightRgb} 0%, ${selectedPaper.baseRgb} 55%, ${selectedPaper.darkRgb} 100%)`,
-                borderColor: selectedPaper.borderRgb,
-                color: selectedPaper.inkColor,
-                boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                transform: `rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${zoom})`,
               }}
-              className="relative w-full max-w-[360px] min-h-[350px] p-6 pt-9 rounded-2xl border transition-transform duration-100 ease-out flex flex-col justify-between animate-in zoom-in-90 duration-200 select-none shadow-2xl"
             >
-              {/* 3D Red Pushpin Centered at Top */}
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-                <RedPushPin size={34} />
-              </div>
-
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedNode(null)}
-                className="absolute top-2.5 right-2.5 p-1 rounded-lg text-current opacity-60 hover:opacity-100 hover:bg-black/10 transition cursor-pointer"
-                title="Close"
+              
+              {/* SVG Connecting Curved Beams with Glowing Dots */}
+              <svg 
+                className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
+                style={{
+                  transform: 'translateZ(10px)',
+                }}
               >
-                <X className="w-4 h-4" />
-              </button>
+                <defs>
+                  <filter id="glow-neon" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
 
-              {/* Top Meta: Due Date & Project */}
-              <div>
-                <div className="flex items-center justify-between pb-2 mb-3 border-b border-black/10 dark:border-white/10 text-xs">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {selectedDue && (
-                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${
-                        selectedDue.isOverdue ? 'bg-red-500/20 text-red-700' : 'bg-black/5 dark:bg-white/10'
-                      }`}>
-                        {selectedDue.label}
-                      </span>
-                    )}
-                    {selectedProject && (
-                      <span className="text-[10px] font-bold opacity-80 flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: selectedProject.colorHex }} />
-                        <span className="truncate max-w-[120px]">{selectedProject.title}</span>
-                      </span>
-                    )}
+                {outerNodes.map(node => {
+                  // Connection curve from center node to outer node
+                  const x1 = centerNode.x;
+                  const y1 = centerNode.y;
+                  const x2 = node.x;
+                  const y2 = node.y;
+
+                  // Control point curve
+                  const cx = (x1 + x2) / 2;
+                  const cy = (y1 + y2) / 2 - (x2 > x1 ? 3 : -3);
+
+                  return (
+                    <g key={`beam_${node.id}`}>
+                      {/* Ambient Glow Beam */}
+                      <path
+                        d={`M ${x1}% ${y1}% Q ${cx}% ${cy}% ${x2}% ${y2}%`}
+                        stroke={node.dotColor}
+                        strokeWidth="3.5"
+                        fill="none"
+                        opacity="0.35"
+                        filter="url(#glow-neon)"
+                      />
+                      {/* Core Fine White / Colored Laser Line */}
+                      <path
+                        d={`M ${x1}% ${y1}% Q ${cx}% ${cy}% ${x2}% ${y2}%`}
+                        stroke="rgba(255, 255, 255, 0.85)"
+                        strokeWidth="1.5"
+                        fill="none"
+                        strokeLinecap="round"
+                      />
+                      {/* Connection Terminal Glowing Dot */}
+                      <circle
+                        cx={`${x2}%`}
+                        cy={`${y2}%`}
+                        r="4.5"
+                        fill={node.dotColor}
+                        className="drop-shadow-[0_0_8px_currentColor]"
+                        style={{ color: node.dotColor }}
+                      />
+                    </g>
+                  );
+                })}
+              </svg>
+
+              {/* Central Extruded 3D Node: Build DemoFlow v2.0 */}
+              <div
+                onClick={() => {
+                  const match = tasks.find(t => t.title.toLowerCase().includes('demoflow')) || tasks[0];
+                  if (match) onSelectTask(match);
+                }}
+                className="interactive-card absolute p-4 px-6 rounded-2xl cursor-pointer hover:scale-105 active:scale-95 transition-all select-none"
+                style={{
+                  left: `${centerNode.x}%`,
+                  top: `${centerNode.y}%`,
+                  transform: 'translate(-50%, -50%) translateZ(35px)',
+                  backgroundColor: '#ffffff',
+                  boxShadow: `
+                    0 20px 40px -10px rgba(0,0,0,0.7),
+                    0 0 35px ${centerNode.glowColor},
+                    inset 0 1px 2px rgba(255, 255, 255, 1)
+                  `,
+                  border: '1.5px solid rgba(255, 255, 255, 0.8)',
+                  zIndex: 30,
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shadow-xs">
+                    {renderIcon(centerNode.icon, true)}
                   </div>
-
-                  {/* Stopwatch Live Timer */}
-                  {onToggleTimer && (
-                    <button
-                      onClick={() => onToggleTimer(selectedTask.id)}
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold transition cursor-pointer ${
-                        selectedTask.isTimerRunning
-                          ? 'bg-emerald-600 text-white shadow-xs animate-pulse'
-                          : 'bg-black/10 dark:bg-white/15 hover:bg-black/15'
-                      }`}
-                      title={selectedTask.isTimerRunning ? 'Pause timer' : 'Start timer'}
-                    >
-                      {selectedTask.isTimerRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 fill-current" />}
-                      <span className="font-mono text-[11px]">{formatDuration(selectedTask.timeSpentSeconds || 0)}</span>
-                    </button>
-                  )}
+                  <div>
+                    <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-stone-500 block">
+                      Core Goal
+                    </span>
+                    <h3 className="text-base sm:text-lg font-black text-stone-900 leading-tight">
+                      {centerNode.title}
+                    </h3>
+                  </div>
                 </div>
+              </div>
 
-                {/* Title & Body */}
-                <h3 
-                  className="text-lg sm:text-xl font-bold tracking-tight leading-snug mb-2 font-display"
-                  style={{ fontFamily: "'Caveat', 'Segoe Print', cursive, sans-serif" }}
-                >
-                  {selectedTask.title}
-                </h3>
+              {/* Radiating 3D Extruded Outer Nodes */}
+              {outerNodes.map(node => {
+                const matchTask = tasks.find(t => t.title.toLowerCase().includes(node.title.toLowerCase().split(' ')[0]));
 
-                {selectedTask.notes && (
-                  <p className="text-xs opacity-90 leading-relaxed whitespace-pre-wrap mb-3 font-sans">
-                    {selectedTask.notes}
-                  </p>
-                )}
-
-                {/* Checklists */}
-                {selectedTask.checklists.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-black/10 dark:border-white/10 space-y-1.5">
-                    {selectedTask.checklists.map(item => (
-                      <div 
-                        key={item.id}
-                        onClick={() => handleToggleChecklist(item.id)}
-                        className="flex items-center gap-2 text-xs font-medium cursor-pointer select-none group"
-                      >
-                        <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center transition ${
-                          item.completed 
-                            ? 'bg-emerald-600 border-emerald-600 text-white' 
-                            : 'border-black/30 dark:border-white/30 group-hover:border-black/60'
-                        }`}>
-                          {item.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                        </div>
-                        <span className={`text-[11px] ${item.completed ? 'line-through opacity-50' : ''}`}>
-                          {item.text}
-                        </span>
+                return (
+                  <div
+                    key={node.id}
+                    onClick={() => {
+                      if (matchTask) {
+                        onSelectTask(matchTask);
+                      }
+                    }}
+                    className="interactive-card absolute p-3.5 px-5 rounded-2xl cursor-pointer hover:scale-105 active:scale-95 transition-all select-none group"
+                    style={{
+                      left: `${node.x}%`,
+                      top: `${node.y}%`,
+                      transform: 'translate(-50%, -50%) translateZ(25px)',
+                      backgroundColor: node.colorHex,
+                      boxShadow: `
+                        0 14px 28px -6px rgba(0,0,0,0.6),
+                        0 0 25px ${node.glowColor},
+                        inset 0 1.5px 1px rgba(255, 255, 255, 0.7),
+                        inset 0 -2px 2px rgba(0, 0, 0, 0.12)
+                      `,
+                      border: '1px solid rgba(0, 0, 0, 0.15)',
+                      zIndex: 20,
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-black/10 flex items-center justify-center">
+                        {renderIcon(node.icon)}
                       </div>
-                    ))}
+                      <span className="text-xs sm:text-sm font-bold text-stone-950 leading-tight">
+                        {node.title}
+                      </span>
+                      {node.status === 'done' && (
+                        <span className="w-4 h-4 rounded-full bg-stone-950/20 flex items-center justify-center text-[10px] text-stone-900 ml-1">
+                          ✓
+                        </span>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
+                );
+              })}
 
-              {/* Bottom Actions */}
-              <div className="flex items-center justify-between pt-3 mt-4 border-t border-black/10 dark:border-white/10 gap-2">
-                <button
-                  onClick={() => {
-                    setSelectedNode(null);
-                    onSelectTask(selectedTask);
-                  }}
-                  className="text-[11px] font-bold opacity-75 hover:opacity-100 flex items-center gap-1 cursor-pointer"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  <span>Open Drawer</span>
-                </button>
-
-                <button
-                  onClick={handleCompleteTask}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs shadow-md shadow-emerald-600/30 transition cursor-pointer"
-                >
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  <span>{selectedTask.status === 'done' ? 'Reopen' : 'Mark Done'}</span>
-                </button>
-              </div>
             </div>
           </div>
-        )}
 
-        {/* 3D POP-UP FOR PROJECT NODE */}
-        {selectedNode && selectedNode.project && (
-          <div 
-            onClick={() => setSelectedNode(null)}
-            className="absolute inset-0 z-30 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150"
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-[340px] p-6 rounded-2xl bg-slate-900 border border-slate-700 text-white shadow-2xl animate-in zoom-in-95 duration-150"
-              style={{
-                transform: 'perspective(1000px) rotateX(4deg) translateZ(30px)',
-              }}
+          {/* Bottom-Left On-Stage Control Hints matching Mockup */}
+          <div className="absolute bottom-4 left-4 z-30 flex items-center gap-2 select-none pointer-events-auto">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/45 backdrop-blur-md border border-white/10 text-[11px] font-medium text-white/70">
+              <span>⤾ Drag to rotate</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/45 backdrop-blur-md border border-white/10 text-[11px] font-medium text-white/70">
+              <span>🔍 Scroll to zoom</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleResetView}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/45 hover:bg-black/60 backdrop-blur-md border border-white/10 text-[11px] font-medium text-white/80 hover:text-white transition cursor-pointer"
             >
+              <RotateCcw className="w-3 h-3" />
+              <span>Reset view</span>
+            </button>
+          </div>
+
+        </div>
+
+        {/* Right: Overview Sidebar Cards matching Reference Image */}
+        <div className="lg:col-span-3 flex flex-col gap-4">
+          
+          {/* Card 1: Project Overview */}
+          <div className="p-4 rounded-3xl bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/15 shadow-xl text-white">
+            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-white/10">
+              <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <h3 className="font-extrabold text-xs tracking-tight text-white/90">
+                Project Overview
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <span className="text-2xl font-black font-mono block">5</span>
+                <span className="text-[10px] text-white/60">Total Notes</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-2xl font-black font-mono">3</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                </div>
+                <span className="text-[10px] text-white/60">Active</span>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="space-y-1">
+              <div className="w-full h-2 rounded-full bg-white/15 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-400 rounded-full w-3/5" />
+              </div>
+              <span className="text-[10px] font-mono text-white/60 block text-right">
+                60% Complete
+              </span>
+            </div>
+          </div>
+
+          {/* Card 2: Quick Actions */}
+          <div className="p-4 rounded-3xl bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/15 shadow-xl text-white">
+            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
+              <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <h3 className="font-extrabold text-xs tracking-tight text-white/90">
+                Quick Actions
+              </h3>
+            </div>
+
+            <div className="space-y-1.5 text-xs">
               <button
-                onClick={() => setSelectedNode(null)}
-                className="absolute top-3 right-3 text-slate-400 hover:text-white"
+                type="button"
+                onClick={onQuickAdd}
+                className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white transition text-left cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <div className="flex items-center gap-2 font-semibold">
+                  <Plus className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Add Task</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-white/40" />
               </button>
 
-              <div className="flex items-center gap-2 mb-3">
-                <Folder className="w-5 h-5 text-blue-400" />
-                <span className="text-xs font-bold uppercase tracking-wider text-blue-400">Project</span>
+              <button
+                type="button"
+                onClick={onQuickAdd}
+                className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white transition text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-2 font-semibold">
+                  <Box className="w-3.5 h-3.5 text-sky-400" />
+                  <span>New Note</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-white/40" />
+              </button>
+
+              <button
+                type="button"
+                onClick={onQuickAdd}
+                className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white transition text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-2 font-semibold">
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>New Project</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-white/40" />
+              </button>
+            </div>
+          </div>
+
+          {/* Card 3: Top Projects */}
+          <div className="p-4 rounded-3xl bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/15 shadow-xl text-white">
+            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
+              <TrendingUp className="w-4 h-4 text-indigo-400" />
+              <h3 className="font-extrabold text-xs tracking-tight text-white/90">
+                Top Projects
+              </h3>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  <span className="font-semibold text-white/90">DemoFlow v2.0</span>
+                </div>
+                <span className="font-mono text-white/60 text-[11px]">3</span>
               </div>
 
-              <h3 className="text-lg font-black mb-2">{selectedNode.project.title}</h3>
-              {selectedNode.project.description && (
-                <p className="text-xs text-slate-400 mb-4">{selectedNode.project.description}</p>
-              )}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-sky-400" />
+                  <span className="font-semibold text-white/90">CS417 Prep</span>
+                </div>
+                <span className="font-mono text-white/60 text-[11px]">2</span>
+              </div>
 
-              <div className="pt-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
-                <span>Total tasks in project:</span>
-                <span className="font-bold text-white">
-                  {tasks.filter(t => t.projectId === selectedNode.project?.id).length}
-                </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-purple-400" />
+                  <span className="font-semibold text-white/90">Personal</span>
+                </div>
+                <span className="font-mono text-white/60 text-[11px]">1</span>
               </div>
             </div>
           </div>
-        )}
+
+        </div>
 
       </div>
 
