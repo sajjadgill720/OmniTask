@@ -125,21 +125,21 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
               className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-500 dark:text-amber-400 hover:text-amber-400 transition mb-1 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>← Back to 2D Canvas Wall</span>
+              <span>← Return to Desk Workspace</span>
             </button>
           )}
 
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-xl">🍂</span>
+            <span className="text-xl">🏛️</span>
             <h2 className="text-xl font-black tracking-tight text-stone-900 dark:text-stone-100 drop-shadow-xs">
-              {title} — 3D Spatial Canvas
+              {title}
             </h2>
             <span className="px-2 py-0.5 rounded-full bg-[#F8D979] text-[#25231F] text-xs font-bold font-mono">
-              {tasks.length} Notes
+              {tasks.length} Deliverables
             </span>
           </div>
           <p className="text-xs text-stone-600 dark:text-stone-400 font-medium">
-            {subtitle} • Drag space to orbit 3D camera. Content remains perfectly synchronized with your tasks.
+            {subtitle}
           </p>
         </div>
 

@@ -15,7 +15,9 @@ import {
   Award,
   ChevronDown,
   LayoutGrid,
-  Square
+  Square,
+  Monitor,
+  Landmark
 } from 'lucide-react';
 import { Task, Project } from '../types';
 import { RedPushPin } from './RedPushPin';
@@ -35,6 +37,7 @@ interface StudioBoardViewProps {
   audioEnabled: boolean;
   onQuickAdd: () => void;
   onNavigateToNetwork?: () => void;
+  onToggleStandupWall?: () => void;
 }
 
 /**
@@ -56,6 +59,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
   audioEnabled,
   onQuickAdd,
   onNavigateToNetwork,
+  onToggleStandupWall,
 }) => {
   const [dragOverCol, setDragOverCol] = useState<Task['status'] | null>(null);
 
@@ -109,9 +113,35 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
   return (
     <div className="w-full flex flex-col justify-between gap-4 max-w-5xl mx-auto select-none">
       
-      {/* Top Density / Size Switcher matching user request */}
-      <div className="flex items-center justify-end px-2">
-        <div className="flex items-center gap-1 bg-black/25 dark:bg-black/40 backdrop-blur-md px-2 py-1 rounded-2xl border border-white/15 text-xs text-stone-800 dark:text-stone-200">
+      {/* Top Workspace Bar: Corporate Digital Twin View Switcher + Note Size */}
+      <div className="flex items-center justify-between px-2 gap-3 flex-wrap">
+        
+        {/* Left: Dual Corporate Perspective Switcher (Desk Workspace vs. Executive Standup Wall) */}
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-black/25 dark:bg-black/40 backdrop-blur-md border border-white/15 text-xs font-bold shadow-xs">
+          <button
+            type="button"
+            className="px-3 py-1 rounded-xl bg-amber-400 text-stone-950 font-black shadow-xs flex items-center gap-1.5 cursor-default"
+            title="Desk Workspace (Active Daily Workstation)"
+          >
+            <Monitor className="w-3.5 h-3.5" />
+            <span>Desk Workspace</span>
+          </button>
+
+          {onToggleStandupWall && (
+            <button
+              type="button"
+              onClick={onToggleStandupWall}
+              className="px-3 py-1 rounded-xl text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-white/10 transition flex items-center gap-1.5 cursor-pointer"
+              title="Step back to review team sprint on the 3D Executive Standup Wall"
+            >
+              <Landmark className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+              <span>Executive Standup Wall ↗</span>
+            </button>
+          )}
+        </div>
+
+        {/* Right: Note Size Density Switcher */}
+        <div className="flex items-center gap-1 bg-black/25 dark:bg-black/40 backdrop-blur-md px-2 py-1 rounded-2xl border border-white/15 text-xs text-stone-800 dark:text-stone-200 shadow-xs">
           <span className="text-[10px] font-bold text-stone-600 dark:text-stone-400 mr-1 hidden sm:inline">Note Size:</span>
           <button
             type="button"
@@ -139,6 +169,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
             <span>Compact</span>
           </button>
         </div>
+
       </div>
 
       {/* 3-Column Kanban Wall with Internal Column Scrolling */}

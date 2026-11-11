@@ -501,6 +501,7 @@ export function App() {
                 onMoveTaskStatus={handleMoveTaskStatus}
                 audioEnabled={permissions.audioEnabled}
                 onNavigateToNetwork={() => handleChangeViewMode('analytics')}
+                onToggleStandupWall={() => handleChangeViewMode('canvas_3d')}
                 onQuickAdd={() => handleMagicAdd({
                   title: 'New note',
                   priority: 'normal',
@@ -536,19 +537,14 @@ export function App() {
                   section: currentSection,
                   colorHex: '#F8D979',
                 })}
-                onToggle3DSpatial={() => handleChangeViewMode('canvas_3d')}
               />
             ) : viewMode === 'canvas_3d' ? (
-              /* Knovera Wall — 3D Spatial Canvas (Status Pedestals & 3D Ideas Space) */
+              /* Executive Standup Wall (Realistic Sticky Notes 3D Pedestals) */
               <SpatialCanvas3DView
-                title="Knovera Wall"
-                subtitle="Visual Brainstorming Studio"
+                title="Executive Standup Wall"
+                subtitle="Corporate Sprint Review • Live physical digital twin of your team workspace."
                 tasks={tasks}
                 projects={projects}
-                elements={canvasElements}
-                onUpdateElements={setCanvasElements}
-                connections={canvasConnections}
-                onUpdateConnections={setCanvasConnections}
                 onToggleComplete={handleToggleComplete}
                 onSelectTask={setSelectedTask}
                 onToggleTimer={handleToggleTimer}
@@ -565,7 +561,7 @@ export function App() {
                 })}
                 onReorderTasks={handleReorderTasks}
                 onMoveTaskStatus={handleMoveTaskStatus}
-                onBack={() => handleChangeViewMode('canvas')}
+                onBack={() => handleChangeViewMode('board')}
               />
             ) : viewMode === 'analytics' ? (
               /* Analytics & Interactive Network Graph */

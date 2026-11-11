@@ -18,7 +18,7 @@ import {
   Archive,
   Flame,
   ArrowRight,
-  Box
+  Landmark
 } from 'lucide-react';
 import { Task, Project, ThingsSection, ViewMode } from '../types';
 
@@ -122,11 +122,11 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       },
     },
     {
-      id: 'view_canvas_3d',
-      title: 'Go to 3D Spatial Canvas',
+      id: 'view_standup_wall',
+      title: 'Go to Executive Standup Wall',
       category: 'views',
-      icon: Box,
-      detail: 'Interactive 3D status pedestals and wall',
+      icon: Landmark,
+      detail: 'Live physical 3D sprint review stage',
       action: () => {
         onChangeViewMode('canvas_3d');
         onClose();

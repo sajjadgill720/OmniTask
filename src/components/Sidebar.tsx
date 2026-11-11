@@ -202,7 +202,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               =================================================================== */}
           <nav className="space-y-1 text-xs font-semibold pb-4 border-b border-white/10">
 
-            {/* My Board */}
+            {/* My Board (Desk Workspace & Executive Standup Wall) */}
             <button
               type="button"
               onClick={() => {
@@ -210,11 +210,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onChangeViewMode('board');
                 onCloseMobile();
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${viewMode === 'board' && !selectedProjectId
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${(viewMode === 'board' || viewMode === 'canvas_3d') && !selectedProjectId
                   ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
                 } ${isCollapsed ? 'justify-center px-0' : ''}`}
-              title="My Board (3-Column Sticky Kanban)"
+              title="My Board (Desk Workspace & Executive Standup Wall)"
             >
               <Columns3 className="w-4 h-4 text-amber-300 shrink-0" />
               {!isCollapsed && <span>My Board</span>}
@@ -246,11 +246,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onChangeViewMode('canvas');
                 onCloseMobile();
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${(viewMode === 'canvas' || viewMode === 'canvas_3d') && !selectedProjectId
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${viewMode === 'canvas' && !selectedProjectId
                   ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
                 } ${isCollapsed ? 'justify-center px-0' : ''}`}
-              title="Canvas Wall (Spatial 3D Canvas)"
+              title="Canvas Wall (Visual Brainstorming Studio & Ideas Board)"
             >
               <LayoutGrid className="w-4 h-4 text-emerald-300 shrink-0" />
               {!isCollapsed && <span>Canvas Wall</span>}

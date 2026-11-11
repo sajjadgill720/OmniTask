@@ -42,7 +42,6 @@ interface CanvasWallViewProps {
   onUpdateConnections: (connections: CanvasConnection[]) => void;
   onSelectTask: (task: Task) => void;
   onQuickAdd: () => void;
-  onToggle3DSpatial?: () => void;
 }
 
 interface HistorySnapshot {
@@ -110,7 +109,6 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
   onUpdateConnections,
   onSelectTask,
   onQuickAdd,
-  onToggle3DSpatial,
 }) => {
   const { toast } = useToast();
 
@@ -784,20 +782,6 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
           >
             <Maximize2 className="w-4 h-4" />
           </button>
-
-          {onToggle3DSpatial && (
-            <>
-              <div className="w-px h-4 bg-white/20 mx-1" />
-              <button
-                type="button"
-                onClick={onToggle3DSpatial}
-                className="p-1.5 rounded-xl hover:bg-amber-400/20 text-amber-300 hover:text-amber-200 transition cursor-pointer"
-                title="Switch to 3D Spatial Wall"
-              >
-                <Box className="w-4 h-4" />
-              </button>
-            </>
-          )}
         </div>
 
         {/* ===================================================================
@@ -937,21 +921,6 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
           >
             <Redo2 className="w-4 h-4" />
           </button>
-
-          {/* 3D Spatial Canvas Cube Button */}
-          {onToggle3DSpatial && (
-            <>
-              <div className="w-full h-px bg-white/20 my-1" />
-              <button
-                type="button"
-                onClick={onToggle3DSpatial}
-                className="p-2 rounded-xl text-amber-300 hover:text-white hover:bg-amber-500/20 transition cursor-pointer group relative"
-                title="Switch to 3D Spatial View (Cube)"
-              >
-                <Box className="w-4 h-4" />
-              </button>
-            </>
-          )}
         </div>
 
         {/* Dynamic Instruction Banner for Flow Connector Mode */}
