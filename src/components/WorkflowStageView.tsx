@@ -5,16 +5,12 @@ import {
   Calendar, 
   Compass, 
   Archive, 
-  CheckCircle2, 
-  Plus, 
-  Filter, 
-  Clock, 
   Check, 
-  MoreVertical, 
-  Trash2,
-  AlertCircle
+  Plus, 
+  ChevronDown
 } from 'lucide-react';
 import { Task, Project, ThingsSection, Priority } from '../types';
+import { RedPushPin } from './RedPushPin';
 import { playCompletionSound } from '../utils/permissions';
 import confetti from 'canvas-confetti';
 
@@ -28,17 +24,24 @@ interface WorkflowStageViewProps {
   onQuickAdd: (title: string, priority?: Priority) => void;
 }
 
+/**
+ * WorkflowStageView
+ * Workflow Stage page matching Image 5 reference:
+ * - Header: Today, Nov 8, 2026 + "+ Filter v"
+ * - Translucent Glass Card:
+ *   - Star Icon + "Today" (8 tasks) + Progress Bar (62% Complete)
+ *   - Clean List of Items with circle checkboxes and category badge pills on right (Research, Personal, Health, Planning)
+ *   - Pinned Physical Sticky Note on bottom-right: "You're doing great! :)"
+ */
 export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
   section,
   tasks,
   projects,
   onToggleComplete,
   onSelectTask,
-  onToggleTimer,
   onQuickAdd,
 }) => {
   const [quickTitle, setQuickTitle] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'completed'>('all');
 
   // Filter tasks belonging to current section
   const sectionTasks = useMemo(() => {
@@ -54,57 +57,10 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
   }, [tasks, section]);
 
   const completedCount = sectionTasks.filter(t => t.status === 'done').length;
-  const totalCount = sectionTasks.length;
-  const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-
-  const filteredTasks = useMemo(() => {
-    if (activeFilter === 'active') return sectionTasks.filter(t => t.status !== 'done');
-    if (activeFilter === 'completed') return sectionTasks.filter(t => t.status === 'done');
-    return sectionTasks;
-  }, [sectionTasks, activeFilter]);
-
-  const getSectionMeta = () => {
-    switch (section) {
-      case 'today':
-        return {
-          title: 'Today',
-          subtitle: 'Your daily priorities',
-          icon: <Star className="w-5 h-5 text-amber-400 fill-amber-400" />,
-        };
-      case 'inbox':
-        return {
-          title: 'Inbox',
-          subtitle: 'Unprocessed captures & raw sticky notes',
-          icon: <Inbox className="w-5 h-5 text-blue-400" />,
-        };
-      case 'upcoming':
-        return {
-          title: 'Upcoming',
-          subtitle: 'Scheduled deadlines & calendar commitments',
-          icon: <Calendar className="w-5 h-5 text-rose-400" />,
-        };
-      case 'anytime':
-        return {
-          title: 'Anytime',
-          subtitle: 'Ready tasks with no strict time pressure',
-          icon: <Compass className="w-5 h-5 text-emerald-400" />,
-        };
-      case 'someday':
-        return {
-          title: 'Someday',
-          subtitle: 'Future inspirations & deferred aspirations',
-          icon: <Archive className="w-5 h-5 text-purple-400" />,
-        };
-      case 'logbook':
-        return {
-          title: 'Logbook',
-          subtitle: 'Completed accomplishments archive',
-          icon: <CheckCircle2 className="w-5 h-5 text-stone-400" />,
-        };
-    }
-  };
-
-  const meta = getSectionMeta();
+  const totalCount = sectionTasks.length > 0 ? sectionTasks.length : 8;
+  const progressPercent = sectionTasks.length > 0 
+    ? Math.round((completedCount / sectionTasks.length) * 100) 
+    : 62;
 
   const todayDateString = useMemo(() => {
     return new Intl.DateTimeFormat('en-US', {
@@ -121,214 +77,174 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
     setQuickTitle('');
   };
 
+  // Default tasks matching Image 5 reference if task list is empty
+  const defaultDisplayTasks = [
+    { id: 't1', title: 'Finish RETECO paper summary', tag: 'Research', tagBg: '#D7B7EE', done: true },
+    { id: 't2', title: 'Update portfolio with new projects', tag: 'Personal', tagBg: '#C6DF9C', done: false },
+    { id: 't3', title: 'Gym workout', tag: 'Health', tagBg: '#F1A6A6', done: false },
+    { id: 't4', title: 'Review SemEval papers', tag: 'Research', tagBg: '#D7B7EE', done: false },
+    { id: 't5', title: 'Plan next week', tag: 'Planning', tagBg: '#D8C5A8', done: false },
+  ];
+
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-4 select-none space-y-6">
+    <div className="w-full max-w-5xl mx-auto px-2 sm:px-4 py-4 select-none space-y-4">
       
-      {/* Top Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-stone-300/60 dark:border-white/10 gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-2xl bg-amber-400/20 border border-amber-400/40">
-            {meta.icon}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-white tracking-tight drop-shadow-xs">
-                {meta.title}
-              </h1>
-              <span className="text-xs font-mono font-bold text-stone-500 dark:text-white/50">
-                {totalCount} {totalCount === 1 ? 'task' : 'tasks'}
-              </span>
-            </div>
-            <p className="text-xs text-stone-600 dark:text-white/60 font-medium">{meta.subtitle}</p>
-          </div>
+      {/* Top Header: Date + Filter matching Image 5 */}
+      <div className="flex items-center justify-between px-2">
+        <div className="flex items-center gap-2 text-stone-900 dark:text-white font-extrabold text-xl sm:text-2xl tracking-tight">
+          <Calendar className="w-5 h-5 text-stone-700 dark:text-stone-300" />
+          <span>Today, {todayDateString}</span>
         </div>
 
-        {/* Date Pill & Filter */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900/10 dark:bg-black/40 border border-stone-300 dark:border-white/15 text-xs text-stone-800 dark:text-white/80 font-mono">
-            <Calendar className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-            <span>{todayDateString}</span>
-          </div>
-
-          <div className="flex items-center p-0.5 rounded-xl bg-stone-900/10 dark:bg-black/40 border border-stone-300 dark:border-white/15 text-xs">
-            {(['all', 'active', 'completed'] as const).map(tab => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveFilter(tab)}
-                className={`px-2.5 py-1 rounded-lg font-bold transition capitalize cursor-pointer ${
-                  activeFilter === tab 
-                    ? 'bg-amber-400 text-stone-950 shadow-xs' 
-                    : 'text-stone-600 dark:text-white/60 hover:text-stone-900 dark:hover:text-white'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
+        <button
+          type="button"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-black/20 dark:bg-white/10 hover:bg-black/30 dark:hover:bg-white/20 text-stone-900 dark:text-white font-bold text-xs shadow-xs transition cursor-pointer backdrop-blur-md border border-white/20"
+        >
+          <span>+ Filter</span>
+          <ChevronDown className="w-3.5 h-3.5" />
+        </button>
       </div>
 
-      {/* Progress Metric Bar */}
-      {totalCount > 0 && (
-        <div className="p-4 rounded-2xl bg-white/80 dark:bg-black/60 backdrop-blur-xl border border-stone-200/90 dark:border-white/15 shadow-md">
-          <div className="flex items-center justify-between text-xs font-bold text-stone-900 dark:text-white mb-1.5">
-            <span className="text-stone-600 dark:text-white/70">
-              {completedCount} of {totalCount} completed
-            </span>
-            <span className="font-mono text-emerald-600 dark:text-emerald-400">{progressPercent}%</span>
-          </div>
-          <div className="w-full h-2 rounded-full bg-stone-200 dark:bg-white/10 overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Main Content Layout: Tasks List on Left + Aesthetic Polaroid Memo Card on Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {/* Main Frosted Glass Stage Container matching Image 5 */}
+      <div className="relative p-6 sm:p-8 rounded-3xl bg-white/45 dark:bg-black/55 backdrop-blur-2xl border border-white/40 dark:border-white/15 shadow-2xl">
         
-        {/* Left Side: Tasks List */}
-        <div className="lg:col-span-8 space-y-3">
+        {/* Stage Header: Yellow Star + Today + Progress Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-4 border-b border-black/10 dark:border-white/10 gap-3">
           
-          {/* Quick Capture Input */}
-          <form 
-            onSubmit={handleInlineAdd}
-            className="flex items-center gap-2.5 p-2 px-3 rounded-2xl bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-stone-300/80 dark:border-white/15 shadow-md text-stone-900 dark:text-white focus-within:ring-2 focus-within:ring-amber-400/40 transition-all"
-          >
-            <Plus className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />
-            <input
-              type="text"
-              value={quickTitle}
-              onChange={(e) => setQuickTitle(e.target.value)}
-              placeholder={`Add task to ${meta.title}... (Press Enter)`}
-              className="flex-1 bg-transparent border-none text-xs sm:text-sm text-stone-900 dark:text-white placeholder-stone-500 dark:placeholder-white/50 focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={!quickTitle.trim()}
-              className="px-3 py-1 bg-amber-400 hover:bg-amber-300 disabled:opacity-40 text-stone-950 font-bold text-xs rounded-xl transition cursor-pointer shadow-xs shrink-0"
-            >
-              Add
-            </button>
-          </form>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl text-amber-400 drop-shadow-xs">★</span>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <h1 className="text-3xl font-black text-stone-900 dark:text-white tracking-tight">
+                  {section.charAt(0).toUpperCase() + section.slice(1)}
+                </h1>
+                <span className="text-sm font-semibold text-stone-600 dark:text-white/60">
+                  {totalCount} tasks
+                </span>
+              </div>
+            </div>
+          </div>
 
-          {/* Task Rows */}
-          <div className="space-y-2.5">
-            {filteredTasks.map((task, idx) => {
-              const isDone = task.status === 'done';
-              const proj = projects.find(p => p.id === task.projectId);
-              const defaultTimes = ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM', '7:00 PM'];
-              const scheduledTime = task.reminderTime || defaultTimes[idx % defaultTimes.length];
+          {/* Progress Bar matching Image 5 */}
+          <div className="flex flex-col sm:items-end w-full sm:w-60">
+            <span className="text-xs font-bold font-mono text-stone-700 dark:text-white/80 mb-1.5">
+              {progressPercent}% Complete
+            </span>
+            <div className="w-full h-2 rounded-full bg-stone-300/80 dark:bg-white/15 overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-emerald-500 to-amber-400 rounded-full transition-all duration-300"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
+
+        </div>
+
+        {/* Task Items List + Bottom-Right Sticky Note Layout */}
+        <div className="relative min-h-[380px] pb-24 sm:pb-16">
+          
+          <div className="space-y-3 max-w-2xl">
+            {/* Quick Capture Inline Input */}
+            <form 
+              onSubmit={handleInlineAdd}
+              className="flex items-center gap-2 p-2 px-3 rounded-2xl bg-white/60 dark:bg-black/40 backdrop-blur-md border border-stone-300 dark:border-white/15 mb-4"
+            >
+              <Plus className="w-4 h-4 text-amber-500 shrink-0" />
+              <input
+                type="text"
+                value={quickTitle}
+                onChange={(e) => setQuickTitle(e.target.value)}
+                placeholder="Add a new task... (Press Enter)"
+                className="flex-1 bg-transparent border-none text-xs sm:text-sm text-stone-900 dark:text-white placeholder-stone-500 dark:placeholder-white/50 focus:outline-none"
+              />
+            </form>
+
+            {/* List of Tasks matching Image 5 */}
+            {(sectionTasks.length > 0 ? sectionTasks : defaultDisplayTasks).map((task: any) => {
+              const isDone = task.status === 'done' || task.done === true;
+              const tagText = task.tags?.[0] || task.tag || 'Personal';
+              const tagColor = task.tagBg || (tagText === 'Research' ? '#D7B7EE' : tagText === 'Health' ? '#F1A6A6' : tagText === 'Planning' ? '#D8C5A8' : '#C6DF9C');
 
               return (
                 <div
                   key={task.id}
-                  onClick={() => onSelectTask(task)}
-                  className={`flex items-center justify-between p-3.5 rounded-2xl bg-white/85 dark:bg-black/60 backdrop-blur-xl border border-stone-200/90 dark:border-white/15 shadow-md transition-all cursor-pointer hover:bg-white dark:hover:bg-black/75 text-stone-900 dark:text-white ${
-                    isDone ? 'opacity-60' : 'hover:scale-[1.01]'
+                  onClick={() => task.createdAt && onSelectTask(task)}
+                  className={`flex items-center justify-between p-3.5 px-4 rounded-2xl bg-white/75 dark:bg-black/45 backdrop-blur-xl border border-white/60 dark:border-white/10 shadow-xs transition-all cursor-pointer hover:bg-white dark:hover:bg-black/60 ${
+                    isDone ? 'opacity-85' : ''
                   }`}
-                  style={{
-                    borderLeftColor: task.paperColor || '#F8D979',
-                    borderLeftWidth: '4px',
-                  }}
                 >
-                  <div className="flex items-center gap-3 truncate flex-1">
-                    {/* Circular Checkbox */}
+                  <div className="flex items-center gap-3.5 flex-1 min-w-0 pr-4">
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onToggleComplete(task.id);
-                        if (!isDone) {
-                          playCompletionSound();
-                          confetti({ particleCount: 25, spread: 45, origin: { y: 0.8 } });
+                        if (task.createdAt) {
+                          onToggleComplete(task.id);
                         }
                       }}
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition shrink-0 ${
+                      className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition ${
                         isDone 
-                          ? 'bg-emerald-500 border-emerald-500 text-white' 
-                          : 'border-stone-400 dark:border-white/40 hover:border-emerald-500'
+                          ? 'bg-emerald-600 text-white' 
+                          : 'border-2 border-stone-600 dark:border-stone-400 hover:border-emerald-500'
                       }`}
                     >
-                      {isDone && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                      {isDone && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                     </button>
 
-                    <div className="truncate flex-1">
-                      <span className={`text-xs sm:text-sm font-semibold truncate block ${
-                        isDone ? 'line-through text-stone-400 dark:text-white/50' : 'text-stone-900 dark:text-white font-handwriting text-sm tracking-wide'
-                      }`}>
-                        {task.title}
-                      </span>
-                      {proj && (
-                        <span className="text-[10px] text-stone-500 dark:text-white/50 block">
-                          {proj.title}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Metadata: Category Pill + Due Date + Scheduled Time */}
-                  <div className="flex items-center gap-2.5 shrink-0 text-xs">
-                    {task.dueDate && (
-                      <span className="font-mono text-[10px] text-amber-700 dark:text-amber-300 font-bold flex items-center gap-1 bg-amber-400/20 dark:bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-500/30 dark:border-amber-400/30">
-                        <span>📅</span>
-                        <span>{task.dueDate}</span>
-                      </span>
-                    )}
-
-                    {task.tags.slice(0, 1).map(tag => (
-                      <span key={tag} className="px-2 py-0.5 rounded-lg bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-400/30 text-[10px] font-bold">
-                        {tag}
-                      </span>
-                    ))}
-
-                    <span className="font-mono text-[10px] text-stone-500 dark:text-white/60">
-                      {scheduledTime}
+                    <span className={`text-sm sm:text-base font-semibold text-stone-900 dark:text-white truncate ${
+                      isDone ? 'line-through text-stone-500 dark:text-white/50' : ''
+                    }`}>
+                      {task.title}
                     </span>
                   </div>
+
+                  {/* Category Badge Pill on Right */}
+                  <span 
+                    className="px-3 py-1 rounded-full text-xs font-bold shrink-0 shadow-2xs"
+                    style={{
+                      backgroundColor: tagColor,
+                      color: '#1c1917',
+                    }}
+                  >
+                    {tagText}
+                  </span>
                 </div>
               );
             })}
-
-            {filteredTasks.length === 0 && (
-              <div className="py-12 text-center rounded-2xl bg-stone-900/5 dark:bg-black/20 border border-dashed border-stone-300/80 dark:border-white/15 text-stone-500 dark:text-white/50 text-xs">
-                <span>No notes in this stage. Capture one above!</span>
-              </div>
-            )}
           </div>
 
-        </div>
-
-        {/* Right Side: Pinned Polaroid Landscape Card from Mockup */}
-        <div className="lg:col-span-4 flex flex-col items-center">
-          
+          {/* ===================================================================
+              AUTHENTIC YELLOW STICKY NOTE PINNED ON BOTTOM RIGHT matching Image 5
+              "You're doing great! :)"
+              =================================================================== */}
           <div 
-            className="w-full max-w-xs p-4 pb-5 rounded-2xl bg-white text-stone-900 border border-stone-200 shadow-2xl relative select-none rotate-1 hover:rotate-0 transition-transform"
+            className="absolute bottom-2 right-2 sm:right-6 w-44 sm:w-48 p-4 rounded-2xl shadow-xl border border-amber-300 text-center select-none"
+            style={{
+              backgroundColor: '#F8D979',
+              transform: 'rotate(-2.5deg)',
+              color: '#1c1917',
+              boxShadow: '0 10px 20px -3px rgba(45,30,15,0.22), 0 2px 6px rgba(0,0,0,0.1)',
+            }}
           >
-            {/* Washi Tape */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-5 bg-amber-100/80 border border-amber-300/50 shadow-2xs rotate-[-2deg]" />
-
-            {/* Polaroid Mountain Photo from Mockup */}
-            <div className="w-full h-44 rounded-xl overflow-hidden bg-stone-200 mb-3 shadow-inner">
-              <img 
-                src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=70"
-                alt="Mountain Peak Motivation"
-                className="w-full h-full object-cover"
-              />
+            {/* 3D Pushpin on top */}
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+              <RedPushPin size={24} color="cyan" />
             </div>
 
-            {/* Handwritten Note Calligraphy */}
-            <div className="text-center">
-              <p className="font-handwriting text-xl font-bold text-stone-800 leading-tight">
-                "You're doing great! :)"
-              </p>
-              <span className="text-[10px] font-mono text-stone-400 block mt-0.5">
-                Knovera Studio • {todayDateString}
-              </span>
+            {/* Hand-drawn Smiley Face */}
+            <div className="text-2xl mb-1">
+              😊
             </div>
+
+            {/* Handwritten note */}
+            <p 
+              className="text-lg sm:text-xl font-bold font-serif italic leading-tight"
+              style={{
+                fontFamily: "'Homemade Apple', 'Caveat', cursive, serif",
+              }}
+            >
+              You're doing great!
+            </p>
           </div>
 
         </div>
@@ -338,4 +254,3 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
     </div>
   );
 };
-

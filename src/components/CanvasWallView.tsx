@@ -715,6 +715,92 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
         )}
 
         {/* ===================================================================
+            TOP-CENTER CALLIGRAPHY TITLE DIRECTLY ON WALL matching Image 2
+            =================================================================== */}
+        <div className="absolute top-5 left-1/2 -translate-x-1/2 z-30 pointer-events-none select-none flex items-center gap-2.5">
+          <span className="text-2xl drop-shadow-xs">💡</span>
+          <h2 
+            className="text-2xl sm:text-3xl font-bold text-stone-900/90 dark:text-amber-100 font-serif italic tracking-tight drop-shadow-xs"
+            style={{
+              fontFamily: "'Homemade Apple', 'Caveat', cursive, serif",
+              textShadow: '0 1px 2px rgba(0,0,0,0.14)',
+            }}
+          >
+            Ideas Board
+          </h2>
+        </div>
+
+        {/* ===================================================================
+            TOP-RIGHT FLOATING TOOLBAR matching Image 2 Reference
+            (Undo, Redo, Zoom In, Zoom Out, Fit Screen, 3D Cube)
+            =================================================================== */}
+        <div className="absolute top-5 right-6 z-40 flex items-center gap-1.5 p-1.5 px-3 rounded-2xl bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/20 shadow-xl text-white">
+          <button
+            type="button"
+            disabled={historyIndex <= 0}
+            onClick={handleUndo}
+            className={`p-1.5 rounded-xl transition cursor-pointer ${
+              historyIndex > 0 ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-white/30 cursor-not-allowed'
+            }`}
+            title="Undo (Ctrl + Z)"
+          >
+            <Undo2 className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            disabled={historyIndex >= history.length - 1}
+            onClick={handleRedo}
+            className={`p-1.5 rounded-xl transition cursor-pointer ${
+              historyIndex < history.length - 1 ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-white/30 cursor-not-allowed'
+            }`}
+            title="Redo (Ctrl + Shift + Z)"
+          >
+            <Redo2 className="w-4 h-4" />
+          </button>
+          
+          <div className="w-px h-4 bg-white/20 mx-1" />
+
+          <button
+            type="button"
+            onClick={() => setZoomLevel(z => Math.min(z + 15, 200))}
+            className="p-1.5 rounded-xl hover:bg-white/10 text-white/80 hover:text-white transition cursor-pointer"
+            title="Zoom In"
+          >
+            <ZoomIn className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoomLevel(z => Math.max(z - 15, 40))}
+            className="p-1.5 rounded-xl hover:bg-white/10 text-white/80 hover:text-white transition cursor-pointer"
+            title="Zoom Out"
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setZoomLevel(100); setPanOffset({ x: 0, y: 0 }); }}
+            className="p-1.5 rounded-xl hover:bg-white/10 text-white/80 hover:text-white transition cursor-pointer"
+            title="Fit to Screen (100%)"
+          >
+            <Maximize2 className="w-4 h-4" />
+          </button>
+
+          {onToggle3DSpatial && (
+            <>
+              <div className="w-px h-4 bg-white/20 mx-1" />
+              <button
+                type="button"
+                onClick={onToggle3DSpatial}
+                className="p-1.5 rounded-xl hover:bg-amber-400/20 text-amber-300 hover:text-amber-200 transition cursor-pointer"
+                title="Switch to 3D Spatial Wall"
+              >
+                <Box className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* ===================================================================
             LEFT FLOATING TOOLBAR
             =================================================================== */}
         <div className="absolute top-6 left-6 z-40 flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-black/65 dark:bg-black/75 backdrop-blur-2xl border border-white/20 shadow-2xl text-white">

@@ -502,6 +502,7 @@ export function App() {
                 onDeleteTask={handleDeleteTask}
                 onMoveTaskStatus={handleMoveTaskStatus}
                 audioEnabled={permissions.audioEnabled}
+                onNavigateToNetwork={() => handleChangeViewMode('connections')}
                 onQuickAdd={() => handleMagicAdd({
                   title: 'New note',
                   priority: 'normal',

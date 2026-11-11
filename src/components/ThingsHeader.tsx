@@ -1,15 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
   Menu, 
   Search, 
   Sun, 
   Moon, 
   Bell, 
-  Sparkles,
-  Columns3,
-  Target,
-  LayoutGrid,
-  Network
+  Calendar
 } from 'lucide-react';
 import { ViewMode, ThemeMode } from '../types';
 
@@ -30,35 +26,35 @@ interface ThingsHeaderProps {
 
 /**
  * ThingsHeader
- * Sleek studio header bar:
- * - Centered dark translucent search pill with ⌘K / Ctrl K
- * - Theme toggle (Warm Studio Sunlight vs Cozy Ambient Night Studio)
- * - Notification Bell with badge
- * - Responsive mobile drawer trigger
+ * Sleek studio header bar matching Image 1 reference:
+ * - Left: Mobile navigation drawer toggle (responsive)
+ * - Right: Frosted Date Pill (📅 Nov 8, 2026) + Search Pill (🔍 Search tasks... Ctrl K) + Theme Toggle + Bell Notification
  */
 export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
   onToggleMobileNav,
   searchQuery,
-  onSearchChange,
   onOpenCommandPalette,
-  onOpenQuickAdd,
-  onOpenSettings,
   onOpenPermissions,
   theme,
   onToggleTheme,
-  viewMode,
-  onChangeViewMode,
-  isProUser,
 }) => {
+  const formattedDate = useMemo(() => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(new Date());
+  }, []);
+
   return (
-    <header className="relative z-30 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3 sm:gap-4 select-none">
+    <header className="relative z-30 px-4 sm:px-8 py-3 flex items-center justify-between gap-4 select-none">
       
       {/* Left: Mobile Navigation Trigger */}
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={onToggleMobileNav}
-          className="lg:hidden p-2 rounded-2xl bg-black/35 hover:bg-black/50 dark:bg-black/50 dark:hover:bg-black/70 backdrop-blur-xl border border-white/15 text-white/90 shadow-md transition cursor-pointer"
+          className="lg:hidden p-2 rounded-2xl bg-black/35 hover:bg-black/50 dark:bg-black/50 dark:hover:bg-black/70 backdrop-blur-xl border border-white/15 text-white shadow-md transition cursor-pointer"
           title="Open Navigation"
         >
           <Menu className="w-4 h-4" />
@@ -69,60 +65,62 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
           <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-amber-300 shadow-sm flex items-center justify-center text-white font-black text-xs">
             ✦
           </div>
-          <span className="font-extrabold text-sm text-white drop-shadow-xs">Knovera</span>
+          <span className="font-extrabold text-sm text-stone-900 dark:text-white drop-shadow-xs">Knovera</span>
         </div>
       </div>
 
-      {/* Center: Top Wall Search Pill (Reference Photo Search) */}
-      <div className="flex-1 max-w-xl mx-auto">
+      {/* Right: Frosted Utility Suite (Date Pill + Search Pill + Theme + Bell) matching Mockup Image 1 */}
+      <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+        
+        {/* Date Pill: 📅 Nov 8, 2026 */}
+        <div className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-black/25 dark:bg-black/45 backdrop-blur-xl border border-white/15 text-stone-900 dark:text-stone-200 text-xs font-semibold shadow-xs">
+          <Calendar className="w-3.5 h-3.5 text-stone-700 dark:text-stone-300" />
+          <span>{formattedDate}</span>
+        </div>
+
+        {/* Search Pill: 🔍 Search tasks... Ctrl K */}
         <div 
           onClick={onOpenCommandPalette}
-          className="flex items-center gap-3 px-4 py-2 sm:py-2.5 rounded-2xl bg-black/35 hover:bg-black/45 dark:bg-black/50 dark:hover:bg-black/65 backdrop-blur-xl border border-white/15 text-white/90 shadow-lg cursor-pointer transition-all hover:scale-[1.01]"
-          title="Search tasks, jump to views, or run actions (⌘K)"
+          className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-black/25 hover:bg-black/35 dark:bg-black/50 dark:hover:bg-black/65 backdrop-blur-xl border border-white/15 text-white shadow-sm cursor-pointer transition-all hover:scale-[1.01]"
+          title="Search tasks, jump to views, or run actions (Ctrl K)"
         >
-          <Search className="w-4 h-4 text-white/60 shrink-0" />
+          <Search className="w-3.5 h-3.5 text-white/70 shrink-0" />
           <input
             type="text"
             readOnly
             value={searchQuery}
-            placeholder="Search tasks, notes, projects..."
-            className="bg-transparent border-none text-xs sm:text-sm text-white placeholder-white/50 focus:outline-none w-full cursor-pointer truncate"
+            placeholder="Search tasks..."
+            className="bg-transparent border-none text-xs text-white placeholder-white/60 focus:outline-none w-24 sm:w-36 cursor-pointer truncate"
           />
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono font-bold bg-white/10 rounded-lg border border-white/15 text-white/70 shrink-0">
-            ⌘K
+          <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono font-bold bg-white/15 rounded-md border border-white/20 text-white/80 shrink-0">
+            Ctrl K
           </kbd>
         </div>
-      </div>
 
-      {/* Right Utility Icons (Theme Toggle + Notification Bell) */}
-      <div className="flex items-center gap-2 shrink-0">
-        
-        {/* Theme Toggle */}
+        {/* Theme Toggle Button */}
         <button
           type="button"
           onClick={onToggleTheme}
-          className="p-2 sm:p-2.5 rounded-2xl bg-black/35 hover:bg-black/50 dark:bg-black/50 dark:hover:bg-black/70 backdrop-blur-xl border border-white/15 text-white/80 hover:text-white shadow-md transition cursor-pointer"
-          title={theme === 'dark' ? 'Switch to Warm Studio Sunlight' : 'Switch to Cozy Ambient Night Studio'}
+          className="p-2 rounded-2xl bg-black/25 hover:bg-black/35 dark:bg-black/50 dark:hover:bg-black/65 backdrop-blur-xl border border-white/15 text-amber-300 hover:text-amber-200 shadow-sm transition cursor-pointer"
+          title={theme === 'dark' ? 'Switch to warm daylight studio' : 'Switch to cozy ambient dark studio'}
         >
-          {theme === 'dark' ? (
-            <Sun className="w-4 h-4 text-amber-300" />
-          ) : (
-            <Moon className="w-4 h-4 text-white/85" />
-          )}
+          {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-stone-800" />}
         </button>
 
-        {/* Notifications Center Bell */}
-        <button
-          type="button"
-          onClick={onOpenPermissions}
-          className="relative p-2 sm:p-2.5 rounded-2xl bg-black/35 hover:bg-black/50 dark:bg-black/50 dark:hover:bg-black/70 backdrop-blur-xl border border-white/15 text-white/80 hover:text-white shadow-md transition cursor-pointer"
-          title="Notifications & Permissions Center"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-black/40">
+        {/* Notification Bell with Red Badge */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={onOpenPermissions}
+            className="p-2 rounded-2xl bg-black/25 hover:bg-black/35 dark:bg-black/50 dark:hover:bg-black/65 backdrop-blur-xl border border-white/15 text-white/80 hover:text-white shadow-sm transition cursor-pointer"
+            title="Notifications"
+          >
+            <Bell className="w-4 h-4" />
+          </button>
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs">
             2
           </span>
-        </button>
+        </div>
 
       </div>
 
