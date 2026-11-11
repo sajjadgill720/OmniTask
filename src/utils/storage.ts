@@ -19,6 +19,29 @@ export const DEFAULT_PROJECTS: Project[] = [
 
 export const DEFAULT_TASKS: Task[] = [
   {
+    id: 't_corporate',
+    title: 'Refine corporate presentation & finalize deliverables.',
+    notes: 'Write notes here...',
+    checklists: [],
+    section: 'today',
+    isThisEvening: false,
+    areaId: 'area_work',
+    priority: 'high',
+    status: 'todo',
+    tags: ['Work', 'Pitch'],
+    dueDate: new Date().toISOString().split('T')[0],
+    timeSpentSeconds: 0,
+    isTimerRunning: false,
+    colorHex: '#FFF380',
+    paperColor: '#FFF380',
+    shape: 'square',
+    lineStyle: 'lines',
+    pinStyle: 'adhesive',
+    rotation: -1.0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
     id: 't_simplified',
     title: 'Simplified',
     notes: 'Redesigned\nIntuitive !',
@@ -75,24 +98,50 @@ export const DEFAULT_TASKS: Task[] = [
     updatedAt: new Date().toISOString(),
   },
   {
+    id: 't_kraft_note',
+    title: 'New Sticky Note',
+    notes: 'Initial project specs & deliverables.',
+    checklists: [
+      { id: 'ck1', text: 'Verify requirements', completed: true },
+    ],
+    section: 'today',
+    isThisEvening: false,
+    areaId: 'area_work',
+    priority: 'normal',
+    status: 'done',
+    completedAt: new Date(Date.now() - 3600000).toISOString(),
+    tags: ['Review'],
+    timeSpentSeconds: 950,
+    isTimerRunning: false,
+    colorHex: '#E6CCB2',
+    paperColor: '#E6CCB2',
+    shape: 'square',
+    lineStyle: 'lines',
+    pinStyle: 'adhesive',
+    rotation: 1.0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
     id: 't_2',
     title: 'Evening wind-down & journal reflections',
     notes: 'Reflect on 3 high-impact accomplishments of the day.',
     checklists: [
-      { id: 'c4', text: 'Log day focus minutes', completed: false },
-      { id: 'c5', text: 'Plan top 3 MITs for tomorrow morning', completed: false },
+      { id: 'c4', text: 'Log day focus minutes', completed: true },
+      { id: 'c5', text: 'Plan top 3 MITs for tomorrow morning', completed: true },
     ],
     section: 'today',
     isThisEvening: true, // Appears in "This Evening" in Things 3!
     areaId: 'area_personal',
     priority: 'normal',
-    status: 'todo',
+    status: 'done',
+    completedAt: new Date().toISOString(),
     tags: ['Mindfulness'],
     dueDate: new Date().toISOString().split('T')[0],
     timeSpentSeconds: 0,
     isTimerRunning: false,
-    colorHex: '#B5EAD7',
-    paperColor: '#B5EAD7',
+    colorHex: '#C7CEEA',
+    paperColor: '#C7CEEA',
     lineStyle: 'dots',
     pinStyle: 'tape',
     rotation: 1.8,
@@ -358,8 +407,8 @@ export function loadStoredTasks(): Task[] {
     if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_TASKS;
     
     // Ensure the reference photo notes are present without overwriting user data
-    const hasReteco = parsed.some((t: Task) => t.id === 't_reteco');
-    const baseList = !hasReteco 
+    const hasCorporate = parsed.some((t: Task) => t.id === 't_corporate');
+    const baseList = !hasCorporate 
       ? [...parsed, ...DEFAULT_TASKS.filter(d => !parsed.some((p: Task) => p.id === d.id))] 
       : parsed;
 

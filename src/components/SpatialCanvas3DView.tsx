@@ -67,11 +67,11 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
   onMoveTaskStatus,
   onBack,
 }) => {
-  const [arrangement, setArrangement] = useState<SpatialArrangement>('canvas_projection');
-  const [preset, setPreset] = useState<Preset3D>('isometric');
-  const [pitch, setPitch] = useState(20); // degrees rotateX
-  const [yaw, setYaw] = useState(-14);   // degrees rotateY
-  const [zoom, setZoom] = useState(0.88);
+  const [arrangement, setArrangement] = useState<SpatialArrangement>('pedestals');
+  const [preset, setPreset] = useState<Preset3D>('desk');
+  const [pitch, setPitch] = useState(4); // degrees rotateX (default Desk mode)
+  const [yaw, setYaw] = useState(0);    // degrees rotateY
+  const [zoom, setZoom] = useState(0.95);
   const [isOrbiting, setIsOrbiting] = useState(false);
   const [dragOverZone, setDragOverZone] = useState<Task['status'] | null>(null);
   const [selected3DElementId, setSelected3DElementId] = useState<string | null>(null);
@@ -150,30 +150,42 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
   return (
     <div className="w-full px-2 sm:px-4 py-4 select-none font-sans">
       
+      {/* Top Wall Quote */}
+      <div className="flex justify-end mb-2 pr-2">
+        <div className="text-right">
+          <p className="font-handwriting text-xl font-bold tracking-wide italic text-[#25231F] dark:text-[#E8DDD0]">
+            "The price of anything is the amount of life you exchange for it."
+          </p>
+          <p className="text-xs text-stone-500 font-handwriting mt-0.5">
+            — Henry David Thoreau
+          </p>
+        </div>
+      </div>
+
       {/* 3D Canvas Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-white/10 gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-black/10 dark:border-white/10 gap-3">
         <div>
           {onBack && (
             <button
               type="button"
               onClick={onBack}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 transition mb-1 cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-500 dark:text-amber-400 hover:text-amber-400 transition mb-1 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>‹ Back to 2D Canvas Wall</span>
+              <span>← Back to 2D Canvas Wall</span>
             </button>
           )}
 
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-xl">🪐</span>
-            <h2 className="text-xl font-black tracking-tight text-white drop-shadow-xs">
+            <span className="text-xl">🍂</span>
+            <h2 className="text-xl font-black tracking-tight text-stone-900 dark:text-stone-100 drop-shadow-xs">
               {title} — 3D Spatial Canvas
             </h2>
-            <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold font-mono">
-              {elements.length} Items
+            <span className="px-2 py-0.5 rounded-full bg-[#F8D979] text-[#25231F] text-xs font-bold font-mono">
+              {tasks.length || elements.length} Items
             </span>
           </div>
-          <p className="text-xs text-white/60 font-medium">
+          <p className="text-xs text-stone-600 dark:text-stone-400 font-medium">
             {subtitle} • Click & drag space to orbit 3D camera. Content remains perfectly synchronized with 2D.
           </p>
         </div>
@@ -182,13 +194,13 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
         <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           
           {/* Spatial Mode Switcher */}
-          <div className="flex items-center p-1 bg-black/50 rounded-xl border border-white/15 text-xs font-bold text-white">
+          <div className="flex items-center p-1 bg-black/60 rounded-xl border border-white/15 text-xs font-bold text-white shadow-md">
             <button
               onClick={() => setArrangement('canvas_projection')}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
                 arrangement === 'canvas_projection'
-                  ? 'bg-amber-400 text-stone-950 shadow-xs'
-                  : 'text-white/60 hover:text-white'
+                  ? 'bg-[#F8D979] text-[#25231F] font-extrabold shadow-sm'
+                  : 'text-stone-300 hover:text-white'
               }`}
               title="3D Canvas Projection (Synchronized with 2D Notes & Photos)"
             >
@@ -198,10 +210,10 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
 
             <button
               onClick={() => setArrangement('pedestals')}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
                 arrangement === 'pedestals'
-                  ? 'bg-amber-400 text-stone-950 shadow-xs'
-                  : 'text-white/60 hover:text-white'
+                  ? 'bg-[#F8D979] text-[#25231F] font-extrabold shadow-sm'
+                  : 'text-stone-300 hover:text-white'
               }`}
               title="Interactive 3D Status Pedestals"
             >
@@ -211,13 +223,13 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
           </div>
 
           {/* Perspective Preset Buttons */}
-          <div className="flex items-center p-1 bg-black/50 rounded-xl border border-white/15 text-xs font-bold text-white">
+          <div className="flex items-center p-1 bg-black/60 rounded-xl border border-white/15 text-xs font-bold text-white shadow-md">
             <button
               onClick={() => setPresetAngle('isometric')}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 ${
+              className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1 ${
                 preset === 'isometric'
-                  ? 'bg-amber-400 text-stone-950 shadow-xs'
-                  : 'text-white/60 hover:text-white'
+                  ? 'bg-[#F8D979] text-[#25231F] font-extrabold shadow-sm'
+                  : 'text-stone-300 hover:text-white'
               }`}
               title="Cinematic Isometric 3D Perspective"
             >
@@ -227,10 +239,10 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
 
             <button
               onClick={() => setPresetAngle('gyro')}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 ${
+              className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1 ${
                 preset === 'gyro'
-                  ? 'bg-amber-400 text-stone-950 shadow-xs'
-                  : 'text-white/60 hover:text-white'
+                  ? 'bg-[#F8D979] text-[#25231F] font-extrabold shadow-sm'
+                  : 'text-stone-300 hover:text-white'
               }`}
               title="Soft Angle Perspective"
             >
@@ -239,10 +251,10 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
 
             <button
               onClick={() => setPresetAngle('desk')}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 ${
+              className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1 ${
                 preset === 'desk'
-                  ? 'bg-amber-400 text-stone-950 shadow-xs'
-                  : 'text-white/60 hover:text-white'
+                  ? 'bg-[#F8D979] text-[#25231F] font-extrabold shadow-sm'
+                  : 'text-stone-300 hover:text-white'
               }`}
               title="Desk Top-Down Projection"
             >
@@ -251,25 +263,25 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
           </div>
 
           {/* Zoom controls */}
-          <div className="flex items-center gap-1 p-1 bg-black/50 rounded-xl border border-white/15 text-xs font-bold text-white">
+          <div className="flex items-center gap-1 p-1 bg-black/60 rounded-xl border border-white/15 text-xs font-bold text-white shadow-md">
             <button
               onClick={() => setZoom(z => Math.max(0.55, z - 0.1))}
-              className="p-1 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              className="p-1.5 rounded-lg text-stone-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
               title="Zoom Out"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="text-[10px] font-mono px-1 text-amber-300">{Math.round(zoom * 100)}%</span>
+            <span className="text-xs font-mono px-1.5 text-amber-300 font-bold">{Math.round(zoom * 100)}%</span>
             <button
               onClick={() => setZoom(z => Math.min(1.35, z + 0.1))}
-              className="p-1 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              className="p-1.5 rounded-lg text-stone-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
               title="Zoom In"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={resetCamera}
-              className="p-1 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition cursor-pointer ml-1"
+              className="p-1.5 rounded-lg text-stone-300 hover:text-white hover:bg-white/10 transition cursor-pointer ml-0.5"
               title="Reset 3D Camera"
             >
               <RotateCw className="w-3.5 h-3.5" />
@@ -456,7 +468,7 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
             </div>
           ) : (
             /* MODE B: 3D STATUS PEDESTALS (Kanban Columns in 3D space) */
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start" style={{ transformStyle: 'preserve-3d' }}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start" style={{ transformStyle: 'preserve-3d' }}>
               
               {/* PEDESTAL 1: TO DO */}
               <div
@@ -466,7 +478,7 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
                 className={`relative rounded-3xl p-5 transition-all duration-300 border ${
                   dragOverZone === 'todo'
                     ? 'bg-amber-500/20 border-amber-400 ring-4 ring-amber-400/30'
-                    : 'bg-white/40 dark:bg-stone-900/60 border-white/15'
+                    : 'bg-[#2B2723]/95 border-white/10'
                 } backdrop-blur-md shadow-2xl`}
                 style={{
                   transform: 'translateZ(15px)',
@@ -483,7 +495,7 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 max-h-[660px] overflow-y-auto pr-1 column-scrollbar">
                   {todoTasks.map((task, idx) => (
                     <div key={task.id} style={{ transform: `translateZ(${idx * 4}px)` }}>
                       <StickyNoteCard
@@ -511,7 +523,7 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
                 className={`relative rounded-3xl p-5 transition-all duration-300 border ${
                   dragOverZone === 'in_progress'
                     ? 'bg-blue-500/20 border-blue-400 ring-4 ring-blue-400/30'
-                    : 'bg-white/40 dark:bg-stone-900/60 border-white/15'
+                    : 'bg-[#2B2723]/95 border-white/10'
                 } backdrop-blur-md shadow-2xl`}
                 style={{
                   transform: 'translateZ(25px)',
@@ -528,7 +540,7 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 max-h-[660px] overflow-y-auto pr-1 column-scrollbar">
                   {doingTasks.map((task, idx) => (
                     <div key={task.id} style={{ transform: `translateZ(${idx * 4}px)` }}>
                       <StickyNoteCard
@@ -556,7 +568,7 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
                 className={`relative rounded-3xl p-5 transition-all duration-300 border ${
                   dragOverZone === 'done'
                     ? 'bg-emerald-500/20 border-emerald-400 ring-4 ring-emerald-400/30'
-                    : 'bg-white/40 dark:bg-stone-900/60 border-white/15'
+                    : 'bg-[#2B2723]/95 border-white/10'
                 } backdrop-blur-md shadow-2xl`}
                 style={{
                   transform: 'translateZ(10px)',
@@ -573,7 +585,7 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 max-h-[660px] overflow-y-auto pr-1 column-scrollbar">
                   {doneTasks.map((task, idx) => (
                     <div key={task.id} style={{ transform: `translateZ(${idx * 4}px)` }}>
                       <StickyNoteCard

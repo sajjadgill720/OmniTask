@@ -9,6 +9,7 @@ import { FocusRoomView } from './components/FocusRoomView';
 import { CanvasWallView } from './components/CanvasWallView';
 import { AnalyticsDashboardView } from './components/AnalyticsDashboardView';
 import { NetworkGraph3DView } from './components/NetworkGraph3DView';
+import { SpatialCanvas3DView } from './components/SpatialCanvas3DView';
 import { WorkflowStageView } from './components/WorkflowStageView';
 import { ProjectsHubView } from './components/ProjectsHubView';
 import { ProjectDetailView } from './components/ProjectDetailView';
@@ -539,7 +540,36 @@ export function App() {
                 })}
                 onToggle3DSpatial={() => handleChangeViewMode('canvas_3d')}
               />
-            ) : viewMode === 'canvas_3d' || viewMode === 'connections' || viewMode === 'network_3d' ? (
+            ) : viewMode === 'canvas_3d' ? (
+              /* Knovera Wall — 3D Spatial Canvas (Status Pedestals & 3D Ideas Space) */
+              <SpatialCanvas3DView
+                title="Knovera Wall"
+                subtitle="Visual Brainstorming Studio"
+                tasks={tasks}
+                projects={projects}
+                elements={canvasElements}
+                onUpdateElements={setCanvasElements}
+                connections={canvasConnections}
+                onUpdateConnections={setCanvasConnections}
+                onToggleComplete={handleToggleComplete}
+                onSelectTask={setSelectedTask}
+                onToggleTimer={handleToggleTimer}
+                onUpdateTask={handleSaveTask}
+                onDeleteTask={handleDeleteTask}
+                audioEnabled={permissions.audioEnabled}
+                onQuickAdd={(status) => handleMagicAdd({
+                  title: 'New note',
+                  status: status || 'todo',
+                  priority: 'normal',
+                  tags: [],
+                  section: currentSection,
+                  colorHex: '#F8D979',
+                })}
+                onReorderTasks={handleReorderTasks}
+                onMoveTaskStatus={handleMoveTaskStatus}
+                onBack={() => handleChangeViewMode('canvas')}
+              />
+            ) : viewMode === 'connections' || viewMode === 'network_3d' ? (
               /* Connections — 3D Network View (Unified clean 3D experience) */
               <NetworkGraph3DView
                 tasks={tasks}
