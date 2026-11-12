@@ -2,6 +2,66 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* The navigation surface deliberately contrasts with the selected app theme. */
+.omni-sidebar {
+  background-color: var(--sidebar-bg);
+  border-color: var(--sidebar-border);
+  background-image: linear-gradient(155deg, rgba(255, 255, 255, .045), transparent 42%);
+  backdrop-filter: blur(22px) saturate(118%);
+  -webkit-backdrop-filter: blur(22px) saturate(118%);
+  box-shadow: 0 20px 52px rgba(34, 24, 16, .22), inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+.omni-sidebar--dark {
+  background-image:
+    radial-gradient(ellipse at 0% 0%, rgba(190, 143, 82, .14), transparent 46%),
+    linear-gradient(155deg, rgba(255, 255, 255, .035), transparent 46%);
+}
+.omni-sidebar--light {
+  background-image:
+    radial-gradient(ellipse at 0% 0%, rgba(255, 251, 240, .34), transparent 46%),
+    linear-gradient(155deg, rgba(255, 255, 255, .18), transparent 48%);
+  box-shadow: 0 20px 52px rgba(0, 0, 0, .25), inset 0 1px 0 rgba(255, 255, 255, .46);
+}
+.omni-sidebar--light :where([class*="text-white"]) { color: #332a21 !important; }
+.omni-sidebar--light :where([class*="text-stone-"]) { color: #64594c !important; }
+.omni-sidebar--light :where([class*="border-white/"]) {
+  border-color: var(--sidebar-border) !important;
+}
+.omni-sidebar--light :where([class*=" bg-white/"]) {
+  background-color: var(--sidebar-active) !important;
+}
+.omni-sidebar--light :where([class*="hover:bg-white/"]):hover {
+  background-color: var(--sidebar-hover) !important;
+}
+.omni-sidebar--light :where([class*="hover:text-white"]):hover {
+  color: #201b17 !important;
+}
+.omni-sidebar--light :where([class*="text-amber-200"], [class*="text-amber-300"]) {
+  color: #8b5c10 !important;
+}
+.omni-sidebar--light :where([class*="text-sky-300"], [class*="text-blue-300"]) {
+  color: #17618b !important;
+}
+.omni-sidebar--light :where([class*="text-rose-300"]) {
+  color: #a83a50 !important;
+}
+.omni-sidebar--light :where([class*="text-emerald-300"]) {
+  color: #187451 !important;
+}
+.omni-sidebar--light :where([class*="text-violet-300"], [class*="text-purple-300"]) {
+  color: #67469b !important;
+}
+.omni-sidebar--light .omni-sidebar-brand-mark,
+.omni-sidebar--light .bg-gradient-to-br {
+  color: #fff !important;
+}
+.omni-sidebar :where([class*="border-white/"]) { border-color: var(--sidebar-border); }
+.omni-sidebar :where([class*="hover:bg-white/"]):hover { background-color: var(--sidebar-hover); }
+.omni-sidebar :where([class*="hover:text-white"]):hover { color: var(--sidebar-text); }
+.omni-sidebar--dark :where([class*="bg-white/"]) { background-color: var(--sidebar-active); }
+.omni-sidebar--dark .omni-sidebar-brand-mark,
+.omni-sidebar--dark .bg-gradient-to-br { color: #fff !important; }
+
 @layer base {
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
