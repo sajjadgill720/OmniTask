@@ -406,11 +406,31 @@
   background-attachment: scroll;
 }
 
+/* Keep the warm studio character in dark mode, but change the room itself
+   instead of only darkening individual cards and panels. */
+.dark .studio-wall-background {
+  background-color: #17151a;
+  background-image:
+    radial-gradient(ellipse at 19% 8%, rgba(155, 105, 53, .22), transparent 36%),
+    radial-gradient(ellipse at 80% 28%, rgba(119, 78, 43, .16), transparent 42%),
+    repeating-linear-gradient(93deg, rgba(255, 226, 183, .012) 0 1px, transparent 1px 5px),
+    linear-gradient(180deg, #211d1d 0%, #19171a 48%, #131216 100%);
+}
+.dark .studio-wall-quote {
+  color: #f3cf82;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, .72), 0 0 1px rgba(0, 0, 0, .9);
+}
+
 .studio-wall-scene {
   overflow: hidden;
   background:
     radial-gradient(ellipse at 48% 3%, rgba(255,255,240,.23), transparent 60%),
     linear-gradient(118deg, transparent 0 17%, rgba(255,248,223,.22) 18% 21%, transparent 22% 42%, rgba(255,248,223,.16) 43% 46%, transparent 47%);
+}
+.dark .studio-wall-scene {
+  background:
+    radial-gradient(ellipse at 48% 3%, rgba(255, 196, 111, .07), transparent 60%),
+    linear-gradient(118deg, transparent 0 17%, rgba(255, 211, 147, .035) 18% 21%, transparent 22% 42%, rgba(255, 211, 147, .025) 43% 46%, transparent 47%);
 }
 .studio-ivy {
   position: absolute;
@@ -428,6 +448,7 @@
   stroke-width: 5;
   stroke-linecap: round;
 }
+.dark .studio-ivy path { stroke: #52613a; }
 .studio-ivy ellipse {
   fill: #627b32;
   stroke: #87964a;
@@ -435,6 +456,9 @@
 }
 .studio-ivy ellipse:nth-of-type(3n) { fill: #78913e; }
 .studio-ivy ellipse:nth-of-type(4n) { fill: #50692b; }
+.dark .studio-ivy ellipse { fill: #3f512b; stroke: #71834a; }
+.dark .studio-ivy ellipse:nth-of-type(3n) { fill: #526a32; }
+.dark .studio-ivy ellipse:nth-of-type(4n) { fill: #354523; }
 .studio-desk {
   position: absolute;
   inset: auto 0 0;
@@ -444,6 +468,12 @@
     linear-gradient(180deg, #c9853e 0%, #e2a255 20%, #aa5f2b 44%, #c47a3c 72%, #8d4c27 100%);
   border-top: 4px solid rgba(255, 219, 161, .62);
   box-shadow: 0 -8px 18px rgba(83, 47, 20, .16);
+}
+.dark .studio-desk {
+  background:
+    repeating-linear-gradient(2deg, transparent 0 8px, rgba(31, 14, 8, .22) 9px, transparent 11px),
+    linear-gradient(180deg, #80502e 0%, #9a6339 20%, #63391f 44%, #754526 72%, #512d1a 100%);
+  border-top-color: rgba(198, 143, 84, .4);
 }
 
 /* Fixed cork viewport: notes scroll inside the frame while the page continues below. */
