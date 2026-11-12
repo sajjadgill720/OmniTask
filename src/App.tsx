@@ -562,6 +562,7 @@ export function App() {
                 onReorderTasks={handleReorderTasks}
                 onMoveTaskStatus={handleMoveTaskStatus}
                 onBack={() => handleChangeViewMode('board')}
+                onOpenNewProject={() => setIsProjectModalOpen(true)}
               />
             ) : viewMode === 'analytics' ? (
               /* Analytics & Interactive Network Graph */
