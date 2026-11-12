@@ -1,5 +1,4 @@
-import React, { useMemo } from 'react';
-import { getDailyHyperFocusQuote, FocusQuote } from '../utils/quotes';
+import React from 'react';
 
 interface StudioTopMuralProps {
   compact?: boolean;
@@ -7,42 +6,24 @@ interface StudioTopMuralProps {
 
 /**
  * StudioTopMural
- * Displays the hyperrealistic handwritten quote directly on the stucco wall,
- * matching the authentic studio reference photo (Image 1 & Image 3):
- * "Discipline is choosing between what you want now and what you want most."
- * — Abraham Lincoln
+ * Displays the hyperrealistic handwritten quote painted directly on the plaster wall:
+ * "Small steps every day lead to remarkable places."
  */
 export const StudioTopMural: React.FC<StudioTopMuralProps> = ({ compact = false }) => {
-  const currentQuote: FocusQuote = useMemo(() => getDailyHyperFocusQuote(0), []);
-
   return (
-    <div className={`text-center relative select-none w-full max-w-3xl mx-auto px-4 ${compact ? 'mb-1' : 'mb-3'}`}>
-      {/* Hyperrealistic Handwritten Quote Directly on the Stucco Wall */}
-      <div className="relative inline-block py-1">
+    <div className={`text-center relative select-none w-full max-w-2xl mx-auto px-4 ${compact ? 'mb-1' : 'mb-2.5'}`}>
+      <div className="relative inline-block py-0.5">
         <h2 
-          className="text-2xl sm:text-3xl md:text-4xl text-stone-900/90 dark:text-amber-100/90 font-serif italic font-medium tracking-tight drop-shadow-xs"
+          className="text-2xl sm:text-3xl md:text-[34px] text-stone-900/90 dark:text-amber-100/90 font-serif italic font-medium tracking-tight"
           style={{
-            fontFamily: "'Homemade Apple', 'Caveat', 'Playfair Display', Georgia, serif",
-            lineHeight: 1.35,
-            textShadow: '0 1px 2px rgba(0,0,0,0.18), 0 0 1px rgba(0,0,0,0.08)',
+            fontFamily: "'Homemade Apple', 'Caveat', 'Playfair Display', Georgia, cursive, serif",
+            lineHeight: 1.25,
+            textShadow: '0 1px 2px rgba(0,0,0,0.12), 0 0 1px rgba(0,0,0,0.05)',
           }}
         >
-          “{currentQuote.quote}”
+          “Small steps every day lead to remarkable places.”
         </h2>
-
-        {/* Verified Author Attribution in Fine Italic Ink */}
-        {currentQuote.author && (
-          <p 
-            className="text-sm sm:text-base text-stone-700/80 dark:text-amber-200/70 font-serif italic tracking-wide mt-1 sm:mt-1.5 text-right pr-4 sm:pr-8"
-            style={{
-              fontFamily: "'Caveat', 'Homemade Apple', cursive, serif",
-            }}
-          >
-            — {currentQuote.author}
-          </p>
-        )}
       </div>
     </div>
   );
 };
-
