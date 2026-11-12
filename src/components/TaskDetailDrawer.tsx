@@ -16,7 +16,6 @@ import {
   Palette,
   Check,
   Edit2,
-  Type,
   Flag
 } from 'lucide-react';
 import { Task, Project, Area, Priority, ChecklistItem, LineStyle, PinStyle } from '../types';
@@ -77,7 +76,6 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
   const [newTagText, setNewTagText] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [customizerTab, setCustomizerTab] = useState<'color' | 'ruling' | 'fastener'>('color');
-  const [useHandwriting, setUseHandwriting] = useState(true);
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const notesTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -457,16 +455,6 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
               )}
             </div>
 
-            {/* Font Toggle */}
-            <button
-              type="button"
-              onClick={() => setUseHandwriting(!useHandwriting)}
-              className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer opacity-75 hover:opacity-100"
-              title={useHandwriting ? 'Switch to clean sans font' : 'Switch to authentic handwriting'}
-            >
-              <Type className="w-4 h-4" />
-            </button>
-
             {/* Pin to Top */}
             <button
               type="button"
@@ -524,7 +512,7 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
             <h3 
               onClick={() => setIsEditingTitle(true)}
               className={`text-2xl sm:text-3xl font-bold leading-tight break-words cursor-text transition rounded px-0.5 tracking-wide ${
-                useHandwriting ? 'font-handwriting' : 'font-sans text-xl font-bold'
+                'font-handwriting'
               } ${lineStyle === 'ruled' || lineStyle === 'lines' ? 'leading-[32px]' : ''} ${isDone ? 'marker-strike opacity-60' : ''}`}
               style={{ color: paperStyle.inkColor }}
               title="Click to edit title"
@@ -553,7 +541,7 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
             <p 
               onClick={() => setIsEditingNotes(true)}
               className={`text-lg sm:text-xl mt-1 leading-snug break-words font-medium cursor-text opacity-90 transition rounded px-0.5 ${
-                useHandwriting ? 'font-handwriting' : 'font-sans text-sm'
+                'font-handwriting'
               } ${lineStyle === 'ruled' || lineStyle === 'lines' ? 'leading-[30px]' : ''}`}
               style={{ color: paperStyle.inkColor }}
               title="Click to edit notes"
@@ -586,7 +574,7 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                     </div>
                     <span 
                       className={`text-lg leading-tight ${
-                        useHandwriting ? 'font-handwriting' : 'text-xs'
+                        'font-handwriting'
                       } ${c.completed ? 'line-through opacity-55' : ''}`}
                       style={{ color: paperStyle.inkColor }}
                     >

@@ -9,7 +9,6 @@ import {
   Palette, 
   Plus, 
   Calendar, 
-  Type,
   Edit2,
   ShieldCheck,
   Sparkles,
@@ -92,7 +91,6 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
   const [customizerTab, setCustomizerTab] = useState<'color' | 'ruling' | 'shape' | 'fastener'>('color');
   const [newChecklistText, setNewChecklistText] = useState('');
   const [isAddingItem, setIsAddingItem] = useState(false);
-  const [useHandwriting, setUseHandwriting] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -435,19 +433,6 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
           <Edit2 className="w-3 h-3" />
         </button>
 
-        {/* Font Toggle */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setUseHandwriting(!useHandwriting);
-          }}
-          className="p-1 rounded text-slate-800 dark:text-slate-200 hover:bg-black/10 transition cursor-pointer"
-          title={useHandwriting ? 'Switch to clean sans font' : 'Switch to authentic handwriting'}
-        >
-          <Type className="w-3 h-3" />
-        </button>
-
         {/* Skeuomorphic Style Customizer Popover Trigger */}
         <div className="relative">
           <button
@@ -754,9 +739,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
               e.stopPropagation();
               setIsEditingTitle(true);
             }}
-            className={`text-2xl sm:text-[26px] font-bold leading-tight break-words cursor-text transition rounded px-0.5 ${
-              useHandwriting ? 'font-handwriting' : 'font-sans text-lg font-bold'
-            } ${lineStyle === 'ruled' || lineStyle === 'lines' || lineStyle === 'stencil' ? 'leading-[28px]' : ''} ${isDone ? 'marker-strike opacity-60' : ''}`}
+            className={`text-2xl sm:text-[26px] font-handwriting font-bold leading-tight break-words cursor-text transition rounded px-0.5 ${lineStyle === 'ruled' || lineStyle === 'lines' || lineStyle === 'stencil' ? 'leading-[28px]' : ''} ${isDone ? 'marker-strike opacity-60' : ''}`}
             style={{ color: paperStyle.inkColor }}
             title="Click to edit title"
           >
@@ -786,9 +769,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
               e.stopPropagation();
               setIsEditingNotes(true);
             }}
-            className={`text-base sm:text-lg mt-1 line-clamp-4 leading-snug break-words font-medium cursor-text opacity-90 transition rounded px-0.5 ${
-              useHandwriting ? 'font-handwriting' : 'font-sans text-xs'
-            } ${lineStyle === 'ruled' || lineStyle === 'lines' || lineStyle === 'stencil' ? 'leading-[28px]' : ''}`}
+            className={`text-base sm:text-lg mt-1 line-clamp-4 leading-snug break-words font-handwriting font-medium cursor-text opacity-90 transition rounded px-0.5 ${lineStyle === 'ruled' || lineStyle === 'lines' || lineStyle === 'stencil' ? 'leading-[28px]' : ''}`}
             style={{ color: paperStyle.inkColor }}
             title="Click to edit notes"
           >
@@ -812,9 +793,7 @@ export const StickyNoteCard: React.FC<StickyNoteCardProps> = ({
                   {c.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                 </div>
                 <span 
-                  className={`text-base leading-tight ${
-                    useHandwriting ? 'font-handwriting' : 'text-xs'
-                  } ${c.completed ? 'line-through opacity-55' : ''}`}
+                  className={`text-base font-handwriting leading-tight ${c.completed ? 'line-through opacity-55' : ''}`}
                   style={{ color: paperStyle.inkColor }}
                 >
                   {c.text}

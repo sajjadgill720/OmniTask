@@ -191,7 +191,7 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
                   className="w-full text-xs font-medium bg-white/10 border border-white/15 rounded-xl px-2.5 py-1.5 text-white/90 focus:outline-none cursor-pointer"
                 >
                   {activeTasks.map(t => (
-                    <option key={t.id} value={t.id} className="bg-stone-900 text-white">
+                    <option key={t.id} value={t.id} className="bg-stone-900 font-handwriting text-white">
                       {t.title}
                     </option>
                   ))}

@@ -335,7 +335,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
                       >
                         {task.status === 'done' && <Check className="w-2.5 h-2.5 text-amber-500 stroke-[3]" />}
                       </button>
-                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">
+                      <span className="text-sm font-handwriting font-semibold text-slate-800 dark:text-slate-100 truncate">
                         {task.title}
                       </span>
                     </div>

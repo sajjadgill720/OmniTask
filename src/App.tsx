@@ -491,7 +491,6 @@ export function App() {
               <StudioBoardView
                 executiveWall={viewMode === 'canvas_3d'}
                 tasks={tasks}
-                projects={projects}
                 onToggleComplete={handleToggleComplete}
                 onSelectTask={setSelectedTask}
                 onToggleTimer={handleToggleTimer}
@@ -499,7 +498,7 @@ export function App() {
                 onDeleteTask={handleDeleteTask}
                 onMoveTaskStatus={handleMoveTaskStatus}
                 audioEnabled={permissions.audioEnabled}
-                onNavigateToNetwork={() => handleChangeViewMode('analytics')}
+                onNavigateToAnalytics={() => handleChangeViewMode('analytics')}
                 onToggleStandupWall={() => handleChangeViewMode(viewMode === 'canvas_3d' ? 'board' : 'canvas_3d')}
                 onQuickAdd={() => handleMagicAdd({
                   title: 'New note',
@@ -538,25 +537,19 @@ export function App() {
                 })}
               />
             ) : viewMode === 'analytics' ? (
-              /* Analytics & Interactive Network Graph */
+              /* Productivity analytics and momentum insights */
               <AnalyticsDashboardView
                 tasks={tasks}
                 projects={projects}
                 onSelectTask={setSelectedTask}
-                onSelectProject={(id) => {
-                  setSelectedProjectId(id);
-                  handleChangeViewMode('things_list');
-                }}
               />
             ) : (
               /* Workflow Stages: Today, Inbox, Upcoming, Anytime, Someday, Logbook */
               <WorkflowStageView
                 section={currentSection}
                 tasks={tasks}
-                projects={projects}
                 onToggleComplete={handleToggleComplete}
                 onSelectTask={setSelectedTask}
-                onToggleTimer={handleToggleTimer}
                 onQuickAdd={(title, priority) => handleMagicAdd({
                   title: title || 'New note',
                   priority: priority || 'normal',

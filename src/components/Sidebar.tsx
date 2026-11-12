@@ -10,7 +10,7 @@ import {
   Columns3,
   Target,
   LayoutGrid,
-  Network,
+  ChartNoAxesCombined,
   Settings,
   ChevronDown,
   ChevronRight,
@@ -268,9 +268,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
                 } ${isCollapsed ? 'justify-center px-0' : ''}`}
-              title="Analytics & Network Graph"
+              title="Productivity Analytics"
             >
-              <Network className="w-4 h-4 text-cyan-300 shrink-0" />
+              <ChartNoAxesCombined className="w-4 h-4 text-cyan-300 shrink-0" />
               {!isCollapsed && <span>Analytics</span>}
             </button>
           </nav>

@@ -69,7 +69,7 @@ export const StudioRightPanel: React.FC<StudioRightPanelProps> = ({
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span className={`w-2 h-2 rounded-full ${dotColor} shrink-0`} />
-                    <span className="text-xs font-semibold text-stone-900 dark:text-stone-100 truncate">
+                    <span className="text-sm font-handwriting font-semibold text-stone-900 dark:text-stone-100 truncate">
                       {t.title}
                     </span>
                   </div>

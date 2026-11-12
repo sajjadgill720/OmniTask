@@ -241,13 +241,13 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({
                     </button>
 
                     <div className="truncate flex-1">
-                      <span className={`text-xs sm:text-sm font-semibold truncate block ${
-                        isDone ? 'line-through text-white/50' : 'text-white font-handwriting text-sm tracking-wide'
+                      <span className={`text-sm sm:text-base font-handwriting font-semibold truncate block ${
+                        isDone ? 'line-through text-white/50' : 'text-white tracking-wide'
                       }`}>
                         {task.title}
                       </span>
                       {task.notes && (
-                        <span className="text-[10px] text-white/50 truncate block mt-0.5">
+                        <span className="text-xs font-handwriting text-white/60 truncate block mt-0.5">
                           {task.notes}
                         </span>
                       )}

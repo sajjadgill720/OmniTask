@@ -9,7 +9,6 @@ import {
   Plus,
   TrendingUp,
   Sparkles,
-  Share2,
   Calendar,
   Flame,
   Award,
@@ -19,7 +18,7 @@ import {
   Monitor,
   Landmark
 } from 'lucide-react';
-import { Task, Project } from '../types';
+import { Task } from '../types';
 import { RedPushPin } from './RedPushPin';
 import { checkDueDate } from '../utils/storage';
 import { playCompletionSound } from '../utils/permissions';
@@ -28,7 +27,6 @@ import confetti from 'canvas-confetti';
 interface StudioBoardViewProps {
   executiveWall?: boolean;
   tasks: Task[];
-  projects: Project[];
   onToggleComplete: (id: string) => void;
   onSelectTask: (task: Task) => void;
   onToggleTimer: (id: string) => void;
@@ -37,7 +35,7 @@ interface StudioBoardViewProps {
   onMoveTaskStatus: (taskId: string, newStatus: Task['status']) => void;
   audioEnabled: boolean;
   onQuickAdd: () => void;
-  onNavigateToNetwork?: () => void;
+  onNavigateToAnalytics?: () => void;
   onToggleStandupWall?: () => void;
 }
 
@@ -51,7 +49,6 @@ interface StudioBoardViewProps {
 export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
   executiveWall = false,
   tasks,
-  projects,
   onToggleComplete,
   onSelectTask,
   onToggleTimer,
@@ -60,32 +57,28 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
   onMoveTaskStatus,
   audioEnabled,
   onQuickAdd,
-  onNavigateToNetwork,
+  onNavigateToAnalytics,
   onToggleStandupWall,
 }) => {
   const [dragOverCol, setDragOverCol] = useState<Task['status'] | null>(null);
 
-  // Density Mode: 'normal' (Image 1) vs 'compact' (Image 2 mini-memos)
+  // Full handwritten task cards are the default desk view; preserve an explicit saved choice.
   const [density, setDensity] = useState<'normal' | 'compact' | 'full'>(() => {
-    const saved = localStorage.getItem('omnisticky_board_density');
-    return saved === 'compact' || saved === 'full' ? saved : 'normal';
+    const saved = localStorage.getItem('omnisticky_board_density_v2');
+    return saved === 'normal' || saved === 'compact' || saved === 'full' ? saved : 'full';
   });
   // The executive review always uses detailed cards; desk view keeps its own density choice.
   const noteDensity = executiveWall ? 'full' : density;
 
   const handleToggleDensity = (mode: 'normal' | 'compact' | 'full') => {
     setDensity(mode);
-    localStorage.setItem('omnisticky_board_density', mode);
+    localStorage.setItem('omnisticky_board_density_v2', mode);
   };
 
   const todoTasks = tasks.filter(t => t.status === 'todo');
   const inProgressTasks = tasks.filter(t => t.status === 'in_progress');
   const doneTasks = tasks.filter(t => t.status === 'done');
-  const networkPreviewTasks = tasks.slice(0, 6);
-  const networkPreviewPoints = [
-    { x: 20, y: 20 }, { x: 43, y: 66 }, { x: 63, y: 12 },
-    { x: 111, y: 13 }, { x: 140, y: 38 }, { x: 103, y: 67 },
-  ];
+  const completedToday = tasks.filter(task => task.status === 'done' && task.completedAt && new Date(task.completedAt).toDateString() === new Date().toDateString()).length;
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
@@ -299,7 +292,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                       <RedPushPin size={18} color="red" />
                     </div>
 
-                    <h4 className="text-xs font-bold leading-tight font-sans text-stone-950 line-clamp-3">
+                    <h4 className="text-sm font-bold leading-tight font-handwriting text-stone-950 line-clamp-3">
                       {task.title}
                     </h4>
 
@@ -340,7 +333,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                       className="w-4 h-4 mt-0.5 rounded-full border-2 border-stone-800 hover:bg-stone-800/15 flex items-center justify-center shrink-0 transition"
                       title="Click to start task"
                     />
-                    <h3 className={`${noteDensity === 'full' ? 'font-handwriting text-[1.45rem] sm:text-[1.7rem] font-bold' : 'text-xs sm:text-sm font-bold font-sans'} text-stone-950 leading-snug break-words flex-1`}>
+                    <h3 className={`${noteDensity === 'full' ? 'text-[1.45rem] sm:text-[1.7rem]' : 'text-sm'} font-handwriting font-bold text-stone-950 leading-snug break-words flex-1`}>
                       {task.title}
                     </h3>
                   </div>
@@ -461,7 +454,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                       <RedPushPin size={18} color="green" />
                     </div>
 
-                    <h4 className="text-xs font-bold leading-tight font-sans text-stone-950 line-clamp-3">
+                    <h4 className="text-sm font-bold leading-tight font-handwriting text-stone-950 line-clamp-3">
                       {task.title}
                     </h4>
 
@@ -503,7 +496,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                     >
                       ✓
                     </button>
-                    <h3 className={`${noteDensity === 'full' ? 'font-handwriting text-[1.45rem] sm:text-[1.7rem] font-bold' : 'text-xs sm:text-sm font-bold font-sans'} text-stone-950 leading-snug break-words flex-1`}>
+                    <h3 className={`${noteDensity === 'full' ? 'text-[1.45rem] sm:text-[1.7rem]' : 'text-sm'} font-handwriting font-bold text-stone-950 leading-snug break-words flex-1`}>
                       {task.title}
                     </h3>
                   </div>
@@ -611,7 +604,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                       <RedPushPin size={18} color="purple" />
                     </div>
 
-                    <h4 className="text-xs font-bold leading-tight font-sans text-stone-950 line-clamp-3 line-through opacity-70">
+                    <h4 className="text-sm font-bold leading-tight font-handwriting text-stone-950 line-clamp-3 line-through opacity-70">
                       {task.title}
                     </h4>
 
@@ -662,7 +655,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                     >
                       ✓
                     </button>
-                    <h3 className={`${noteDensity === 'full' ? 'font-handwriting text-[1.45rem] sm:text-[1.7rem] font-bold' : 'text-xs sm:text-sm font-bold font-sans'} text-stone-950 leading-snug break-words flex-1 line-through opacity-75`}>
+                    <h3 className={`${noteDensity === 'full' ? 'text-[1.45rem] sm:text-[1.7rem]' : 'text-sm'} font-handwriting font-bold text-stone-950 leading-snug break-words flex-1 line-through opacity-75`}>
                       {task.title}
                     </h3>
                   </div>
@@ -719,7 +712,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
       {/* =======================================================================
           BOTTOM WOODEN DESK DASHBOARD CARDS (Directly resting on Desk above fold)
           1. Productivity Overview
-          2. Your Network
+          2. Today's Momentum
           3. Focus Streak
           ======================================================================= */}
       <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
@@ -762,43 +755,31 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
           </div>
         </div>
 
-        {/* Card 2: Your Network */}
+        {/* Card 2: Today's Momentum */}
         <div 
-          onClick={onNavigateToNetwork}
+          onClick={onNavigateToAnalytics}
           className="p-3.5 rounded-2xl bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/15 shadow-xl text-white flex flex-col justify-between cursor-pointer hover:bg-black/55 transition group"
         >
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
-              <Share2 className="w-3.5 h-3.5 text-purple-400" />
-              <span className="font-extrabold text-xs tracking-tight text-white/90">Your Network</span>
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-300" />
+              <span className="font-extrabold text-xs tracking-tight text-white/90">Today's Momentum</span>
             </div>
             <span className="text-[9px] font-bold text-white/60 group-hover:text-white flex items-center gap-0.5 transition">
-              <span>View Graph</span>
+              <span>Open insights</span>
               <ArrowRight className="w-3 h-3" />
             </span>
           </div>
-
-          <div className="w-full h-16 flex items-center justify-center relative" aria-label={`Network preview: ${tasks.length} tasks and ${projects.length} projects`}>
-            {networkPreviewTasks.length > 0 ? (
-              <svg viewBox="0 0 160 80" role="img" aria-label="Connected task preview" className="w-full h-full">
-                {networkPreviewTasks.map((task, index) => {
-                  const point = networkPreviewPoints[index];
-                  return <line key={`edge-${task.id}`} x1="80" y1="40" x2={point.x} y2={point.y} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />;
-                })}
-                {networkPreviewTasks.map((task, index) => {
-                  const point = networkPreviewPoints[index];
-                  const color = task.status === 'done' ? '#34d399' : task.status === 'in_progress' ? '#38bdf8' : '#fbbf24';
-                  return <circle key={task.id} cx={point.x} cy={point.y} r="4" fill={color} />;
-                })}
-                <circle cx="80" cy="40" r="8" fill="#8b5cf6" />
-                <text x="80" y="42.5" textAnchor="middle" fill="#ffffff" fontSize="6.5" fontWeight="bold">✦</text>
-              </svg>
-            ) : (
-              <p className="text-[10px] text-white/55">Add tasks to build your network</p>
-            )}
-            {networkPreviewTasks.length > 0 && (
-              <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] font-bold text-white/50 tracking-wider">You</span>
-            )}
+          <div className="flex items-center justify-between gap-3 pt-2">
+            <div>
+              <strong className="text-2xl font-black text-emerald-300">{completedToday}</strong>
+              <p className="text-[9px] text-white/60">notes completed today</p>
+            </div>
+            <div className="flex h-10 items-end gap-1" aria-hidden="true">
+              {[3, 5, 2, 7, 4, Math.max(2, completedToday)].map((height, index) => (
+                <span key={index} className="w-2 rounded-t bg-gradient-to-t from-emerald-600 to-teal-300" style={{ height: `${Math.min(100, height * 12)}%` }} />
+              ))}
+            </div>
           </div>
         </div>
 

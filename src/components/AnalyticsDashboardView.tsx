@@ -6,87 +6,98 @@ import {
   Folder, 
 } from 'lucide-react';
 import { Task, Project } from '../types';
-import { NetworkGraph } from './NetworkGraph';
 
 interface AnalyticsDashboardViewProps {
   tasks: Task[];
   projects: Project[];
   onSelectTask: (task: Task) => void;
-  onSelectProject?: (projectId: string) => void;
 }
 
 export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
   tasks,
   projects,
   onSelectTask,
-  onSelectProject,
 }) => {
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'year'>('week');
+
+  const momentumDays = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Array.from({ length: 7 }, (_, offset) => {
+      const day = new Date(today);
+      day.setDate(today.getDate() - (6 - offset));
+      const count = tasks.filter(task => {
+        if (task.status !== 'done' || !task.completedAt) return false;
+        const completed = new Date(task.completedAt);
+        return completed.toDateString() === day.toDateString();
+      }).length;
+      return { day, count };
+    });
+  }, [tasks]);
+
+  const nextStep = useMemo(() => {
+    const active = tasks.filter(task => task.status !== 'done');
+    const overdue = active.find(task => task.dueDate && new Date(task.dueDate).getTime() < Date.now());
+    return overdue || active.find(task => task.status === 'in_progress') || active[0];
+  }, [tasks]);
 
   // Computed metrics from real user tasks
   const completedTasks = tasks.filter(t => t.status === 'done');
   const inProgressTasks = tasks.filter(t => t.status === 'in_progress');
   const todoTasks = tasks.filter(t => t.status === 'todo');
 
-  const totalTasks = tasks.length || 1;
-  const completionRate = Math.round((completedTasks.length / totalTasks) * 100);
+  const totalTasks = tasks.length;
+  const completionRate = totalTasks ? Math.round((completedTasks.length / totalTasks) * 100) : 0;
 
   // Total recorded focus time in hours
   const totalFocusSeconds = tasks.reduce((acc, t) => acc + (t.timeSpentSeconds || 0), 0);
-  const focusHours = (totalFocusSeconds > 0 ? (totalFocusSeconds / 3600) : 6.5).toFixed(1);
+  const focusHours = (totalFocusSeconds / 3600).toFixed(1);
 
-  // Productivity Trend data adjusted by timeframe
+  // Productivity trend from recorded completion timestamps, with no illustrative sample data.
   const trendConfig = useMemo(() => {
-    if (timeframe === 'month') {
-      return {
-        label: 'Monthly Throughput',
-        peak: '84% Peak',
-        points: [
-          { cx: 50, cy: 150, label: 'W1' },
-          { cx: 200, cy: 110, label: 'W2' },
-          { cx: 350, cy: 75, label: 'W3' },
-          { cx: 500, cy: 95, label: 'W4' },
-          { cx: 650, cy: 55, label: 'W5' },
-        ],
-        pathD: 'M 50 150 C 120 130, 150 110, 200 110 C 270 110, 300 75, 350 75 C 420 75, 450 95, 500 95 C 570 95, 600 55, 650 55',
-        areaD: 'M 50 150 C 120 130, 150 110, 200 110 C 270 110, 300 75, 350 75 C 420 75, 450 95, 500 95 C 570 95, 600 55, 650 55 L 650 180 L 50 180 Z',
-      };
-    }
-    if (timeframe === 'year') {
-      return {
-        label: 'Yearly Momentum',
-        peak: '91% Peak',
-        points: [
-          { cx: 50, cy: 140, label: 'Q1' },
-          { cx: 250, cy: 100, label: 'Q2' },
-          { cx: 450, cy: 70, label: 'Q3' },
-          { cx: 650, cy: 45, label: 'Q4' },
-        ],
-        pathD: 'M 50 140 C 150 120, 180 100, 250 100 C 350 100, 380 70, 450 70 C 550 70, 580 45, 650 45',
-        areaD: 'M 50 140 C 150 120, 180 100, 250 100 C 350 100, 380 70, 450 70 C 550 70, 580 45, 650 45 L 650 180 L 50 180 Z',
-      };
-    }
+    const now = new Date();
+    const binCount = timeframe === 'week' ? 7 : timeframe === 'month' ? 5 : 12;
+    const bins = Array.from({ length: binCount }, (_, index) => {
+      const start = new Date(now);
+      if (timeframe === 'week') start.setDate(now.getDate() - (binCount - 1 - index));
+      else if (timeframe === 'month') start.setDate(now.getDate() - (binCount - 1 - index) * 7);
+      else start.setMonth(now.getMonth() - (binCount - 1 - index));
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      if (timeframe === 'week') end.setDate(start.getDate() + 1);
+      else if (timeframe === 'month') end.setDate(start.getDate() + 7);
+      else end.setMonth(start.getMonth() + 1);
+      const count = tasks.filter(task => {
+        if (task.status !== 'done' || !task.completedAt) return false;
+        const completed = new Date(task.completedAt);
+        return completed >= start && completed < end;
+      }).length;
+      const label = timeframe === 'week'
+        ? start.toLocaleDateString(undefined, { weekday: 'short' })
+        : timeframe === 'month' ? `W${index + 1}` : start.toLocaleDateString(undefined, { month: 'short' });
+      return { count, label };
+    });
+    const peakCount = Math.max(0, ...bins.map(bin => bin.count));
+    const points = bins.map((bin, index) => ({
+      cx: 50 + index * (600 / Math.max(1, binCount - 1)),
+      cy: 165 - (peakCount ? bin.count / peakCount : 0) * 115,
+      label: bin.label,
+    }));
+    const pathD = points.map((point, index) => `${index ? 'L' : 'M'} ${point.cx} ${point.cy}`).join(' ');
+    const areaD = `${pathD} L 650 180 L 50 180 Z`;
     return {
-      label: 'Weekly Throughput',
-      peak: `${Math.max(78, completionRate)}% Peak`,
-      points: [
-        { cx: 50, cy: 140, label: 'Mon' },
-        { cx: 150, cy: 120, label: 'Tue' },
-        { cx: 250, cy: 100, label: 'Wed' },
-        { cx: 350, cy: 90, label: 'Thu' },
-        { cx: 450, cy: 60, label: 'Fri' },
-        { cx: 550, cy: 80, label: 'Sat' },
-        { cx: 650, cy: 50, label: 'Sun' },
-      ],
-      pathD: 'M 50 140 C 120 120, 180 80, 250 100 C 320 120, 380 50, 450 60 C 520 70, 580 85, 650 50',
-      areaD: 'M 50 140 C 120 120, 180 80, 250 100 C 320 120, 380 50, 450 60 C 520 70, 580 85, 650 50 L 650 180 L 50 180 Z',
+      label: timeframe === 'week' ? 'Completions by day' : timeframe === 'month' ? 'Completions by week' : 'Completions by month',
+      peak: `${peakCount} ${peakCount === 1 ? 'task' : 'tasks'} · busiest period`,
+      points,
+      pathD,
+      areaD,
     };
-  }, [timeframe, completionRate]);
+  }, [timeframe, tasks]);
 
   // Task distribution percentages
-  const todoPct = Math.round((todoTasks.length / totalTasks) * 100) || 40;
-  const inProgPct = Math.round((inProgressTasks.length / totalTasks) * 100) || 25;
-  const donePct = Math.round((completedTasks.length / totalTasks) * 100) || 35;
+  const todoPct = totalTasks ? Math.round((todoTasks.length / totalTasks) * 100) : 0;
+  const inProgPct = totalTasks ? Math.round((inProgressTasks.length / totalTasks) * 100) : 0;
+  const donePct = totalTasks ? Math.round((completedTasks.length / totalTasks) * 100) : 0;
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-4 select-none space-y-6">
@@ -136,10 +147,10 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
           </div>
           <div className="flex items-baseline gap-2">
             <h2 className="text-3xl sm:text-4xl font-extrabold font-mono text-white">
-              {completionRate || 78}%
+              {completionRate}%
             </h2>
             <span className="text-[11px] font-bold text-emerald-400 flex items-center">
-              ↑ 12%
+              of all tasks
             </span>
           </div>
           <span className="text-[10px] text-white/40 block mt-1">vs previous cycle</span>
@@ -153,10 +164,10 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
           </div>
           <div className="flex items-baseline gap-2">
             <h2 className="text-3xl sm:text-4xl font-extrabold font-mono text-white">
-              {Number(focusHours) > 0 ? `${focusHours}h` : '6.5h'}
+              {focusHours}h
             </h2>
             <span className="text-[11px] font-bold text-emerald-400 flex items-center">
-              ↑ 18%
+              recorded
             </span>
           </div>
           <span className="text-[10px] text-white/40 block mt-1">Deep work sessions</span>
@@ -170,10 +181,10 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
           </div>
           <div className="flex items-baseline gap-2">
             <h2 className="text-3xl sm:text-4xl font-extrabold font-mono text-white">
-              {completedTasks.length || 42}
+              {completedTasks.length}
             </h2>
             <span className="text-[11px] font-bold text-emerald-400 flex items-center">
-              ↑ 20%
+              total
             </span>
           </div>
           <span className="text-[10px] text-white/40 block mt-1">Completed milestones</span>
@@ -187,10 +198,10 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
           </div>
           <div className="flex items-baseline gap-2">
             <h2 className="text-3xl sm:text-4xl font-extrabold font-mono text-white">
-              {projects.length || 12}
+              {projects.length}
             </h2>
             <span className="text-[11px] font-bold text-amber-300">
-              Active
+              total
             </span>
           </div>
           <span className="text-[10px] text-white/40 block mt-1">Work & Personal streams</span>
@@ -316,15 +327,46 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
 
       </div>
 
-      {/* =======================================================================
-          4. INTERACTIVE KNOWLEDGE NETWORK GRAPH SECTION
-          ======================================================================= */}
-      <NetworkGraph
-        tasks={tasks}
-        projects={projects}
-        onSelectTask={onSelectTask}
-        onSelectProject={onSelectProject}
-      />
+      <section className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+        <div className="lg:col-span-3 rounded-3xl border border-amber-100/20 bg-gradient-to-br from-[#49301f]/95 via-[#312820]/95 to-[#201b1b]/95 p-5 sm:p-6 text-white shadow-2xl backdrop-blur-xl">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[.2em] text-amber-300">Your week, at a glance</p>
+              <h2 className="mt-1 text-xl font-black">Momentum Map</h2>
+              <p className="mt-1 text-xs text-white/60">Completed notes by day. Each mark represents a finished task.</p>
+            </div>
+            <CheckCircle2 className="h-6 w-6 text-emerald-300" aria-hidden="true" />
+          </div>
+          <div className="mt-6 grid grid-cols-7 gap-2 sm:gap-3" role="list" aria-label="Tasks completed each of the last seven days">
+            {momentumDays.map(({ day, count }) => (
+              <div key={day.toISOString()} role="listitem" className="flex flex-col items-center gap-2">
+                <span className="text-[10px] font-semibold text-white/55">{day.toLocaleDateString(undefined, { weekday: 'short' })}</span>
+                <div className="flex h-16 w-full items-end justify-center rounded-xl border border-white/10 bg-black/20 p-1.5" title={`${count} completed ${count === 1 ? 'task' : 'tasks'}`}>
+                  <div className="w-full rounded-md bg-gradient-to-t from-emerald-600 to-teal-300 transition-all" style={{ height: `${Math.min(100, count * 28 + 8)}%` }} />
+                </div>
+                <span className="text-xs font-bold text-amber-200">{count}</span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-[10px] text-white/45">Based on completion dates recorded in your tasks.</p>
+        </div>
+        <div className="lg:col-span-2 flex flex-col justify-between rounded-3xl border border-amber-100/20 bg-[#f8edda]/95 p-5 sm:p-6 text-stone-900 shadow-2xl">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[.2em] text-amber-800">A gentle nudge</p>
+            <h2 className="mt-1 text-xl font-black">One clear next step</h2>
+            <p className="mt-2 text-xs text-stone-600">Keep the day moving by returning to one useful task.</p>
+          </div>
+          {nextStep ? (
+            <button type="button" onClick={() => onSelectTask(nextStep)} className="mt-5 rounded-2xl border border-stone-900/10 bg-white/75 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <span className="block font-handwriting text-xl font-bold leading-snug">{nextStep.title}</span>
+              <span className="mt-2 block text-[10px] font-semibold uppercase tracking-wide text-stone-500">{nextStep.status === 'in_progress' ? 'In progress' : 'Ready when you are'} · Open note →</span>
+            </button>
+          ) : (
+            <p className="mt-5 rounded-2xl bg-white/75 p-4 font-handwriting text-lg">Everything is complete. Enjoy the clear desk.</p>
+          )}
+          <p className="mt-4 text-[10px] text-stone-500">Suggested from your current task list; nothing is scheduled automatically.</p>
+        </div>
+      </section>
 
     </div>
   );
