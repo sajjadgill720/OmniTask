@@ -1,35 +1,18 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { 
+import {
   Network, 
   Search, 
-  Filter, 
   Maximize2, 
   ZoomIn, 
   ZoomOut, 
   RotateCcw, 
-  ArrowUpRight, 
-  Folder, 
-  CheckCircle2, 
-  Clock, 
-  Tag, 
-  FileText, 
-  CheckSquare, 
   X, 
-  Crosshair, 
-  GitFork,
-  Layers,
-  Sparkles,
-  Info,
-  ChevronRight,
-  TrendingUp,
-  HelpCircle
 } from 'lucide-react';
 import { Task, Project } from '../types';
 
-export type GraphEntityType = 'user' | 'project' | 'task' | 'note';
+export type GraphEntityType = 'project' | 'task' | 'note';
 
 export type RelationshipType = 
-  | 'user_project'    // User -> Project
   | 'project_task'    // Project -> Task
   | 'task_note'       // Task -> Note
   | 'shared_tag';     // Task <-> Task (shared domain tag)
@@ -70,10 +53,6 @@ export interface GraphEdge {
   color?: string;
 }
 
-export type LayoutMode = 'force' | 'radial' | 'hierarchical';
-export type GroupingMode = 'type' | 'project' | 'status';
-export type FilterTab = 'all' | 'tasks' | 'projects' | 'notes';
-
 interface NetworkGraphProps {
   tasks: Task[];
   projects: Project[];
@@ -101,14 +80,9 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
   onSelectProject,
 }) => {
   // UI Controls State
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>('force');
-  const [groupingMode, setGroupingMode] = useState<GroupingMode>('type');
-  const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
-  const [showSecondDegree, setShowSecondDegree] = useState(false);
 
   // Camera Transformation (Pan & Zoom)
   const [camera, setCamera] = useState({ x: 0, y: 0, zoom: 1 });
@@ -134,36 +108,20 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
       edgeDegreeMap[idB] = (edgeDegreeMap[idB] || 0) + 1;
     };
 
-    // A. Central User Identity Node
-    const userNodeId = 'user-root';
-    extractedNodes.push({
-      id: userNodeId,
-      title: 'Knovera Workspace',
-      type: 'user',
-      color: '#A855F7',
-      baseRadius: 18,
-      radius: 18,
-      degree: 0,
-      x: CENTER_X,
-      y: CENTER_Y,
-      vx: 0,
-      vy: 0,
-      pinned: true,
-    });
-
-    // B. Project Nodes
+    // Projects and tasks are graph nodes; only real project membership creates an edge.
     const projectMap = new Map<string, Project>();
     projects.forEach((proj, idx) => {
       projectMap.set(proj.id, proj);
-      const angle = (idx / Math.max(1, projects.length)) * 2 * Math.PI;
-      const initX = CENTER_X + Math.cos(angle) * 180;
-      const initY = CENTER_Y + Math.sin(angle) * 150;
+      const angle = idx * 2.399963229728653;
+      const radius = 140 + Math.sqrt(idx + 1) * 24;
+      const initX = CENTER_X + Math.cos(angle) * radius;
+      const initY = CENTER_Y + Math.sin(angle) * radius * 0.68;
 
       extractedNodes.push({
         id: proj.id,
         title: proj.title,
         type: 'project',
-        color: proj.colorHex || '#10B981',
+        color: '#10B981',
         baseRadius: 16,
         radius: 16,
         degree: 0,
@@ -175,36 +133,21 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
         vy: 0,
       });
 
-      // User owns Project edge
-      extractedEdges.push({
-        id: `edge-${userNodeId}-${proj.id}`,
-        source: userNodeId,
-        target: proj.id,
-        type: 'user_project',
-        label: 'Workspace Project',
-        directed: true,
-        color: '#A855F7',
-      });
-      incrementDegree(userNodeId, proj.id);
     });
 
-    // C. Task Nodes & Project Containment Edges
+    // Tasks orbit their project or use a deterministic spiral when unassigned.
     tasks.forEach((task, idx) => {
       const parentProj = task.projectId ? projectMap.get(task.projectId) : undefined;
-      const angle = (idx / Math.max(1, tasks.length)) * 2 * Math.PI;
-      const offsetDist = parentProj ? 80 : 220;
-      const baseAnchorX = parentProj ? CENTER_X : CENTER_X;
-      const baseAnchorY = parentProj ? CENTER_Y : CENTER_Y;
-
-      const initX = baseAnchorX + Math.cos(angle) * offsetDist + (stableUnit(task.id, 1) * 40 - 20);
-      const initY = baseAnchorY + Math.sin(angle) * offsetDist + (stableUnit(task.id, 2) * 40 - 20);
-
-      // Node color according to grouping default
-      const taskColor = task.status === 'done' 
-        ? '#10B981' 
-        : task.status === 'in_progress' 
-        ? '#38BDF8' 
-        : '#F59E0B';
+      const angle = idx * 2.399963229728653;
+      const parentIndex = parentProj ? projects.findIndex(project => project.id === parentProj.id) : -1;
+      const parentAngle = parentIndex >= 0 ? parentIndex * 2.399963229728653 : 0;
+      const parentRadius = parentIndex >= 0 ? 140 + Math.sqrt(parentIndex + 1) * 24 : 0;
+      const anchorX = parentIndex >= 0 ? CENTER_X + Math.cos(parentAngle) * parentRadius : CENTER_X;
+      const anchorY = parentIndex >= 0 ? CENTER_Y + Math.sin(parentAngle) * parentRadius * 0.68 : CENTER_Y;
+      const orbit = parentIndex >= 0 ? 90 + stableUnit(task.id, 3) * 30 : 74 + Math.sqrt(idx + 1) * 54;
+      const taskAngle = parentIndex >= 0 ? parentAngle + (stableUnit(task.id, 4) * 1.1 - 0.55) : angle;
+      const initX = anchorX + Math.cos(taskAngle) * orbit + (stableUnit(task.id, 1) * 24 - 12);
+      const initY = anchorY + Math.sin(taskAngle) * orbit * 0.72 + (stableUnit(task.id, 2) * 24 - 12);
 
       const completedSubtasks = (task.checklists || []).filter(c => c.completed).length;
 
@@ -214,7 +157,7 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
         type: 'task',
         status: task.status,
         priority: task.priority,
-        color: taskColor,
+        color: '#F59E0B',
         baseRadius: 12,
         radius: 12,
         degree: 0,
@@ -231,7 +174,7 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
         vy: 0,
       });
 
-      // Connect Task to parent Project if assigned, otherwise connect to Workspace root
+      // Only project membership creates a containment edge.
       if (task.projectId && projectMap.has(task.projectId)) {
         extractedEdges.push({
           id: `edge-${task.projectId}-${task.id}`,
@@ -243,17 +186,6 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
           color: parentProj?.colorHex || '#10B981',
         });
         incrementDegree(task.projectId, task.id);
-      } else {
-        extractedEdges.push({
-          id: `edge-${userNodeId}-${task.id}`,
-          source: userNodeId,
-          target: task.id,
-          type: 'user_project',
-          label: 'Direct Task',
-          directed: true,
-          color: '#F59E0B',
-        });
-        incrementDegree(userNodeId, task.id);
       }
 
       // D. Note / Documentation Entity (only if task has actual notes)
@@ -332,217 +264,41 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
     return { rawNodes: extractedNodes, rawEdges: extractedEdges };
   }, [tasks, projects]);
 
-  // 2. FILTERING & COLOR GROUPING
-  const { filteredNodes, filteredEdges, filteredNodeMap } = useMemo(() => {
-    let activeNodes = rawNodes;
-
-    if (filterTab === 'tasks') {
-      activeNodes = rawNodes.filter(n => n.type === 'task' || n.type === 'project');
-    } else if (filterTab === 'projects') {
-      activeNodes = rawNodes.filter(n => n.type === 'project' || n.type === 'user');
-    } else if (filterTab === 'notes') {
-      activeNodes = rawNodes.filter(n => n.type === 'note' || (n.type === 'task' && n.rawTask?.notes));
-    }
-
-    const activeNodeIdSet = new Set(activeNodes.map(n => n.id));
-
-    // Keep edges only if both endpoints exist in the active filtered set
-    const activeEdges = rawEdges.filter(e => activeNodeIdSet.has(e.source) && activeNodeIdSet.has(e.target));
-
-    // Apply Coloring Mode
-    const styledNodes = activeNodes.map(node => {
-      let finalColor = node.color;
-
-      if (groupingMode === 'type') {
-        if (node.type === 'user') finalColor = '#A855F7';
-        else if (node.type === 'project') finalColor = '#10B981';
-        else if (node.type === 'task') finalColor = '#F59E0B';
-        else if (node.type === 'note') finalColor = '#38BDF8';
-      } else if (groupingMode === 'status') {
-        if (node.type === 'task') {
-          if (node.status === 'done') finalColor = '#10B981';
-          else if (node.status === 'in_progress') finalColor = '#38BDF8';
-          else finalColor = '#F59E0B';
-        }
-      } else if (groupingMode === 'project') {
-        if (node.projectId) {
-          const parent = rawNodes.find(n => n.id === node.projectId);
-          if (parent?.color) finalColor = parent.color;
-        }
-      }
-
-      return {
-        ...node,
-        color: finalColor,
-      };
-    });
-
-    const map = new Map<string, GraphNode>();
-    styledNodes.forEach(n => map.set(n.id, n));
-
-    return {
-      filteredNodes: styledNodes,
-      filteredEdges: activeEdges,
-      filteredNodeMap: map,
-    };
-  }, [rawNodes, rawEdges, filterTab, groupingMode]);
-
-  // 3. SEARCH & FOCUS NEIGHBORS RESOLUTION
+  // 2. SEARCH & HOVERED NEIGHBORS
   const searchMatchIds = useMemo(() => {
     if (!searchQuery.trim()) return new Set<string>();
     const q = searchQuery.toLowerCase().trim();
     const matches = new Set<string>();
-    filteredNodes.forEach(n => {
+    rawNodes.forEach(n => {
       if (n.title.toLowerCase().includes(q) || (n.rawTask?.tags || []).some(t => t.toLowerCase().includes(q))) {
         matches.add(n.id);
       }
     });
     return matches;
-  }, [searchQuery, filteredNodes]);
+  }, [searchQuery, rawNodes]);
 
-  // Direct and 2nd-degree neighbors for Focus Mode
-  const { focusNeighborIds, focusEdgeIds } = useMemo(() => {
-    if (!selectedNodeId) return { focusNeighborIds: new Set<string>(), focusEdgeIds: new Set<string>() };
-
-    const firstDegree = new Set<string>([selectedNodeId]);
-    const activeEdges = new Set<string>();
-
-    filteredEdges.forEach(e => {
-      if (e.source === selectedNodeId) {
-        firstDegree.add(e.target);
-        activeEdges.add(e.id);
-      } else if (e.target === selectedNodeId) {
-        firstDegree.add(e.source);
-        activeEdges.add(e.id);
-      }
+  const hoveredNeighborIds = useMemo(() => {
+    if (!hoveredNodeId) return new Set<string>();
+    const neighbors = new Set([hoveredNodeId]);
+    rawEdges.forEach(edge => {
+      if (edge.source === hoveredNodeId) neighbors.add(edge.target);
+      if (edge.target === hoveredNodeId) neighbors.add(edge.source);
     });
+    return neighbors;
+  }, [hoveredNodeId, rawEdges]);
 
-    if (showSecondDegree) {
-      filteredEdges.forEach(e => {
-        if (firstDegree.has(e.source) || firstDegree.has(e.target)) {
-          firstDegree.add(e.source);
-          firstDegree.add(e.target);
-          activeEdges.add(e.id);
-        }
-      });
-    }
+  // 3. Force-directed graph layout (a single global graph, without alternate modes).
+  const computeInitialLayout = useCallback((currentNodes: GraphNode[]): GraphNode[] => currentNodes.map(node => ({
+    ...node,
+    pinned: false,
+    x: node.x || CENTER_X + (stableUnit(node.id, 4) * 200 - 100),
+    y: node.y || CENTER_Y + (stableUnit(node.id, 5) * 200 - 100),
+  })), []);
 
-    return { focusNeighborIds: firstDegree, focusEdgeIds: activeEdges };
-  }, [selectedNodeId, filteredEdges, showSecondDegree]);
-
-  // 4. LAYOUT POSITION CALCULATIONS
-  // Updates node coordinates according to selected Layout Mode (Force, Radial, Hierarchical)
-  const computeInitialLayout = useCallback((layout: LayoutMode, currentNodes: GraphNode[]): GraphNode[] => {
-    if (layout === 'hierarchical') {
-      // 4-tier DAG layout
-      const ranks: Record<string, GraphNode[]> = {
-        user: [],
-        project: [],
-        task: [],
-        note: [],
-      };
-
-      currentNodes.forEach(n => {
-        if (ranks[n.type]) ranks[n.type].push(n);
-        else ranks.task.push(n);
-      });
-
-      const yLevels = { user: 70, project: 210, task: 410, note: 580 };
-      const updated: GraphNode[] = [];
-
-      Object.entries(ranks).forEach(([type, tierNodes]) => {
-        const y = yLevels[type as keyof typeof yLevels] || 300;
-        const count = tierNodes.length;
-        const spacing = CANVAS_WIDTH / (count + 1);
-
-        tierNodes.forEach((node, i) => {
-          updated.push({
-            ...node,
-            x: Math.round(spacing * (i + 1)),
-            y,
-            vx: 0,
-            vy: 0,
-            pinned: true,
-          });
-        });
-      });
-
-      return updated;
-    }
-
-    if (layout === 'radial') {
-      // Concentric circular orbit layout
-      const updated: GraphNode[] = [];
-      const userNode = currentNodes.find(n => n.type === 'user');
-      const projectNodes = currentNodes.filter(n => n.type === 'project');
-      const taskNodes = currentNodes.filter(n => n.type === 'task');
-      const noteNodes = currentNodes.filter(n => n.type === 'note');
-
-      if (userNode) {
-        updated.push({ ...userNode, x: CENTER_X, y: CENTER_Y, vx: 0, vy: 0, pinned: true });
-      }
-
-      // Ring 1: Projects (Radius 150)
-      const projAngleMap = new Map<string, number>();
-      projectNodes.forEach((p, idx) => {
-        const angle = (idx / Math.max(1, projectNodes.length)) * 2 * Math.PI - Math.PI / 2;
-        projAngleMap.set(p.id, angle);
-        updated.push({
-          ...p,
-          x: Math.round(CENTER_X + Math.cos(angle) * 150),
-          y: Math.round(CENTER_Y + Math.sin(angle) * 125),
-          vx: 0,
-          vy: 0,
-          pinned: true,
-        });
-      });
-
-      // Ring 2: Tasks clustered towards parent project angle (Radius 265)
-      taskNodes.forEach((t, idx) => {
-        let baseAngle = (idx / Math.max(1, taskNodes.length)) * 2 * Math.PI;
-        if (t.projectId && projAngleMap.has(t.projectId)) {
-          const parentAngle = projAngleMap.get(t.projectId)!;
-          baseAngle = parentAngle + (stableUnit(t.id, 3) * 0.45 - 0.225);
-        }
-        updated.push({
-          ...t,
-          x: Math.round(CENTER_X + Math.cos(baseAngle) * 270),
-          y: Math.round(CENTER_Y + Math.sin(baseAngle) * 220),
-          vx: 0,
-          vy: 0,
-          pinned: true,
-        });
-      });
-
-      // Ring 3: Notes (Radius 340)
-      noteNodes.forEach((n, idx) => {
-        const angle = (idx / Math.max(1, noteNodes.length)) * 2 * Math.PI;
-        updated.push({
-          ...n,
-          x: Math.round(CENTER_X + Math.cos(angle) * 350),
-          y: Math.round(CENTER_Y + Math.sin(angle) * 280),
-          vx: 0,
-          vy: 0,
-          pinned: true,
-        });
-      });
-
-      return updated;
-    }
-
-    // Force-directed initialization
-    return currentNodes.map(n => ({
-      ...n,
-      pinned: n.type === 'user',
-      x: n.x || CENTER_X + (stableUnit(n.id, 4) * 200 - 100),
-      y: n.y || CENTER_Y + (stableUnit(n.id, 5) * 200 - 100),
-    }));
-  }, []);
-
-  // Initialize or update nodes on filter/layout changes
+  // Initialize or update graph nodes while preserving positions after edits.
   useEffect(() => {
     setNodes(prev => {
-      const merged = filteredNodes.map(fn => {
+      const merged = rawNodes.map(fn => {
         const existing = prev.find(p => p.id === fn.id);
         if (existing) {
           return {
@@ -556,14 +312,12 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
         }
         return fn;
       });
-      return computeInitialLayout(layoutMode, merged);
+      return computeInitialLayout(merged);
     });
-  }, [filteredNodes, layoutMode, computeInitialLayout]);
+  }, [rawNodes, computeInitialLayout]);
 
   // 5. FORCE-DIRECTED PHYSICS SIMULATION STEP
   useEffect(() => {
-    if (layoutMode !== 'force') return;
-
     let iterations = 0;
     const maxIterations = 140;
 
@@ -602,7 +356,7 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
         }
 
         // B. Edge Attraction (Hooke's spring force)
-        filteredEdges.forEach(e => {
+        rawEdges.forEach(e => {
           const src = nodeMap.get(e.source);
           const tgt = nodeMap.get(e.target);
           if (!src || !tgt) return;
@@ -662,7 +416,7 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
     return () => {
       if (simFrameRef.current) cancelAnimationFrame(simFrameRef.current);
     };
-  }, [layoutMode, filteredEdges]);
+  }, [rawEdges]);
 
   // 6. PAN & ZOOM CONTROLS
   const handleWheel = (e: React.WheelEvent) => {
@@ -778,31 +532,16 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
     });
   };
 
-  // 7. KEYBOARD NAVIGATION & ESCAPE TO CLEAR
+  // Escape clears the graph search.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setSelectedNodeId(null);
         setSearchQuery('');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  // Selected Node Details
-  const activeSelectedNode = useMemo(() => {
-    if (!selectedNodeId) return null;
-    return nodes.find(n => n.id === selectedNodeId) || filteredNodeMap.get(selectedNodeId) || null;
-  }, [selectedNodeId, nodes, filteredNodeMap]);
-
-  // Top Most Connected Entities for Empty Inspector State
-  const mostConnectedNodes = useMemo(() => {
-    return [...nodes]
-      .filter(n => n.type !== 'user')
-      .sort((a, b) => b.degree - a.degree)
-      .slice(0, 3);
-  }, [nodes]);
 
   // Lookup node coordinate helper for edge rendering
   const liveNodeMap = useMemo(() => {
@@ -813,144 +552,44 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
 
   return (
     <div className="w-full flex flex-col gap-4 select-none font-sans">
-      
-      {/* =======================================================================
-          TOP CONTROLS & FILTER BAR
-          ======================================================================= */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 p-4 rounded-3xl bg-black/55 dark:bg-black/70 backdrop-blur-2xl border border-white/15 shadow-xl text-white">
-        
-        {/* Left: Section Title & Real Graph Counters */}
+      <header className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/20 bg-stone-950/55 p-4 text-white shadow-xl backdrop-blur-xl">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-amber-300 shadow-md flex items-center justify-center text-white font-bold shrink-0">
-            <Network className="w-5 h-5" />
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-500 shadow-lg">
+            <Network className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-extrabold text-base tracking-tight text-white">
-                Knowledge Network Graph
-              </h3>
-              <span className="px-2 py-0.5 rounded-full bg-white/10 text-[11px] font-mono font-bold text-amber-300 border border-white/10">
-                {nodes.length} Nodes • {filteredEdges.length} Edges
-              </span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h3 className="text-base font-extrabold tracking-tight">Knowledge Graph</h3>
+              <span className="text-xs text-white/65">{rawNodes.length} items · {rawEdges.length} links</span>
             </div>
-            <p className="text-[11px] text-white/50">
-              Interactive relationship discovery across tasks, parent projects & documentation
-            </p>
+            <p className="text-xs text-white/60">Explore how tasks, projects, and notes connect.</p>
           </div>
         </div>
-
-        {/* Center: Search with Live Highlighting */}
-        <div className="relative flex-1 max-w-xs">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
+        <label className="relative w-full sm:max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" aria-hidden="true" />
           <input
-            type="text"
+            type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search nodes or #tags..."
-            className="w-full pl-8 pr-8 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-white/10 text-xs text-white placeholder-white/40 outline-none transition"
+            placeholder="Find a task, project, or note"
+            aria-label="Search graph"
+            className="w-full rounded-xl border border-white/15 bg-white/10 py-2 pl-10 pr-10 text-sm text-white placeholder:text-white/50 outline-none transition focus:border-amber-300 focus:ring-2 focus:ring-amber-300/40"
           />
           {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
-            >
-              <X className="w-3 h-3" />
+            <button type="button" onClick={() => setSearchQuery('')} aria-label="Clear graph search" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/65 hover:text-white">
+              <X className="h-4 w-4" />
             </button>
           )}
-        </div>
-
-        {/* Right: Layout Switcher + Filter Tabs */}
-        <div className="flex items-center gap-2 flex-wrap">
-          
-          {/* Entity Type Filter Tabs */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10 text-xs">
-            {(['all', 'tasks', 'projects', 'notes'] as const).map(tab => {
-              const count = tab === 'all' 
-                ? rawNodes.length 
-                : tab === 'tasks' 
-                ? tasks.length 
-                : tab === 'projects' 
-                ? projects.length 
-                : rawNodes.filter(n => n.type === 'note').length;
-
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setFilterTab(tab)}
-                  className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer capitalize ${
-                    filterTab === tab ? 'bg-amber-400 text-stone-950 shadow-xs' : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  {tab} ({count})
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Layout Mode Selector (Force-Directed, Radial, Hierarchical) */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10 text-xs">
-            <button
-              type="button"
-              onClick={() => setLayoutMode('force')}
-              className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer ${
-                layoutMode === 'force' ? 'bg-indigo-500 text-white shadow-xs' : 'text-white/60 hover:text-white'
-              }`}
-              title="Force-Directed Organic Physics Layout"
-            >
-              Force
-            </button>
-            <button
-              type="button"
-              onClick={() => setLayoutMode('radial')}
-              className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer ${
-                layoutMode === 'radial' ? 'bg-indigo-500 text-white shadow-xs' : 'text-white/60 hover:text-white'
-              }`}
-              title="Radial Concentric Orbit Rings"
-            >
-              Radial
-            </button>
-            <button
-              type="button"
-              onClick={() => setLayoutMode('hierarchical')}
-              className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer ${
-                layoutMode === 'hierarchical' ? 'bg-indigo-500 text-white shadow-xs' : 'text-white/60 hover:text-white'
-              }`}
-              title="Hierarchical Tree DAG (Projects → Tasks → Notes)"
-            >
-              Tree
-            </button>
-          </div>
-
-          {/* Color Grouping Mode */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10 text-xs">
-            <span className="text-[10px] text-white/40 px-1 font-bold">Color:</span>
-            {(['type', 'project', 'status'] as const).map(grp => (
-              <button
-                key={grp}
-                type="button"
-                onClick={() => setGroupingMode(grp)}
-                className={`px-2 py-0.5 rounded-md font-semibold text-[11px] transition capitalize ${
-                  groupingMode === grp ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white'
-                }`}
-              >
-                {grp}
-              </button>
-            ))}
-          </div>
-
-        </div>
-
-      </div>
+        </label>
+      </header>
 
       {/* =======================================================================
           MAIN GRAPH CANVAS + CONTEXTUAL INSPECTOR PANEL
           ======================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <div className="w-full">
         
         {/* GRAPH CANVAS STAGE */}
-        <div className="lg:col-span-8 relative h-[480px] sm:h-[540px] rounded-3xl bg-gradient-to-br from-[#121019] via-[#161224] to-[#0d0b14] border border-white/15 shadow-2xl overflow-hidden select-none">
+        <div className="relative h-[min(76vh,900px)] min-h-[460px] rounded-3xl border border-white/15 bg-gradient-to-br from-[#121019] via-[#161224] to-[#0d0b14] shadow-2xl overflow-hidden select-none sm:min-h-[560px]">
           
           {/* Subtle Stardust Ambient Background Grid */}
           <div 
@@ -1004,25 +643,6 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
-
-          {/* Active Focus Pill Indicator */}
-          {selectedNodeId && (
-            <div className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-indigo-950/80 backdrop-blur-md border border-indigo-400/30 text-white shadow-xl text-xs">
-              <Crosshair className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-              <span className="font-semibold truncate max-w-[140px]">
-                Focusing: {activeSelectedNode?.title}
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedNodeId(null)}
-                className="p-0.5 rounded-full hover:bg-white/10 text-white/60 hover:text-white"
-                title="Clear Focus (Esc)"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-
           {/* SVG RENDERING LAYER */}
           <svg
             ref={svgRef}
@@ -1033,54 +653,17 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
             onPointerUp={handlePointerUp}
             className={`w-full h-full cursor-${isPanning ? 'grabbing' : 'grab'}`}
           >
-            <defs>
-              {/* Arrowhead marker for directed edges */}
-              <marker
-                id="arrowhead"
-                markerWidth="8"
-                markerHeight="8"
-                refX="18"
-                refY="4"
-                orient="auto"
-              >
-                <path d="M 0 0 L 8 4 L 0 8 Z" fill="rgba(255,255,255,0.45)" />
-              </marker>
-
-              <marker
-                id="arrowhead-highlight"
-                markerWidth="9"
-                markerHeight="9"
-                refX="20"
-                refY="4.5"
-                orient="auto"
-              >
-                <path d="M 0 0 L 9 4.5 L 0 9 Z" fill="#FBBF24" />
-              </marker>
-
-              {/* Glowing Halos for Selected / Central Nodes */}
-              <radialGradient id="halo-glow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#A855F7" stopOpacity="0.75" />
-                <stop offset="100%" stopColor="#6366F1" stopOpacity="0.0" />
-              </radialGradient>
-            </defs>
-
             {/* Transform Group for Pan & Zoom */}
             <g transform={`translate(${camera.x}, ${camera.y}) scale(${camera.zoom})`}>
               
               {/* 1. EDGES LAYER */}
               <g className="edges-layer">
-                {filteredEdges.map(edge => {
+                {rawEdges.map(edge => {
                   const src = liveNodeMap.get(edge.source);
                   const tgt = liveNodeMap.get(edge.target);
                   if (!src || !tgt) return null;
-
-                  const isEdgeActive = selectedNodeId 
-                    ? focusEdgeIds.has(edge.id)
-                    : hoveredNodeId 
-                    ? edge.source === hoveredNodeId || edge.target === hoveredNodeId
-                    : false;
-
-                  const isDimmed = selectedNodeId && !isEdgeActive;
+                  const isEdgeActive = hoveredNodeId ? edge.source === hoveredNodeId || edge.target === hoveredNodeId : false;
+                  const isDimmed = Boolean(hoveredNodeId && !isEdgeActive) || Boolean(searchQuery.trim() && !searchMatchIds.has(edge.source) && !searchMatchIds.has(edge.target));
                   const strokeColor = isEdgeActive ? (edge.color || '#FBBF24') : 'rgba(255,255,255,0.22)';
                   const strokeWidth = isEdgeActive ? 2.6 : 1.2;
                   const isDashed = edge.type === 'task_note' || edge.type === 'shared_tag';
@@ -1101,7 +684,7 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
                         strokeWidth={strokeWidth}
                         strokeDasharray={isDashed ? '4 4' : undefined}
                         opacity={isDimmed ? 0.08 : isEdgeActive ? 0.95 : 0.45}
-                        markerEnd={edge.directed ? (isEdgeActive ? 'url(#arrowhead-highlight)' : 'url(#arrowhead)') : undefined}
+
                         className="transition-all duration-300"
                       />
                       {/* Edge Tooltip on Hover */}
@@ -1125,13 +708,10 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
               {/* 2. NODES LAYER */}
               <g className="nodes-layer">
                 {nodes.map(node => {
-                  const isSelected = selectedNodeId === node.id;
                   const isHovered = hoveredNodeId === node.id;
                   const isSearchMatch = searchMatchIds.has(node.id);
-                  const isNeighbor = selectedNodeId ? focusNeighborIds.has(node.id) : true;
-                  const isDimmed = (selectedNodeId && !isNeighbor) || (searchQuery.trim() && !isSearchMatch);
-
-                  const displayRadius = isSelected ? node.radius + 4 : isHovered ? node.radius + 2 : node.radius;
+                  const isDimmed = Boolean(hoveredNodeId && !hoveredNeighborIds.has(node.id)) || Boolean(searchQuery.trim() && !isSearchMatch);
+                  const displayRadius = isHovered || isSearchMatch ? node.radius + 3 : node.radius;
 
                   return (
                     <g
@@ -1143,12 +723,11 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedNodeId(prev => (prev === node.id ? null : node.id));
-                      }}
-                      onDoubleClick={(e) => {
-                        e.stopPropagation();
                         if (node.rawTask) onSelectTask(node.rawTask);
-                        else if (node.projectId && onSelectProject) onSelectProject(node.projectId);
+                        else if (node.type === 'note') {
+                          const parentTask = tasks.find(task => 'note-' + task.id === node.id);
+                          if (parentTask) onSelectTask(parentTask);
+                        } else if (node.rawProject && onSelectProject) onSelectProject(node.rawProject.id);
                       }}
                       onMouseEnter={() => setHoveredNodeId(node.id)}
                       onMouseLeave={() => setHoveredNodeId(null)}
@@ -1156,11 +735,11 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
                       className="cursor-pointer transition-opacity duration-300 group"
                     >
                       {/* Glow Halo for Selected or Search Match */}
-                      {(isSelected || isSearchMatch) && (
+                      {(isHovered || isSearchMatch) && (
                         <circle
                           r={displayRadius + 10}
                           fill="none"
-                          stroke={isSearchMatch ? '#F59E0B' : '#A855F7'}
+                          stroke={isSearchMatch ? '#F59E0B' : '#ffffff'}
                           strokeWidth="2.5"
                           strokeDasharray={isSearchMatch ? '4 3' : undefined}
                           className="animate-pulse"
@@ -1168,65 +747,7 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
                       )}
 
                       {/* Main Node Body */}
-                      {node.type === 'note' ? (
-                        /* Distinct Rounded Diamond/Square Shape for Notes */
-                        <rect
-                          x={-displayRadius}
-                          y={-displayRadius}
-                          width={displayRadius * 2}
-                          height={displayRadius * 2}
-                          rx={4}
-                          transform="rotate(45)"
-                          fill={node.color}
-                          stroke={isSelected ? '#ffffff' : 'rgba(255,255,255,0.4)'}
-                          strokeWidth={isSelected ? 3 : 1.5}
-                          className="drop-shadow-lg transition-transform duration-200"
-                        />
-                      ) : node.type === 'user' ? (
-                        /* Central User Node */
-                        <circle
-                          r={displayRadius}
-                          fill="url(#halo-glow)"
-                          stroke="#ffffff"
-                          strokeWidth="2.5"
-                          className="drop-shadow-xl"
-                        />
-                      ) : (
-                        /* Standard Project & Task Circles */
-                        <circle
-                          r={displayRadius}
-                          fill={node.color}
-                          stroke={isSelected ? '#ffffff' : 'rgba(255,255,255,0.35)'}
-                          strokeWidth={isSelected ? 3 : 1.5}
-                          className="drop-shadow-md transition-all duration-200"
-                        />
-                      )}
-
-                      {/* Center Glyph Icon */}
-                      {node.type === 'user' && (
-                        <text
-                          y={4}
-                          textAnchor="middle"
-                          fill="#ffffff"
-                          fontSize={13}
-                          fontWeight="bold"
-                          className="pointer-events-none"
-                        >
-                          ✦
-                        </text>
-                      )}
-                      {node.type === 'project' && (
-                        <text
-                          y={4}
-                          textAnchor="middle"
-                          fill="#ffffff"
-                          fontSize={11}
-                          fontWeight="bold"
-                          className="pointer-events-none"
-                        >
-                          📁
-                        </text>
-                      )}
+                      <circle r={displayRadius} fill={node.color} stroke={isHovered || isSearchMatch ? '#ffffff' : 'rgba(255,255,255,0.35)'} strokeWidth={isHovered || isSearchMatch ? 2.5 : 1.5} className="drop-shadow-md transition-all duration-200" />
                       {node.status === 'done' && (
                         <text
                           y={4}
@@ -1240,17 +761,19 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
                         </text>
                       )}
 
-                      {/* Node Label with Contrast Drop-Shadow */}
+                      {/* Keep labels quiet until a node is focused to prevent collisions. */}
+                      {(isHovered || isSearchMatch) && (
                       <text
                         y={displayRadius + 14}
                         textAnchor="middle"
-                        fill={isSelected ? '#ffffff' : 'rgba(255,255,255,0.85)'}
-                        fontSize={isSelected ? 11 : 9.5}
-                        fontWeight={isSelected ? 'bold' : '600'}
+                        fill={isHovered || isSearchMatch ? '#ffffff' : 'rgba(255,255,255,0.85)'}
+                        fontSize={isHovered || isSearchMatch ? 11 : 9.5}
+                        fontWeight={isHovered || isSearchMatch ? 'bold' : '600'}
                         className="pointer-events-none select-none font-sans drop-shadow-sm"
                       >
                         {node.title.length > 18 ? node.title.slice(0, 16) + '…' : node.title}
                       </text>
+                      )}
                     </g>
                   );
                 })}
@@ -1269,232 +792,17 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
                 <span className="w-2 h-2 rounded-full bg-emerald-400" /> Projects
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-sky-400 rotate-45" /> Notes
+                <span className="w-2 h-2 rounded-full bg-sky-400" /> Notes
               </span>
             </div>
-            <span>Double-click task to open detailed sticky note</span>
+            <span>Hover to trace links · Click to open · Drag to move · Scroll to zoom</span>
           </div>
 
         </div>
 
-        {/* CONTEXTUAL INSPECTOR PANEL (Right Sidebar) */}
-        <div className="lg:col-span-4 p-5 rounded-3xl bg-black/55 dark:bg-black/70 backdrop-blur-2xl border border-white/15 shadow-2xl text-white space-y-4">
-          
-          {activeSelectedNode ? (
-            /* Selected Node Inspector */
-            <div className="space-y-4 animate-fade-in">
-              
-              {/* Entity Header */}
-              <div className="flex items-start justify-between gap-3 pb-3 border-b border-white/10">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div 
-                    className="w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-lg shadow-sm shrink-0"
-                    style={{ backgroundColor: `${activeSelectedNode.color}25`, color: activeSelectedNode.color }}
-                  >
-                    {activeSelectedNode.type === 'project' ? '📁' : activeSelectedNode.type === 'note' ? '📝' : '✦'}
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-white/50">
-                      {activeSelectedNode.type} Entity
-                    </span>
-                    <h4 className="font-extrabold text-sm text-white leading-tight truncate">
-                      {activeSelectedNode.title}
-                    </h4>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedNodeId(null)}
-                  className="p-1.5 rounded-xl hover:bg-white/10 text-white/50 hover:text-white transition"
-                  title="Close Inspector"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
 
-              {/* Status & Priority Pills */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {activeSelectedNode.status && (
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${
-                    activeSelectedNode.status === 'done' 
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' 
-                      : activeSelectedNode.status === 'in_progress'
-                      ? 'bg-sky-500/20 text-sky-300 border border-sky-400/30'
-                      : 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
-                  }`}>
-                    {activeSelectedNode.status.replace('_', ' ')}
-                  </span>
-                )}
-                {activeSelectedNode.priority && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-white/80 text-xs font-semibold uppercase font-mono">
-                    {activeSelectedNode.priority}
-                  </span>
-                )}
-                <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-xs font-mono">
-                  {activeSelectedNode.degree} Connections
-                </span>
-              </div>
-
-              {/* Meta Information Cards */}
-              <div className="space-y-2 text-xs bg-white/5 p-3 rounded-2xl border border-white/10">
-                {activeSelectedNode.projectTitle && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-white/50 flex items-center gap-1.5">
-                      <Folder className="w-3.5 h-3.5" /> Project
-                    </span>
-                    <span className="font-bold text-white truncate max-w-[150px]">
-                      {activeSelectedNode.projectTitle}
-                    </span>
-                  </div>
-                )}
-                {activeSelectedNode.dueDate && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-white/50 flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" /> Due Date
-                    </span>
-                    <span className="font-mono font-semibold text-white">
-                      {activeSelectedNode.dueDate}
-                    </span>
-                  </div>
-                )}
-                {activeSelectedNode.checklistsCount !== undefined && activeSelectedNode.checklistsCount > 0 && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-white/50 flex items-center gap-1.5">
-                      <CheckSquare className="w-3.5 h-3.5" /> Subtasks
-                    </span>
-                    <span className="font-mono text-emerald-300 font-bold">
-                      {activeSelectedNode.completedChecklistsCount} / {activeSelectedNode.checklistsCount} completed
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Note Snippet Preview */}
-              {activeSelectedNode.noteSnippet && (
-                <div className="p-3 rounded-2xl bg-sky-500/10 border border-sky-400/20 text-xs">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-sky-300 block mb-1">
-                    Documentation Content
-                  </span>
-                  <p className="text-white/80 italic line-clamp-3">
-                    "{activeSelectedNode.noteSnippet}"
-                  </p>
-                </div>
-              )}
-
-              {/* Contextual Action Button */}
-              {activeSelectedNode.rawTask ? (
-                <button
-                  type="button"
-                  onClick={() => onSelectTask(activeSelectedNode.rawTask!)}
-                  className="w-full py-2 px-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
-                >
-                  <span>Open Sticky Note in Detail Drawer</span>
-                  <ArrowUpRight className="w-4 h-4" />
-                </button>
-              ) : activeSelectedNode.rawProject && onSelectProject ? (
-                <button
-                  type="button"
-                  onClick={() => onSelectProject(activeSelectedNode.rawProject!.id)}
-                  className="w-full py-2 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
-                >
-                  <span>Inspect Project Hub</span>
-                  <ArrowUpRight className="w-4 h-4" />
-                </button>
-              ) : null}
-
-              {/* 2nd Degree Connection Switcher */}
-              <div className="pt-2 flex items-center justify-between text-xs text-white/60">
-                <span>Expand to 2nd-degree links</span>
-                <button
-                  type="button"
-                  onClick={() => setShowSecondDegree(!showSecondDegree)}
-                  className={`px-2 py-0.5 rounded-lg font-bold text-[11px] transition ${
-                    showSecondDegree ? 'bg-indigo-500 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20'
-                  }`}
-                >
-                  {showSecondDegree ? 'Enabled' : 'Disabled'}
-                </button>
-              </div>
-
-            </div>
-          ) : (
-            /* Graph Overview & Knowledge Health (When No Node is Selected) */
-            <div className="space-y-4">
-              <div className="pb-3 border-b border-white/10">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300">
-                  Analytics & Discovery
-                </span>
-                <h4 className="font-extrabold text-sm text-white">
-                  Knowledge Graph Overview
-                </h4>
-                <p className="text-[11px] text-white/50 mt-0.5">
-                  Select any node or drag to inspect relationships and discover project hubs.
-                </p>
-              </div>
-
-              {/* Real Summary Metrics */}
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2.5 rounded-2xl bg-white/5 border border-white/10">
-                  <span className="text-[10px] text-white/40 block">Entities</span>
-                  <span className="font-mono font-extrabold text-lg text-white">
-                    {nodes.length}
-                  </span>
-                </div>
-                <div className="p-2.5 rounded-2xl bg-white/5 border border-white/10">
-                  <span className="text-[10px] text-white/40 block">Total Links</span>
-                  <span className="font-mono font-extrabold text-lg text-emerald-400">
-                    {filteredEdges.length}
-                  </span>
-                </div>
-              </div>
-
-              {/* Most Connected Entities Table */}
-              <div className="space-y-2 pt-1">
-                <div className="flex items-center justify-between text-[11px] font-bold text-white/60 uppercase tracking-wider">
-                  <span>Central Entities</span>
-                  <span>Connections</span>
-                </div>
-                <div className="space-y-1.5">
-                  {mostConnectedNodes.map(node => (
-                    <div
-                      key={node.id}
-                      onClick={() => setSelectedNodeId(node.id)}
-                      className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer transition text-xs"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span 
-                          className="w-2.5 h-2.5 rounded-full shrink-0" 
-                          style={{ backgroundColor: node.color }} 
-                        />
-                        <span className="truncate font-semibold text-white">
-                          {node.title}
-                        </span>
-                      </div>
-                      <span className="font-mono text-amber-300 font-bold shrink-0 ml-2">
-                        {node.degree} links
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Interactive Graph Tips */}
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1.5 text-[11px] text-white/60">
-                <span className="font-bold text-white flex items-center gap-1.5 text-xs">
-                  <HelpCircle className="w-3.5 h-3.5 text-indigo-400" /> Interaction Tips
-                </span>
-                <p>• Click any node to focus its network cluster.</p>
-                <p>• Drag nodes to manually organize your mindmap.</p>
-                <p>• Press <kbd className="px-1 py-0.5 rounded bg-white/10 text-white font-mono">Esc</kbd> to reset focus.</p>
-              </div>
-
-            </div>
-          )}
-
-        </div>
 
       </div>
-
     </div>
   );
 };

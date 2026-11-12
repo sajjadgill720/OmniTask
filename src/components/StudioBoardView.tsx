@@ -44,7 +44,7 @@ interface StudioBoardViewProps {
 /**
  * StudioBoardView
  * The responsive 3-Column Sticky Note Kanban Wall:
- * - Executive notes expand naturally and use normal document scrolling.
+ * - Executive notes scroll together inside a bounded corkboard viewport.
  * - Density Control: Toggle between "Normal" (Image 1) and "Compact Memos" (Image 2)
  * - Pinned to the warm stucco wall above the wooden desk
  */
@@ -66,13 +66,14 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
   const [dragOverCol, setDragOverCol] = useState<Task['status'] | null>(null);
 
   // Density Mode: 'normal' (Image 1) vs 'compact' (Image 2 mini-memos)
-  const [density, setDensity] = useState<'normal' | 'compact'>(() => {
-    return (localStorage.getItem('omnisticky_board_density') as 'normal' | 'compact') || 'normal';
+  const [density, setDensity] = useState<'normal' | 'compact' | 'full'>(() => {
+    const saved = localStorage.getItem('omnisticky_board_density');
+    return saved === 'compact' || saved === 'full' ? saved : 'normal';
   });
   // The executive review always uses detailed cards; desk view keeps its own density choice.
-  const noteDensity = executiveWall ? 'normal' : density;
+  const noteDensity = executiveWall ? 'full' : density;
 
-  const handleToggleDensity = (mode: 'normal' | 'compact') => {
+  const handleToggleDensity = (mode: 'normal' | 'compact' | 'full') => {
     setDensity(mode);
     localStorage.setItem('omnisticky_board_density', mode);
   };
@@ -190,6 +191,19 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
           </button>
           <button
             type="button"
+            onClick={() => handleToggleDensity('full')}
+            className={`px-2.5 py-0.5 rounded-xl font-bold transition cursor-pointer flex items-center gap-1 ${
+              density === 'full'
+                ? 'bg-amber-400 text-stone-950 shadow-xs'
+                : 'text-stone-700 dark:text-white/70 hover:text-stone-950 dark:hover:text-white'
+            }`}
+            title="Show full task details on desk cards"
+          >
+            <Square className="w-3 h-3" />
+            <span>Full card</span>
+          </button>
+          <button
+            type="button"
             onClick={() => handleToggleDensity('compact')}
             className={`px-2.5 py-0.5 rounded-xl font-bold transition cursor-pointer flex items-center gap-1 ${
               density === 'compact' 
@@ -207,8 +221,13 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
 
       </div>
 
-      {/* Three status lanes; executive mode lets the board grow with every note. */}
-      <div className={`${executiveWall ? 'executive-corkboard ' : ''}w-full grid grid-cols-1 min-[640px]:grid-cols-2 min-[1100px]:grid-cols-3 gap-5 lg:gap-6 items-start`}>
+      {/* Executive notes scroll as one board; the surrounding page stays in normal flow. */}
+      <div
+        className={`${executiveWall ? 'executive-corkboard executive-board-scroll items-stretch ' : 'items-start '}w-full grid grid-cols-1 min-[640px]:grid-cols-2 min-[1100px]:grid-cols-3 gap-5 lg:gap-6`}
+        role={executiveWall ? 'region' : undefined}
+        aria-label={executiveWall ? 'Executive standup corkboard, scroll to see all notes' : undefined}
+        tabIndex={executiveWall ? 0 : undefined}
+      >
         
         {/* =======================================================================
             ZONE 1: TO DO (Warm Yellow & Peach Notes)
@@ -321,17 +340,17 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                       className="w-4 h-4 mt-0.5 rounded-full border-2 border-stone-800 hover:bg-stone-800/15 flex items-center justify-center shrink-0 transition"
                       title="Click to start task"
                     />
-                    <h3 className={`${executiveWall ? 'font-handwriting text-[1.45rem] sm:text-[1.7rem] font-bold' : 'text-xs sm:text-sm font-bold font-sans'} text-stone-950 leading-snug break-words flex-1`}>
+                    <h3 className={`${noteDensity === 'full' ? 'font-handwriting text-[1.45rem] sm:text-[1.7rem] font-bold' : 'text-xs sm:text-sm font-bold font-sans'} text-stone-950 leading-snug break-words flex-1`}>
                       {task.title}
                     </h3>
                   </div>
 
-                  {executiveWall && task.notes?.trim() && (
+                  {noteDensity === 'full' && task.notes?.trim() && (
                     <p className="font-handwriting text-lg sm:text-xl leading-snug text-stone-800/90 whitespace-pre-wrap break-words mb-3">
                       {task.notes}
                     </p>
                   )}
-                  {executiveWall && (task.checklists?.length ?? 0) > 0 && (
+                  {noteDensity === 'full' && (task.checklists?.length ?? 0) > 0 && (
                     <ul className="mb-3 space-y-1 border-t border-stone-900/10 pt-2 text-sm text-stone-800">
                       {task.checklists?.map(item => (
                         <li key={item.id} className="flex items-start gap-2">
@@ -484,17 +503,17 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                     >
                       ✓
                     </button>
-                    <h3 className={`${executiveWall ? 'font-handwriting text-[1.45rem] sm:text-[1.7rem] font-bold' : 'text-xs sm:text-sm font-bold font-sans'} text-stone-950 leading-snug break-words flex-1`}>
+                    <h3 className={`${noteDensity === 'full' ? 'font-handwriting text-[1.45rem] sm:text-[1.7rem] font-bold' : 'text-xs sm:text-sm font-bold font-sans'} text-stone-950 leading-snug break-words flex-1`}>
                       {task.title}
                     </h3>
                   </div>
 
-                  {executiveWall && task.notes?.trim() && (
+                  {noteDensity === 'full' && task.notes?.trim() && (
                     <p className="font-handwriting text-lg sm:text-xl leading-snug text-stone-800/90 whitespace-pre-wrap break-words mb-3">
                       {task.notes}
                     </p>
                   )}
-                  {executiveWall && (task.checklists?.length ?? 0) > 0 && (
+                  {noteDensity === 'full' && (task.checklists?.length ?? 0) > 0 && (
                     <ul className="mb-3 space-y-1 border-t border-stone-900/10 pt-2 text-sm text-stone-800">
                       {task.checklists?.map(item => (
                         <li key={item.id} className="flex items-start gap-2">
@@ -643,17 +662,17 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                     >
                       ✓
                     </button>
-                    <h3 className={`${executiveWall ? 'font-handwriting text-[1.45rem] sm:text-[1.7rem] font-bold' : 'text-xs sm:text-sm font-bold font-sans'} text-stone-950 leading-snug break-words flex-1 line-through opacity-75`}>
+                    <h3 className={`${noteDensity === 'full' ? 'font-handwriting text-[1.45rem] sm:text-[1.7rem] font-bold' : 'text-xs sm:text-sm font-bold font-sans'} text-stone-950 leading-snug break-words flex-1 line-through opacity-75`}>
                       {task.title}
                     </h3>
                   </div>
 
-                  {executiveWall && task.notes?.trim() && (
+                  {noteDensity === 'full' && task.notes?.trim() && (
                     <p className="font-handwriting text-lg sm:text-xl leading-snug text-stone-800/90 whitespace-pre-wrap break-words mb-3 line-through opacity-70">
                       {task.notes}
                     </p>
                   )}
-                  {executiveWall && (task.checklists?.length ?? 0) > 0 && (
+                  {noteDensity === 'full' && (task.checklists?.length ?? 0) > 0 && (
                     <ul className="mb-3 space-y-1 border-t border-stone-900/10 pt-2 text-sm text-stone-800">
                       {task.checklists?.map(item => (
                         <li key={item.id} className="flex items-start gap-2">

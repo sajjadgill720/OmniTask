@@ -446,11 +446,11 @@
   box-shadow: 0 -8px 18px rgba(83, 47, 20, .16);
 }
 
-/* A real cork texture inside a live frame that grows with the task columns. */
+/* Fixed cork viewport: notes scroll inside the frame while the page continues below. */
 .executive-corkboard {
   position: relative;
   margin-top: 0;
-  padding: clamp(20px, 3vw, 42px) clamp(14px, 1.5vw, 22px) clamp(24px, 3vw, 44px);
+  padding: clamp(24px, 2.4vw, 36px) clamp(14px, 1.5vw, 22px) 28px;
   border: 11px solid transparent;
   border-radius: 13px;
   background-color: #a96834;
@@ -485,10 +485,33 @@
   margin-inline: auto;
   container-type: inline-size;
 }
-.executive-board-view > .executive-corkboard { overflow: visible; }
-.executive-board-view .column-scrollbar {
-  max-height: none !important;
-  overflow: visible !important;
+.executive-board-view > .executive-board-scroll {
+  height: clamp(440px, 68vh, 820px);
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+  outline-offset: 5px;
+}
+.executive-board-scroll::-webkit-scrollbar { width: 12px; }
+.executive-board-scroll::-webkit-scrollbar-track {
+  background: rgba(74, 39, 20, .38);
+  border-radius: 999px;
+  margin-block: 14px;
+}
+.executive-board-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #e7b16f, #ad6c37);
+  border: 2px solid rgba(89, 47, 22, .72);
+  border-radius: 999px;
+}
+.executive-lane-header {
+  position: relative;
+  z-index: 1;
+  padding: 3px 0 5px;
+  background: linear-gradient(180deg, rgba(126, 70, 33, .88), rgba(126, 70, 33, .45) 82%, transparent);
+  border-radius: 18px;
 }
 .executive-board-view .executive-corkboard .group.relative.w-full {
   max-width: none;
@@ -508,8 +531,13 @@
   .executive-corkboard { grid-template-columns: 1fr; }
 }
 @media (max-width: 520px) {
+  .executive-board-view > .executive-board-scroll { height: clamp(380px, 62vh, 680px); }
   .executive-corkboard { padding: 20px 12px 24px; border-width: 7px; }
   .executive-board-view .executive-corkboard .group.relative.w-full { min-height: 140px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .executive-board-scroll { scroll-behavior: auto; }
 }
 
 /* ==========================================================================
