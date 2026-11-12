@@ -118,7 +118,7 @@ export const HYPER_FOCUS_QUOTES: FocusQuote[] = [
   { id: 'q97', quote: 'A champion is defined not by their wins but by how they can recover when they fall.', author: 'Serena Williams', theme: 'Grit' },
   { id: 'q98', quote: 'You miss 100% of the shots you don\'t take.', author: 'Wayne Gretzky', theme: 'Boldness' },
   { id: 'q99', quote: 'The power of imagination makes us infinite.', author: 'John Muir', theme: 'Imagination' },
-  { id: 'q100', quote: 'Dream big. Plan better. Execute daily.', author: 'Studio Knovera', theme: 'Manifesto' },
+  { id: 'q100', quote: 'Dream big. Plan better. Execute daily.', author: 'Omni Sticky Studio', theme: 'Manifesto' },
   { id: 'q101', quote: 'Nothing will work unless you do.', author: 'Maya Angelou', theme: 'Work Ethic' },
   { id: 'q102', quote: 'Believe you can and you\'re halfway there.', author: 'Theodore Roosevelt', theme: 'Confidence' },
   { id: 'q103', quote: 'Keep your face always toward the sunshine—and shadows will fall behind you.', author: 'Walt Whitman', theme: 'Optimism' },

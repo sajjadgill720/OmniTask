@@ -74,7 +74,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleTestNotification = () => {
     sendLocalNotification(
-      'Knovera Focus Reminder',
+      'Omni Sticky Focus Reminder',
       { body: 'This is a sample notification to keep your daily focus on track.' }
     );
     setNotificationTestSent(true);

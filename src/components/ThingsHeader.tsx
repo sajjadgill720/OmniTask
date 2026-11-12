@@ -65,7 +65,7 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
           <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-amber-300 shadow-sm flex items-center justify-center text-white font-black text-xs">
             ✦
           </div>
-          <span className="font-extrabold text-sm text-stone-900 dark:text-white drop-shadow-xs">Knovera</span>
+          <span className="font-extrabold text-sm text-stone-900 dark:text-white drop-shadow-xs">Omni Sticky</span>
         </div>
       </div>
 

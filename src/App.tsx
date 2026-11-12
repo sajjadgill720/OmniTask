@@ -425,9 +425,9 @@ export function App() {
       />
 
       {/* 3. Main Workspace: Left Glass Sidebar + Center Wall Stage + Right Glass Panels */}
-      <div className={`relative z-10 max-w-[1720px] mx-auto px-4 sm:px-6 flex items-start gap-6 ${viewMode === 'canvas_3d' ? 'pb-20' : viewMode === 'board' ? 'pb-8' : 'pb-24'}`}>
+      <div className={`relative z-10 max-w-[1720px] mx-auto px-2 sm:px-4 xl:px-6 flex items-start gap-3 xl:gap-6 ${viewMode === 'canvas_3d' ? 'pb-20' : viewMode === 'board' ? 'pb-8' : 'pb-24'}`}>
         
-        {/* Left Floating Translucent Glass Panel (Knovera Navigation) */}
+        {/* Left Floating Translucent Glass Panel (Omni Sticky Navigation) */}
         <Sidebar
           currentSection={currentSection}
           onSelectSection={setCurrentSection}

@@ -565,7 +565,7 @@ export const DEFAULT_CANVAS_ELEMENTS: CanvasElement[] = [
   {
     id: 'hub_main',
     type: 'hub',
-    title: 'Knovera\nVision',
+    title: 'Omni Sticky\nVision',
     category: 'Mission',
     x: 440,
     y: 220,
