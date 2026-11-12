@@ -43,8 +43,8 @@ interface StudioBoardViewProps {
 
 /**
  * StudioBoardView
- * The 3-Column Photorealistic Sticky Note Kanban Wall:
- * - Viewport Fitting: Internal column scrolling keeps the bottom desk cards visible on screen without page scroll!
+ * The responsive 3-Column Sticky Note Kanban Wall:
+ * - Executive notes expand naturally and use normal document scrolling.
  * - Density Control: Toggle between "Normal" (Image 1) and "Compact Memos" (Image 2)
  * - Pinned to the warm stucco wall above the wooden desk
  */
@@ -69,6 +69,8 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
   const [density, setDensity] = useState<'normal' | 'compact'>(() => {
     return (localStorage.getItem('omnisticky_board_density') as 'normal' | 'compact') || 'normal';
   });
+  // The executive review always uses detailed cards; desk view keeps its own density choice.
+  const noteDensity = executiveWall ? 'normal' : density;
 
   const handleToggleDensity = (mode: 'normal' | 'compact') => {
     setDensity(mode);
@@ -78,6 +80,11 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
   const todoTasks = tasks.filter(t => t.status === 'todo');
   const inProgressTasks = tasks.filter(t => t.status === 'in_progress');
   const doneTasks = tasks.filter(t => t.status === 'done');
+  const networkPreviewTasks = tasks.slice(0, 6);
+  const networkPreviewPoints = [
+    { x: 20, y: 20 }, { x: 43, y: 66 }, { x: 63, y: 12 },
+    { x: 111, y: 13 }, { x: 140, y: 38 }, { x: 103, y: 67 },
+  ];
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
@@ -113,7 +120,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
   };
 
   return (
-    <div className={`w-full flex flex-col justify-between gap-4 max-w-5xl mx-auto select-none ${executiveWall ? 'executive-board-view' : ''}`}>
+    <div className={`w-full flex flex-col justify-start gap-3 max-w-5xl mx-auto select-none ${executiveWall ? 'executive-board-view' : ''}`}>
       
       {/* Top Workspace Bar: Corporate Digital Twin View Switcher + Note Size */}
       <div className="flex items-center justify-between px-2 gap-3 flex-wrap">
@@ -162,8 +169,12 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
           )}
         </div>
 
-        {/* Right: Note Size Density Switcher */}
+        {/* Corporate review locks full-size cards; the desk retains its density control. */}
         <div className="flex items-center gap-1 bg-black/25 dark:bg-black/40 backdrop-blur-md px-2 py-1 rounded-2xl border border-white/15 text-xs text-stone-800 dark:text-stone-200 shadow-xs">
+          {executiveWall ? (
+            <span className="px-2 py-1 font-bold text-stone-800 dark:text-stone-100">Full-size task cards</span>
+          ) : (
+            <>
           <span className="text-[10px] font-bold text-stone-600 dark:text-stone-400 mr-1 hidden sm:inline">Note Size:</span>
           <button
             type="button"
@@ -190,11 +201,13 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
             <LayoutGrid className="w-3 h-3" />
             <span>Compact</span>
           </button>
+            </>
+          )}
         </div>
 
       </div>
 
-      {/* 3-Column Kanban Wall with Internal Column Scrolling */}
+      {/* Three status lanes; executive mode lets the board grow with every note. */}
       <div className={`${executiveWall ? 'executive-corkboard ' : ''}w-full grid grid-cols-1 min-[640px]:grid-cols-2 min-[1100px]:grid-cols-3 gap-5 lg:gap-6 items-start`}>
         
         {/* =======================================================================
@@ -236,9 +249,9 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
             </div>
           </div>
 
-          {/* Notes Stack with Internal Scroll (Fits comfortably without scrolling page!) */}
-          <div className={`w-full max-h-[350px] xl:max-h-[390px] 2xl:max-h-[440px] overflow-y-auto column-scrollbar px-1 py-1 ${
-            density === 'compact' ? 'grid grid-cols-2 gap-2' : 'space-y-3'
+          {/* Desk keeps its compact viewport; the corporate board shows every note in page flow. */}
+          <div className={`${executiveWall ? 'w-full px-1 py-1 space-y-4' : 'w-full max-h-[350px] xl:max-h-[390px] 2xl:max-h-[440px] overflow-y-auto column-scrollbar px-1 py-1'} ${
+            noteDensity === 'compact' ? 'grid grid-cols-2 gap-2' : 'space-y-3'
           }`}>
             {todoTasks.map((task, idx) => {
               const angles = [-1.4, 1.2, -1.8, 1.6, -0.8];
@@ -248,7 +261,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
               const dueInfo = checkDueDate(task.dueDate);
               const tagPill = task.tags[0] || (idx === 0 ? 'Research' : idx === 1 ? 'Study' : 'Project');
 
-              if (density === 'compact') {
+              if (noteDensity === 'compact') {
                 // Compact square memo note matching Image 2
                 return (
                   <div
@@ -308,10 +321,26 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                       className="w-4 h-4 mt-0.5 rounded-full border-2 border-stone-800 hover:bg-stone-800/15 flex items-center justify-center shrink-0 transition"
                       title="Click to start task"
                     />
-                    <h3 className="text-xs sm:text-sm font-bold font-sans text-stone-950 leading-snug break-words flex-1">
+                    <h3 className={`${executiveWall ? 'font-handwriting text-[1.45rem] sm:text-[1.7rem] font-bold' : 'text-xs sm:text-sm font-bold font-sans'} text-stone-950 leading-snug break-words flex-1`}>
                       {task.title}
                     </h3>
                   </div>
+
+                  {executiveWall && task.notes?.trim() && (
+                    <p className="font-handwriting text-lg sm:text-xl leading-snug text-stone-800/90 whitespace-pre-wrap break-words mb-3">
+                      {task.notes}
+                    </p>
+                  )}
+                  {executiveWall && (task.checklists?.length ?? 0) > 0 && (
+                    <ul className="mb-3 space-y-1 border-t border-stone-900/10 pt-2 text-sm text-stone-800">
+                      {task.checklists?.map(item => (
+                        <li key={item.id} className="flex items-start gap-2">
+                          <span aria-hidden="true" className={`mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${item.completed ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-stone-600'}`}>{item.completed ? '✓' : ''}</span>
+                          <span className={item.completed ? 'line-through opacity-65' : ''}>{item.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
                   <div className="flex items-center justify-between gap-1.5 pt-1 text-[10px] font-semibold text-stone-700">
                     <div className="flex items-center gap-1">
@@ -384,9 +413,8 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
             </div>
           </div>
 
-          {/* Notes Stack with Internal Scroll */}
-          <div className={`w-full max-h-[350px] xl:max-h-[390px] 2xl:max-h-[440px] overflow-y-auto column-scrollbar px-1 py-1 ${
-            density === 'compact' ? 'grid grid-cols-2 gap-2' : 'space-y-3'
+          <div className={`${executiveWall ? 'w-full px-1 py-1 space-y-4' : 'w-full max-h-[350px] xl:max-h-[390px] 2xl:max-h-[440px] overflow-y-auto column-scrollbar px-1 py-1'} ${
+            noteDensity === 'compact' ? 'grid grid-cols-2 gap-2' : 'space-y-3'
           }`}>
             {inProgressTasks.map((task, idx) => {
               const angles = [1.2, -1.5, 1.8, -1.1];
@@ -396,7 +424,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
               const dueInfo = checkDueDate(task.dueDate);
               const tagPill = task.tags[0] || (idx === 0 ? 'Personal' : 'Research');
 
-              if (density === 'compact') {
+              if (noteDensity === 'compact') {
                 return (
                   <div
                     key={task.id}
@@ -456,10 +484,26 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                     >
                       ✓
                     </button>
-                    <h3 className="text-xs sm:text-sm font-bold font-sans text-stone-950 leading-snug break-words flex-1">
+                    <h3 className={`${executiveWall ? 'font-handwriting text-[1.45rem] sm:text-[1.7rem] font-bold' : 'text-xs sm:text-sm font-bold font-sans'} text-stone-950 leading-snug break-words flex-1`}>
                       {task.title}
                     </h3>
                   </div>
+
+                  {executiveWall && task.notes?.trim() && (
+                    <p className="font-handwriting text-lg sm:text-xl leading-snug text-stone-800/90 whitespace-pre-wrap break-words mb-3">
+                      {task.notes}
+                    </p>
+                  )}
+                  {executiveWall && (task.checklists?.length ?? 0) > 0 && (
+                    <ul className="mb-3 space-y-1 border-t border-stone-900/10 pt-2 text-sm text-stone-800">
+                      {task.checklists?.map(item => (
+                        <li key={item.id} className="flex items-start gap-2">
+                          <span aria-hidden="true" className={`mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${item.completed ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-stone-600'}`}>{item.completed ? '✓' : ''}</span>
+                          <span className={item.completed ? 'line-through opacity-65' : ''}>{item.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
                   <div className="flex items-center justify-between gap-1.5 pt-1 text-[10px] font-semibold text-stone-700">
                     <div className="flex items-center gap-1">
@@ -521,9 +565,8 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
             </div>
           </div>
 
-          {/* Notes Stack with Internal Scroll */}
-          <div className={`w-full max-h-[350px] xl:max-h-[390px] 2xl:max-h-[440px] overflow-y-auto column-scrollbar px-1 py-1 ${
-            density === 'compact' ? 'grid grid-cols-2 gap-2' : 'space-y-3'
+          <div className={`${executiveWall ? 'w-full px-1 py-1 space-y-4' : 'w-full max-h-[350px] xl:max-h-[390px] 2xl:max-h-[440px] overflow-y-auto column-scrollbar px-1 py-1'} ${
+            noteDensity === 'compact' ? 'grid grid-cols-2 gap-2' : 'space-y-3'
           }`}>
             {doneTasks.map((task, idx) => {
               const angles = [-1.5, 1.4, -1.1, 1.8];
@@ -531,7 +574,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
               const palette = ['#C6DF9C', '#F1A6A6', '#F8D979', '#D7B7EE'];
               const bg = task.paperColor || palette[idx % palette.length];
 
-              if (density === 'compact') {
+              if (noteDensity === 'compact') {
                 return (
                   <div
                     key={task.id}
@@ -600,10 +643,26 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
                     >
                       ✓
                     </button>
-                    <h3 className="text-xs sm:text-sm font-bold font-sans text-stone-950 leading-snug break-words flex-1 line-through opacity-75">
+                    <h3 className={`${executiveWall ? 'font-handwriting text-[1.45rem] sm:text-[1.7rem] font-bold' : 'text-xs sm:text-sm font-bold font-sans'} text-stone-950 leading-snug break-words flex-1 line-through opacity-75`}>
                       {task.title}
                     </h3>
                   </div>
+
+                  {executiveWall && task.notes?.trim() && (
+                    <p className="font-handwriting text-lg sm:text-xl leading-snug text-stone-800/90 whitespace-pre-wrap break-words mb-3 line-through opacity-70">
+                      {task.notes}
+                    </p>
+                  )}
+                  {executiveWall && (task.checklists?.length ?? 0) > 0 && (
+                    <ul className="mb-3 space-y-1 border-t border-stone-900/10 pt-2 text-sm text-stone-800">
+                      {task.checklists?.map(item => (
+                        <li key={item.id} className="flex items-start gap-2">
+                          <span aria-hidden="true" className={`mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${item.completed ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-stone-600'}`}>{item.completed ? '✓' : ''}</span>
+                          <span className={item.completed ? 'line-through opacity-65' : ''}>{item.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
                   <div className="flex items-center justify-between gap-1.5 pt-1 text-[10px] font-semibold text-stone-700">
                     <span className="flex items-center gap-1 text-stone-600">
@@ -700,26 +759,27 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
             </span>
           </div>
 
-          <div className="w-full h-16 flex items-center justify-center relative">
-            <svg viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-              <line x1="80" y1="40" x2="35" y2="25" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
-              <line x1="80" y1="40" x2="55" y2="65" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
-              <line x1="80" y1="40" x2="115" y2="20" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
-              <line x1="80" y1="40" x2="135" y2="55" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
-              <line x1="80" y1="40" x2="80" y2="70" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
-
-              <circle cx="35" cy="25" r="4" fill="#38bdf8" />
-              <circle cx="55" cy="65" r="3.5" fill="#f43f5e" />
-              <circle cx="115" cy="20" r="4" fill="#34d399" />
-              <circle cx="135" cy="55" r="4.5" fill="#fbbf24" />
-              <circle cx="80" cy="70" r="3" fill="#a855f7" />
-
-              <circle cx="80" cy="40" r="8" fill="#8b5cf6" className="drop-shadow-[0_0_10px_#a855f7]" />
-              <text x="80" y="42.5" textAnchor="middle" fill="#ffffff" fontSize="6.5" fontWeight="bold">✦</text>
-            </svg>
-            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] font-bold text-white/50 tracking-wider">
-              You
-            </span>
+          <div className="w-full h-16 flex items-center justify-center relative" aria-label={`Network preview: ${tasks.length} tasks and ${projects.length} projects`}>
+            {networkPreviewTasks.length > 0 ? (
+              <svg viewBox="0 0 160 80" role="img" aria-label="Connected task preview" className="w-full h-full">
+                {networkPreviewTasks.map((task, index) => {
+                  const point = networkPreviewPoints[index];
+                  return <line key={`edge-${task.id}`} x1="80" y1="40" x2={point.x} y2={point.y} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />;
+                })}
+                {networkPreviewTasks.map((task, index) => {
+                  const point = networkPreviewPoints[index];
+                  const color = task.status === 'done' ? '#34d399' : task.status === 'in_progress' ? '#38bdf8' : '#fbbf24';
+                  return <circle key={task.id} cx={point.x} cy={point.y} r="4" fill={color} />;
+                })}
+                <circle cx="80" cy="40" r="8" fill="#8b5cf6" />
+                <text x="80" y="42.5" textAnchor="middle" fill="#ffffff" fontSize="6.5" fontWeight="bold">✦</text>
+              </svg>
+            ) : (
+              <p className="text-[10px] text-white/55">Add tasks to build your network</p>
+            )}
+            {networkPreviewTasks.length > 0 && (
+              <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] font-bold text-white/50 tracking-wider">You</span>
+            )}
           </div>
         </div>
 

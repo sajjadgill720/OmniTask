@@ -86,6 +86,14 @@ const CANVAS_HEIGHT = 650;
 const CENTER_X = CANVAS_WIDTH / 2;
 const CENTER_Y = CANVAS_HEIGHT / 2;
 
+const stableUnit = (seed: string, salt = 0) => {
+  let hash = 2166136261 ^ salt;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = Math.imul(hash ^ seed.charCodeAt(i), 16777619);
+  }
+  return (hash >>> 0) / 4294967295;
+};
+
 export const NetworkGraph: React.FC<NetworkGraphProps> = ({
   tasks,
   projects,
@@ -188,8 +196,8 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
       const baseAnchorX = parentProj ? CENTER_X : CENTER_X;
       const baseAnchorY = parentProj ? CENTER_Y : CENTER_Y;
 
-      const initX = baseAnchorX + Math.cos(angle) * offsetDist + (Math.random() * 40 - 20);
-      const initY = baseAnchorY + Math.sin(angle) * offsetDist + (Math.random() * 40 - 20);
+      const initX = baseAnchorX + Math.cos(angle) * offsetDist + (stableUnit(task.id, 1) * 40 - 20);
+      const initY = baseAnchorY + Math.sin(angle) * offsetDist + (stableUnit(task.id, 2) * 40 - 20);
 
       // Node color according to grouping default
       const taskColor = task.status === 'done' 
@@ -263,8 +271,8 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
           projectTitle: parentProj?.title,
           noteSnippet: task.notes.trim(),
           createdAt: task.updatedAt || task.createdAt,
-          x: initX + (Math.random() * 50 - 25),
-          y: initY + (Math.random() * 50 - 25),
+          x: initX + (stableUnit(noteId, 1) * 50 - 25),
+          y: initY + (stableUnit(noteId, 2) * 50 - 25),
           vx: 0,
           vy: 0,
         });
@@ -494,7 +502,7 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
         let baseAngle = (idx / Math.max(1, taskNodes.length)) * 2 * Math.PI;
         if (t.projectId && projAngleMap.has(t.projectId)) {
           const parentAngle = projAngleMap.get(t.projectId)!;
-          baseAngle = parentAngle + (Math.random() * 0.45 - 0.225);
+          baseAngle = parentAngle + (stableUnit(t.id, 3) * 0.45 - 0.225);
         }
         updated.push({
           ...t,
@@ -526,8 +534,8 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
     return currentNodes.map(n => ({
       ...n,
       pinned: n.type === 'user',
-      x: n.x || CENTER_X + (Math.random() * 200 - 100),
-      y: n.y || CENTER_Y + (Math.random() * 200 - 100),
+      x: n.x || CENTER_X + (stableUnit(n.id, 4) * 200 - 100),
+      y: n.y || CENTER_Y + (stableUnit(n.id, 5) * 200 - 100),
     }));
   }, []);
 
@@ -659,11 +667,20 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
   // 6. PAN & ZOOM CONTROLS
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
-    setCamera(prev => ({
-      ...prev,
-      zoom: Math.max(0.4, Math.min(2.8, prev.zoom * zoomFactor)),
-    }));
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const viewScale = Math.min(rect.width / CANVAS_WIDTH, rect.height / CANVAS_HEIGHT) || 1;
+    const offsetX = (rect.width - CANVAS_WIDTH * viewScale) / 2;
+    const offsetY = (rect.height - CANVAS_HEIGHT * viewScale) / 2;
+    const pointerX = (e.clientX - rect.left - offsetX) / viewScale;
+    const pointerY = (e.clientY - rect.top - offsetY) / viewScale;
+    const zoomFactor = Math.exp(-e.deltaY * 0.0012);
+    setCamera(prev => {
+      const zoom = Math.max(0.25, Math.min(2.8, prev.zoom * zoomFactor));
+      const worldX = (pointerX - prev.x) / prev.zoom;
+      const worldY = (pointerY - prev.y) / prev.zoom;
+      return { x: pointerX - worldX * zoom, y: pointerY - worldY * zoom, zoom };
+    });
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -681,8 +698,11 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (isPanning) {
-      const dx = (e.clientX - panStartRef.current.x) / camera.zoom;
-      const dy = (e.clientY - panStartRef.current.y) / camera.zoom;
+      const rect = svgRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const viewScale = Math.min(rect.width / CANVAS_WIDTH, rect.height / CANVAS_HEIGHT) || 1;
+      const dx = (e.clientX - panStartRef.current.x) / viewScale;
+      const dy = (e.clientY - panStartRef.current.y) / viewScale;
       setCamera(prev => ({
         ...prev,
         x: panStartRef.current.camX + dx,
@@ -693,8 +713,13 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
       const rect = svgRef.current?.getBoundingClientRect();
       if (!rect) return;
 
-      const mouseX = (e.clientX - rect.left) / camera.zoom - camera.x;
-      const mouseY = (e.clientY - rect.top) / camera.zoom - camera.y;
+      const viewScale = Math.min(rect.width / CANVAS_WIDTH, rect.height / CANVAS_HEIGHT) || 1;
+      const offsetX = (rect.width - CANVAS_WIDTH * viewScale) / 2;
+      const offsetY = (rect.height - CANVAS_HEIGHT * viewScale) / 2;
+      const viewX = (e.clientX - rect.left - offsetX) / viewScale;
+      const viewY = (e.clientY - rect.top - offsetY) / viewScale;
+      const mouseX = (viewX - camera.x) / camera.zoom;
+      const mouseY = (viewY - camera.y) / camera.zoom;
 
       setNodes(prev => prev.map(n => {
         if (n.id === draggedNodeId) {
@@ -742,13 +767,13 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
 
     const w = maxX - minX || CANVAS_WIDTH;
     const h = maxY - minY || CANVAS_HEIGHT;
-    const zoom = Math.min(2.0, Math.max(0.6, Math.min(CANVAS_WIDTH / (w + 80), CANVAS_HEIGHT / (h + 80))));
+    const zoom = Math.min(2.0, Math.max(0.25, Math.min(CANVAS_WIDTH / (w + 80), CANVAS_HEIGHT / (h + 80))));
     const cx = (minX + maxX) / 2;
     const cy = (minY + maxY) / 2;
 
     setCamera({
-      x: (CANVAS_WIDTH / 2) / zoom - cx,
-      y: (CANVAS_HEIGHT / 2) / zoom - cy,
+      x: CANVAS_WIDTH / 2 - cx * zoom,
+      y: CANVAS_HEIGHT / 2 - cy * zoom,
       zoom,
     });
   };
@@ -1040,7 +1065,7 @@ export const NetworkGraph: React.FC<NetworkGraphProps> = ({
             </defs>
 
             {/* Transform Group for Pan & Zoom */}
-            <g transform={`translate(${camera.x * camera.zoom}, ${camera.y * camera.zoom}) scale(${camera.zoom})`}>
+            <g transform={`translate(${camera.x}, ${camera.y}) scale(${camera.zoom})`}>
               
               {/* 1. EDGES LAYER */}
               <g className="edges-layer">

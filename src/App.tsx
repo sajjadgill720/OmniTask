@@ -399,9 +399,8 @@ export function App() {
 
   return (
     <ToastProvider>
-      <div className="relative w-full min-h-screen overflow-x-hidden font-sans select-none studio-wall-background text-stone-900 dark:text-stone-100">
-      
-      {/* 1. Global Photorealistic Studio Wall Atmosphere (Sunlight, Ivy Leaves, Wooden Desk, Lamp, Books, Mug, Astronaut, Terrarium) */}
+      <div className="studio-wall-background relative isolate w-full min-h-screen overflow-x-hidden font-sans select-none text-stone-900 dark:text-stone-100">
+
       <StudioWallAtmosphere />
 
       {/* 2. Top Sleek Frosted Glass Search & Utilities Bar */}
@@ -426,7 +425,7 @@ export function App() {
       />
 
       {/* 3. Main Workspace: Left Glass Sidebar + Center Wall Stage + Right Glass Panels */}
-      <div className={`relative z-10 max-w-[1720px] mx-auto px-4 sm:px-6 flex items-start gap-6 ${viewMode === 'board' ? 'pb-8' : 'pb-24'}`}>
+      <div className={`relative z-10 max-w-[1720px] mx-auto px-4 sm:px-6 flex items-start gap-6 ${viewMode === 'canvas_3d' ? 'pb-20' : viewMode === 'board' ? 'pb-8' : 'pb-24'}`}>
         
         {/* Left Floating Translucent Glass Panel (Knovera Navigation) */}
         <Sidebar
