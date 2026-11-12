@@ -33,7 +33,7 @@ export const StudioRightPanel: React.FC<StudioRightPanelProps> = ({
   }, [tasks]);
 
   return (
-    <aside className="w-64 xl:w-72 shrink-0 hidden lg:flex flex-col gap-3.5 z-20 select-none">
+    <aside className="w-64 xl:w-72 shrink-0 hidden min-[1280px]:flex flex-col gap-3.5 z-20 select-none">
       
       {/* 1. UPCOMING PANEL */}
       <div className="p-4 rounded-3xl bg-white/80 dark:bg-black/55 backdrop-blur-2xl border border-white/40 dark:border-white/15 shadow-xl text-stone-900 dark:text-white">

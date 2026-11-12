@@ -8,7 +8,6 @@ import { StudioRightPanel } from './components/StudioRightPanel';
 import { FocusRoomView } from './components/FocusRoomView';
 import { CanvasWallView } from './components/CanvasWallView';
 import { AnalyticsDashboardView } from './components/AnalyticsDashboardView';
-import { SpatialCanvas3DView } from './components/SpatialCanvas3DView';
 import { WorkflowStageView } from './components/WorkflowStageView';
 import { ProjectsHubView } from './components/ProjectsHubView';
 import { ProjectDetailView } from './components/ProjectDetailView';
@@ -488,9 +487,10 @@ export function App() {
                 onSelectProject={(id) => setSelectedProjectId(id)}
                 onOpenNewProject={() => setIsProjectModalOpen(true)}
               />
-            ) : viewMode === 'board' ? (
-              /* My Board: 3-Column Sticky Note Kanban */
+            ) : viewMode === 'board' || viewMode === 'canvas_3d' ? (
+              /* Executive Standup Wall: compact interactive corkboard */
               <StudioBoardView
+                executiveWall={viewMode === 'canvas_3d'}
                 tasks={tasks}
                 projects={projects}
                 onToggleComplete={handleToggleComplete}
@@ -501,7 +501,7 @@ export function App() {
                 onMoveTaskStatus={handleMoveTaskStatus}
                 audioEnabled={permissions.audioEnabled}
                 onNavigateToNetwork={() => handleChangeViewMode('analytics')}
-                onToggleStandupWall={() => handleChangeViewMode('canvas_3d')}
+                onToggleStandupWall={() => handleChangeViewMode(viewMode === 'canvas_3d' ? 'board' : 'canvas_3d')}
                 onQuickAdd={() => handleMagicAdd({
                   title: 'New note',
                   priority: 'normal',
@@ -537,32 +537,6 @@ export function App() {
                   section: currentSection,
                   colorHex: '#F8D979',
                 })}
-              />
-            ) : viewMode === 'canvas_3d' ? (
-              /* Executive Standup Wall (Realistic Sticky Notes 3D Pedestals) */
-              <SpatialCanvas3DView
-                title="Executive Standup Wall"
-                subtitle="Corporate Sprint Review • Live physical digital twin of your team workspace."
-                tasks={tasks}
-                projects={projects}
-                onToggleComplete={handleToggleComplete}
-                onSelectTask={setSelectedTask}
-                onToggleTimer={handleToggleTimer}
-                onUpdateTask={handleSaveTask}
-                onDeleteTask={handleDeleteTask}
-                audioEnabled={permissions.audioEnabled}
-                onQuickAdd={(status) => handleMagicAdd({
-                  title: 'New note',
-                  status: status || 'todo',
-                  priority: 'normal',
-                  tags: [],
-                  section: currentSection,
-                  colorHex: '#F8D979',
-                })}
-                onReorderTasks={handleReorderTasks}
-                onMoveTaskStatus={handleMoveTaskStatus}
-                onBack={() => handleChangeViewMode('board')}
-                onOpenNewProject={() => setIsProjectModalOpen(true)}
               />
             ) : viewMode === 'analytics' ? (
               /* Analytics & Interactive Network Graph */

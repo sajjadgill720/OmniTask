@@ -26,6 +26,7 @@ import { playCompletionSound } from '../utils/permissions';
 import confetti from 'canvas-confetti';
 
 interface StudioBoardViewProps {
+  executiveWall?: boolean;
   tasks: Task[];
   projects: Project[];
   onToggleComplete: (id: string) => void;
@@ -48,6 +49,7 @@ interface StudioBoardViewProps {
  * - Pinned to the warm stucco wall above the wooden desk
  */
 export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
+  executiveWall = false,
   tasks,
   projects,
   onToggleComplete,
@@ -111,13 +113,31 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
   };
 
   return (
-    <div className="w-full flex flex-col justify-between gap-4 max-w-5xl mx-auto select-none">
+    <div className={`w-full flex flex-col justify-between gap-4 max-w-5xl mx-auto select-none ${executiveWall ? 'executive-board-view' : ''}`}>
       
       {/* Top Workspace Bar: Corporate Digital Twin View Switcher + Note Size */}
       <div className="flex items-center justify-between px-2 gap-3 flex-wrap">
         
         {/* Left: Dual Corporate Perspective Switcher (Desk Workspace vs. Executive Standup Wall) */}
         <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-black/25 dark:bg-black/40 backdrop-blur-md border border-white/15 text-xs font-bold shadow-xs">
+          {executiveWall ? (
+            <>
+              <button
+                type="button"
+                onClick={onToggleStandupWall}
+                className="px-3 py-1 rounded-xl bg-amber-400 text-stone-950 font-black shadow-xs flex items-center gap-1.5 cursor-pointer hover:bg-amber-300 transition"
+                title="Return to Desk Workspace"
+              >
+                <Monitor className="w-3.5 h-3.5" />
+                <span>← Back to Desk Workspace</span>
+              </button>
+              <span className="px-2 text-stone-800 dark:text-stone-100 flex items-center gap-1.5">
+                <Landmark className="w-4 h-4 text-amber-700" /> Executive Standup Wall
+              </span>
+              <span className="rounded-full bg-amber-300/80 px-2 py-1 text-[10px] font-black text-amber-950">{tasks.length} Deliverables</span>
+            </>
+          ) : (
+            <>
           <button
             type="button"
             className="px-3 py-1 rounded-xl bg-amber-400 text-stone-950 font-black shadow-xs flex items-center gap-1.5 cursor-default"
@@ -137,6 +157,8 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
               <Landmark className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
               <span>Executive Standup Wall ↗</span>
             </button>
+          )}
+            </>
           )}
         </div>
 
@@ -173,7 +195,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
       </div>
 
       {/* 3-Column Kanban Wall with Internal Column Scrolling */}
-      <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6 items-start">
+      <div className={`${executiveWall ? 'executive-corkboard ' : ''}w-full grid grid-cols-1 min-[640px]:grid-cols-2 min-[1100px]:grid-cols-3 gap-5 lg:gap-6 items-start`}>
         
         {/* =======================================================================
             ZONE 1: TO DO (Warm Yellow & Peach Notes)
