@@ -47,6 +47,19 @@ npm run dev
 
 Visit: **[http://localhost:5173/](http://localhost:5173/)**
 
+## 🖥️ Windows Desktop App
+
+Omni Sticky can also run as a Windows desktop app with a notification-area tray icon. To create the per-user installer:
+
+```bash
+npm install
+npm run package:desktop
+```
+
+The installer is written to `desktop-release-final/`. It creates Start menu and desktop shortcuts. On the first packaged launch, Omni Sticky enables launch at sign-in and starts hidden on later sign-ins. Closing the window hides it in the tray; use the tray menu to reopen it, create a note, change the sign-in setting, or quit. The app's local browser storage is kept between desktop launches.
+
+For development with the desktop shell, run `npm run dev:desktop`.
+
 ---
 
 ## 📱 Key Features

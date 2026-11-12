@@ -15,16 +15,22 @@ interface MagicPlusButtonProps {
     colorHex?: string;
   }) => void;
   currentSection: ThingsSection;
+  desktopQuickAddSignal?: number;
 }
 
 export const MagicPlusButton: React.FC<MagicPlusButtonProps> = ({
   onAddTask,
   currentSection,
+  desktopQuickAddSignal = 0,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputVal, setInputVal] = useState('');
   const [selectedColor, setSelectedColor] = useState<string>(STICKY_COLORS[0].colorHex);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (desktopQuickAddSignal > 0) setIsOpen(true);
+  }, [desktopQuickAddSignal]);
 
   // Automatically focus on open
   useEffect(() => {

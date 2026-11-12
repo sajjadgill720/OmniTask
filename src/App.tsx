@@ -132,12 +132,17 @@ export function App() {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [desktopQuickAddSignal, setDesktopQuickAddSignal] = useState(0);
   const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isProUser, setIsProUser] = useState<boolean>(() => {
     return localStorage.getItem('omnisticky_pro_user') === 'true';
   });
+
+  useEffect(() => {
+    return window.omniStickyDesktop?.onQuickAdd(() => setDesktopQuickAddSignal(signal => signal + 1));
+  }, []);
 
   // Global ⌘K / Ctrl+K keyboard shortcut
   useEffect(() => {
@@ -588,6 +593,7 @@ export function App() {
       <MagicPlusButton
         onAddTask={handleMagicAdd}
         currentSection={currentSection}
+        desktopQuickAddSignal={desktopQuickAddSignal}
       />
 
       {/* Slide-over Task Inspector / Detail Drawer */}

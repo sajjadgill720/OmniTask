@@ -10,16 +10,11 @@ import {
   Sparkles, 
   Star,
   CheckCircle2,
-  Calendar,
-  Volume2,
-  VolumeX,
-  Plus,
   Maximize2,
   Minimize2,
   Flame,
-  Pin,
   FileText,
-  Palette
+  Pin
 } from 'lucide-react';
 import { Task, WidgetType } from '../types';
 import { checkDueDate, formatDuration } from '../utils/storage';
@@ -50,8 +45,6 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
   onToggleFloatingWidget,
   floatingWidgetType,
 }) => {
-  if (!isOpen) return null;
-
   const [activeWidget, setActiveWidget] = useState<WidgetType>('today_focus');
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -151,28 +144,30 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
   const pomoSecs = pomoSeconds % 60;
   const pomoFormatted = `${pomoMinutes.toString().padStart(2, '0')}:${pomoSecs.toString().padStart(2, '0')}`;
 
+  if (!isOpen) return null;
+
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-150 ${isFullscreen ? 'p-0' : ''}`}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#291b12]/75 backdrop-blur-md animate-in fade-in duration-150 ${isFullscreen ? 'p-0' : ''}`}>
       
-      <div className={`relative w-full ${isFullscreen ? 'h-screen max-w-none rounded-none' : 'max-w-3xl rounded-3xl'} bg-white dark:bg-[#13151c] border border-slate-200/90 dark:border-white/10 shadow-2xl p-5 sm:p-7 overflow-y-auto max-h-[92vh] flex flex-col justify-between transition-all`}>
+      <div className={`relative w-full ${isFullscreen ? 'h-[100dvh] max-w-none rounded-none' : 'max-h-[94dvh] max-w-5xl rounded-[26px]'} bg-[#f5ead5] dark:bg-[#252018] border border-[#c3925d]/70 dark:border-[#70583d] shadow-[0_30px_90px_rgba(30,18,9,.52),inset_0_1px_rgba(255,255,255,.75)] p-4 sm:p-6 overflow-y-auto flex flex-col transition-all`}>
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100 dark:border-white/10">
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#9e7048]/25 dark:border-[#d4b58a]/15">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-amber-500 text-white flex items-center justify-center shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-violet-500 text-white flex items-center justify-center shadow-md shadow-violet-950/20">
               <Layout className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                  Interactive Widgets Hub
+                <h3 className="font-extrabold text-base text-stone-900 dark:text-amber-50">
+                  Omni Sticky Widgets
                 </h3>
-                <span className="px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase">
-                  Pro Suite
+                <span className="px-2 py-0.5 rounded-full bg-amber-300/60 text-amber-950 text-[10px] font-black uppercase tracking-wide">
+                  Your desk, at a glance
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">
-                Interactive desktop widgets, Pomodoro focus blocks & Standby desk display.
+              <p className="text-[11px] text-stone-600 dark:text-stone-300">
+                Handwritten task cards, a focus timer, a desk clock, and a quick jot pad.
               </p>
             </div>
           </div>
@@ -180,7 +175,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer"
+              className="p-2 rounded-lg text-stone-500 hover:text-stone-900 dark:text-stone-300 dark:hover:text-white hover:bg-stone-900/5 dark:hover:bg-white/10 transition cursor-pointer"
               title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Desk Display'}
             >
               {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -188,7 +183,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer"
+              className="p-2 rounded-lg text-stone-500 hover:text-stone-900 dark:text-stone-300 dark:hover:text-white hover:bg-stone-900/5 dark:hover:bg-white/10 transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -196,14 +191,16 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
         </div>
 
         {/* 4-Tab Widget Selector Suite */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-5 bg-slate-100 dark:bg-white/5 p-1 rounded-2xl text-xs font-bold">
+        <div role="tablist" aria-label="Widget preview" className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-5 bg-[#68452d] dark:bg-[#17130f] p-1.5 rounded-2xl border border-[#ba8a56]/70 dark:border-[#715438] text-xs font-bold shadow-[0_5px_12px_rgba(53,34,18,.18)]">
           
           <button
+            role="tab"
+            aria-selected={activeWidget === 'today_focus'}
             onClick={() => setActiveWidget('today_focus')}
             className={`py-2 px-2 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
               activeWidget === 'today_focus'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                ? 'bg-[#f9dc79] text-stone-950 shadow-[0_3px_7px_rgba(25,16,8,.28)]'
+                : 'text-amber-50/80 hover:bg-white/10 hover:text-white'
             }`}
           >
             <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
@@ -211,11 +208,13 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
           </button>
 
           <button
+            role="tab"
+            aria-selected={activeWidget === 'pomodoro'}
             onClick={() => setActiveWidget('pomodoro')}
             className={`py-2 px-2 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
               activeWidget === 'pomodoro'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                ? 'bg-[#f9dc79] text-stone-950 shadow-[0_3px_7px_rgba(25,16,8,.28)]'
+                : 'text-amber-50/80 hover:bg-white/10 hover:text-white'
             }`}
           >
             <Clock className="w-3.5 h-3.5 text-rose-500" />
@@ -223,11 +222,13 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
           </button>
 
           <button
+            role="tab"
+            aria-selected={activeWidget === 'standby_clock'}
             onClick={() => setActiveWidget('standby_clock')}
             className={`py-2 px-2 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
               activeWidget === 'standby_clock'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                ? 'bg-[#f9dc79] text-stone-950 shadow-[0_3px_7px_rgba(25,16,8,.28)]'
+                : 'text-amber-50/80 hover:bg-white/10 hover:text-white'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
@@ -235,11 +236,13 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
           </button>
 
           <button
+            role="tab"
+            aria-selected={activeWidget === 'sticky_pad'}
             onClick={() => setActiveWidget('sticky_pad')}
             className={`py-2 px-2 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
               activeWidget === 'sticky_pad'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                ? 'bg-[#f9dc79] text-stone-950 shadow-[0_3px_7px_rgba(25,16,8,.28)]'
+                : 'text-amber-50/80 hover:bg-white/10 hover:text-white'
             }`}
           >
             <FileText className="w-3.5 h-3.5 text-emerald-500" />
@@ -249,43 +252,44 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
         </div>
 
         {/* WIDGET STAGE AREA */}
-        <div className="flex-1 flex items-center justify-center p-3 sm:p-6 bg-slate-50 dark:bg-black/30 rounded-3xl border border-slate-200/80 dark:border-white/5 min-h-[380px]">
+        <div className="executive-corkboard relative flex-1 flex items-center justify-center p-3 sm:p-6 min-h-[300px] sm:min-h-[380px] max-h-[64dvh] overflow-y-auto">
           
           {/* 1. TODAY FOCUS WIDGET (Lockscreen & Banner Format) */}
           {activeWidget === 'today_focus' && (
-            <div className={`w-full ${widgetSize === 'small' ? 'max-w-xs' : widgetSize === 'medium' ? 'max-w-md' : 'max-w-lg'} bg-white dark:bg-[#1a1c26] rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl p-5 select-none transition-all`}>
+            <div className={`realistic-postit paper-edge relative w-full ${widgetSize === 'small' ? 'max-w-xs' : widgetSize === 'medium' ? 'max-w-md' : 'max-w-lg'} rounded-[5px_10px_7px_9px] border border-amber-900/20 bg-[#fff0a8] p-5 text-stone-900 shadow-[0_18px_30px_-16px_rgba(41,23,10,.72)] select-none transition-all`}>
+              <span aria-hidden="true" className="widget-paper-pin" />
               
               {/* Widget Header & Controls */}
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-white/10">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-amber-900/15">
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                  <span className="font-extrabold text-xs text-slate-900 dark:text-white">TODAY'S EXECUTION</span>
+                  <span className="font-handwriting font-bold text-xl text-stone-900">Today's focus</span>
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <span className="font-mono text-xs font-bold text-amber-600 dark:text-amber-400">
+                  <span className="font-handwriting text-lg font-bold text-amber-900">
                     {completedToday.length}/{todayTasks.length} Done
                   </span>
 
                   {/* Size toggles */}
-                  <div className="flex items-center p-0.5 bg-slate-100 dark:bg-white/5 rounded-lg text-[10px] font-bold">
+                  <div className="flex items-center p-0.5 bg-amber-900/10 rounded-lg text-[10px] font-bold">
                     <button
                       onClick={() => setWidgetSize('small')}
-                      className={`px-1.5 py-0.5 rounded ${widgetSize === 'small' ? 'bg-white dark:bg-slate-800 shadow-xs' : 'text-slate-400'}`}
+                      className={`px-1.5 py-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 ${widgetSize === 'small' ? 'bg-[#fffaf0] text-stone-900 shadow-sm' : 'text-stone-600'}`}
                       title="Compact 2x2"
                     >
                       S
                     </button>
                     <button
                       onClick={() => setWidgetSize('medium')}
-                      className={`px-1.5 py-0.5 rounded ${widgetSize === 'medium' ? 'bg-white dark:bg-slate-800 shadow-xs' : 'text-slate-400'}`}
+                      className={`px-1.5 py-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 ${widgetSize === 'medium' ? 'bg-[#fffaf0] text-stone-900 shadow-sm' : 'text-stone-600'}`}
                       title="Standard 4x2"
                     >
                       M
                     </button>
                     <button
                       onClick={() => setWidgetSize('large')}
-                      className={`px-1.5 py-0.5 rounded ${widgetSize === 'large' ? 'bg-white dark:bg-slate-800 shadow-xs' : 'text-slate-400'}`}
+                      className={`px-1.5 py-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 ${widgetSize === 'large' ? 'bg-[#fffaf0] text-stone-900 shadow-sm' : 'text-stone-600'}`}
                       title="Expanded 4x4"
                     >
                       L
@@ -296,18 +300,18 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
 
               {/* Quick Input in Widget */}
               {onAddTask && (
-                <form onSubmit={handleQuickAdd} className="flex items-center gap-1.5 mb-3 p-1.5 bg-slate-100 dark:bg-white/5 rounded-xl">
+                <form onSubmit={handleQuickAdd} className="flex items-center gap-1.5 mb-3 p-1.5 bg-white/55 border border-amber-900/10 rounded-lg shadow-inner">
                   <input
                     type="text"
                     value={quickInput}
                     onChange={(e) => setQuickInput(e.target.value)}
                     placeholder="Quick add to Today..."
-                    className="flex-1 bg-transparent px-2 text-xs text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none"
+                    className="flex-1 bg-transparent px-2 text-sm font-handwriting text-stone-900 placeholder-stone-500 focus:outline-none"
                   />
                   <button
                     type="submit"
                     disabled={!quickInput.trim()}
-                    className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-bold text-[10px] rounded-lg cursor-pointer"
+                    className="px-3 py-1 bg-amber-400 hover:bg-amber-500 disabled:opacity-40 text-amber-950 font-bold text-xs rounded-md shadow-sm cursor-pointer"
                   >
                     Add
                   </button>
@@ -317,33 +321,37 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
               {/* Tasks List */}
               <div className={`space-y-1.5 ${widgetSize === 'small' ? 'max-h-40' : widgetSize === 'medium' ? 'max-h-56' : 'max-h-72'} overflow-y-auto pr-1`}>
                 {pendingToday.length === 0 && (
-                  <div className="text-center py-8 text-xs text-slate-400">
-                    <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
+                  <div className="text-center py-8 text-sm font-handwriting text-stone-700">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-700 mx-auto mb-2 opacity-80" />
                     All today's tasks completed!
                   </div>
                 )}
 
-                {pendingToday.map(task => (
+                {pendingToday.map((task, index) => (
                   <div
                     key={task.id}
-                    className="flex items-center justify-between gap-2 p-2 bg-slate-50 dark:bg-white/5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition"
+                    style={{ backgroundColor: ['#fff9b8', '#d8edb7', '#ffd5b1', '#e5d2f5'][index % 4] }}
+                    className="realistic-postit paper-edge relative flex min-h-12 items-center justify-between gap-2 rounded-[3px_7px_4px_6px] border border-black/10 px-3 py-2 pl-4 shadow-[0_7px_12px_-8px_rgba(30,18,9,.7)] transition hover:-translate-y-0.5"
                   >
+                    <span aria-hidden="true" className="widget-mini-pin" />
                     <div className="flex items-center gap-2.5 truncate">
                       <button
                         onClick={() => handleCheck(task.id, task.status === 'done')}
-                        className="w-4 h-4 rounded-full border border-slate-300 dark:border-slate-600 hover:border-amber-500 flex items-center justify-center shrink-0 cursor-pointer"
+                        aria-label={`Complete ${task.title}`}
+                        className="w-4 h-4 rounded-full border-2 border-stone-600/70 hover:border-emerald-700 flex items-center justify-center shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-800"
                       >
-                        {task.status === 'done' && <Check className="w-2.5 h-2.5 text-amber-500 stroke-[3]" />}
+                        {task.status === 'done' && <Check className="w-2.5 h-2.5 text-emerald-700 stroke-[3]" />}
                       </button>
-                      <span className="text-sm font-handwriting font-semibold text-slate-800 dark:text-slate-100 truncate">
+                      <span className="text-lg font-handwriting font-semibold text-stone-900 truncate">
                         {task.title}
                       </span>
                     </div>
 
                     <button
                       onClick={() => onToggleTimer(task.id)}
-                      className={`p-1 rounded-md text-[10px] font-mono flex items-center gap-1 ${
-                        task.isTimerRunning ? 'text-rose-600 animate-pulse font-bold' : 'text-slate-400'
+                      aria-label={`${task.isTimerRunning ? 'Pause' : 'Start'} timer for ${task.title}`}
+                      className={`p-1 rounded-md text-xs font-handwriting flex items-center gap-1 ${
+                        task.isTimerRunning ? 'text-rose-700 animate-pulse font-bold' : 'text-stone-600'
                       }`}
                     >
                       <Clock className="w-3 h-3" />
@@ -358,16 +366,17 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
 
           {/* 2. POMODORO DEEP FOCUS ENGINE WIDGET */}
           {activeWidget === 'pomodoro' && (
-            <div className="w-full max-w-md bg-white dark:bg-[#1a1c26] rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl p-6 text-center select-none">
+            <div className="realistic-postit paper-edge relative w-full max-w-md rounded-[5px_12px_8px_10px] border border-amber-900/20 bg-[#fff0a8] p-6 text-center text-stone-900 shadow-[0_18px_30px_-16px_rgba(41,23,10,.72)] select-none">
+              <span aria-hidden="true" className="widget-paper-pin" />
               
-              <div className="flex items-center justify-between pb-2 mb-4 border-b border-slate-100 dark:border-white/10">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-rose-500 flex items-center gap-1">
-                  <Flame className="w-3.5 h-3.5 fill-rose-500" />
-                  <span>Pomodoro Engine</span>
+              <div className="flex items-center justify-between pb-2 mb-4 border-b border-amber-900/15">
+                <span className="font-handwriting text-xl font-bold text-stone-900 flex items-center gap-1">
+                  <Flame className="w-4 h-4 fill-orange-500 text-orange-700" />
+                  <span>Focus session</span>
                 </span>
-                <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                <span className="text-sm font-handwriting font-bold text-stone-700 flex items-center gap-1">
                   <span>Streak:</span>
-                  <span className="font-mono text-amber-500 font-extrabold">🔥 {pomoSessions} Blocks</span>
+                  <span className="font-handwriting text-amber-900 font-bold">🔥 {pomoSessions} blocks</span>
                 </span>
               </div>
 
@@ -381,14 +390,14 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
                     fill="transparent"
                     stroke="currentColor"
                     strokeWidth="7"
-                    className="text-slate-100 dark:text-slate-800"
+                    className="text-amber-900/15"
                   />
                   <circle
                     cx="88"
                     cy="88"
                     r={pomoRadius}
                     fill="transparent"
-                    stroke="#ef4444"
+                    stroke="#19866a"
                     strokeWidth="7"
                     strokeDasharray={pomoCircumference}
                     strokeDashoffset={pomoDashoffset}
@@ -398,10 +407,10 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
                 </svg>
 
                 <div className="absolute flex flex-col items-center">
-                  <span className="text-4xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
+                  <span className="text-4xl font-black font-mono tracking-tight text-stone-900">
                     {pomoFormatted}
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-stone-600 mt-1">
                     {pomoActive ? 'FOCUSING' : 'READY'}
                   </span>
                 </div>
@@ -409,13 +418,13 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
 
               {/* Task Linking Dropdown */}
               <div className="mb-4 text-left">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
-                  Linked Task:
+                <label className="block text-xs font-handwriting font-bold text-stone-700 mb-1">
+                  Pin this session to a task
                 </label>
                 <select
                   value={selectedPomoTaskId}
                   onChange={(e) => setSelectedPomoTaskId(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs font-semibold bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2 text-sm font-handwriting font-semibold bg-white/55 border border-amber-900/20 rounded-lg text-stone-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 cursor-pointer"
                 >
                   <option value="">— Focus on general tasks —</option>
                   {pendingToday.map(t => (
@@ -430,8 +439,8 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
                   onClick={() => setPomoActive(!pomoActive)}
                   className={`px-6 py-2.5 rounded-2xl font-black text-xs transition flex items-center gap-2 cursor-pointer shadow-md ${
                     pomoActive
-                      ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20'
-                      : 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-500/20'
+                      ? 'bg-amber-500 hover:bg-amber-600 text-stone-950 shadow-amber-900/20'
+                      : 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-900/20'
                   }`}
                 >
                   {pomoActive ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white" />}
@@ -443,7 +452,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
                     setPomoActive(false);
                     setPomoSeconds(25 * 60);
                   }}
-                  className="p-2.5 rounded-2xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                  className="p-2.5 rounded-xl bg-white/60 hover:bg-white text-stone-700 transition cursor-pointer"
                   title="Reset Timer"
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -451,7 +460,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
 
                 <button
                   onClick={() => setPomoSeconds(s => s + 5 * 60)}
-                  className="px-3 py-2.5 rounded-2xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold text-xs transition cursor-pointer"
+                  className="px-3 py-2.5 rounded-xl bg-white/60 hover:bg-white text-stone-800 font-bold text-xs transition cursor-pointer"
                   title="Add 5 Minutes"
                 >
                   +5m
@@ -463,7 +472,9 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
 
           {/* 3. STANDBY DESK DISPLAY WIDGET (Nightstand Clock) */}
           {activeWidget === 'standby_clock' && (
-            <div className={`w-full max-w-lg ${nightMode ? 'bg-red-950/80 text-red-500 border-red-900' : 'bg-black text-white border-slate-800'} rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col justify-between border select-none transition-colors`}>
+            <div className="relative w-full max-w-lg rounded-[14px] border-[9px] border-[#956035] bg-[#774a2b] p-1.5 shadow-[0_22px_34px_-18px_rgba(25,13,6,.8),inset_0_1px_rgba(255,255,255,.35)] select-none">
+              <span aria-hidden="true" className="widget-paper-pin" />
+              <div className={`${nightMode ? 'bg-[#250e0b] text-red-400 border-red-950' : 'bg-[#171714] text-amber-50 border-black'} rounded-[6px] p-5 sm:p-7 shadow-inner flex flex-col justify-between border transition-colors`}>
               
               <div className="flex items-center justify-between text-xs mb-4">
                 <span className="font-bold tracking-widest uppercase">STANDBY DESK DISPLAY</span>
@@ -511,6 +522,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
                 )}
               </div>
 
+              </div>
             </div>
           )}
 
@@ -521,39 +533,38 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
               {/* The Miniature Real Sticky Note */}
               <div 
                 style={{ backgroundColor: stickyColor }}
-                className="w-64 h-64 p-5 rounded-2xl shadow-xl border border-black/10 flex flex-col justify-between relative transition-all"
+                className="realistic-postit paper-edge w-64 h-64 p-5 pt-7 rounded-[4px_10px_6px_8px] shadow-[0_18px_28px_-14px_rgba(39,22,10,.7)] border border-black/15 flex flex-col justify-between relative transition-all"
               >
-                {/* Pin at Top */}
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-rose-600 shadow-sm border border-rose-800" />
+                <span aria-hidden="true" className="widget-paper-pin" />
 
                 <div className="flex-1">
-                  <span className="block text-[10px] font-black uppercase text-black/40 mb-1">
-                    JOT NOTE
+                  <span className="block text-sm font-handwriting font-bold text-black/55 mb-1">
+                    A quick thought
                   </span>
                   <textarea
                     rows={5}
                     value={stickyNoteText}
                     onChange={(e) => setStickyNoteText(e.target.value)}
                     placeholder="Write a quick thought or task..."
-                    className="w-full h-40 bg-transparent text-xl font-handwriting text-blue-900 placeholder-blue-900/40 focus:outline-none resize-none leading-snug"
+                    className="paper-ruling-lines w-full h-40 bg-transparent text-xl font-handwriting text-stone-900 placeholder-stone-700/50 focus:outline-none resize-none leading-[28px]"
                   />
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-black/10 text-[10px] text-black/60 font-handwriting">
-                  <span>Auto-syncs with Today</span>
-                  <span>📌 Post-it</span>
+                <div className="flex items-center justify-between pt-2 border-t border-black/15 text-xs text-black/65 font-handwriting">
+                  <span>Save this note to Today</span>
+                  <span className="flex items-center gap-1"><Pin className="h-3 w-3" /> Paper note</span>
                 </div>
               </div>
 
               {/* Color Bar and Save to Wall Button */}
               <div className="flex items-center gap-2 mt-4">
-                <div className="flex items-center gap-1 p-1 bg-white dark:bg-slate-800 rounded-xl shadow-xs border border-slate-200 dark:border-white/10">
+                <div className="flex items-center gap-1 p-1.5 bg-[#68452d] rounded-xl shadow-md border border-[#ba8a56]">
                   {STICKY_COLORS.slice(0, 5).map(c => (
                     <button
                       key={c.id}
                       onClick={() => setStickyColor(c.colorHex)}
                       style={{ backgroundColor: c.colorHex }}
-                      className={`w-5 h-5 rounded-full border transition-transform ${stickyColor === c.colorHex ? 'scale-125 ring-2 ring-blue-500' : 'border-black/10'}`}
+                      className={`w-6 h-6 rounded-full border border-white/65 transition-transform ${stickyColor === c.colorHex ? 'scale-110 ring-2 ring-amber-300' : 'hover:scale-110'}`}
                       title={c.name}
                     />
                   ))}
@@ -561,7 +572,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
 
                 <button
                   onClick={handleSaveStickyToWall}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-md transition cursor-pointer"
+                  className="px-4 py-2 bg-amber-300 hover:bg-amber-200 text-stone-950 font-bold text-sm rounded-lg shadow-md transition cursor-pointer"
                 >
                   Stick to Today's Wall
                 </button>
@@ -573,11 +584,11 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs text-slate-400">
-          <span>Interactive widgets sync live with your workspace database.</span>
+        <div className="mt-4 pt-3 border-t border-[#9e7048]/25 dark:border-[#d4b58a]/15 flex items-center justify-between gap-3 text-xs text-stone-600 dark:text-stone-300">
+          <span className="font-handwriting text-sm">Your workspace, written on paper.</span>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-extrabold text-xs rounded-xl cursor-pointer"
+            className="px-5 py-2.5 bg-[#68452d] hover:bg-[#54341f] dark:bg-amber-300 dark:hover:bg-amber-200 text-amber-50 dark:text-stone-950 font-extrabold text-xs rounded-xl shadow-md transition cursor-pointer"
           >
             Done
           </button>

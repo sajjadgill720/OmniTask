@@ -6,6 +6,9 @@ node_modules/
 # Production build output
 dist/
 build/
+release/
+desktop-release/
+desktop-release-final/
 
 # TypeScript build info
 *.tsbuildinfo
