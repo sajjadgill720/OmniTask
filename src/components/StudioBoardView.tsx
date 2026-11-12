@@ -114,7 +114,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
   };
 
   return (
-    <div className={`w-full flex flex-col justify-start gap-3 max-w-5xl mx-auto select-none ${executiveWall ? 'executive-board-view' : ''}`}>
+    <div className={`studio-board-view w-full flex flex-col justify-start gap-3 max-w-5xl mx-auto select-none ${executiveWall ? 'executive-board-view' : ''}`}>
       
       {/* Top Workspace Bar: Corporate Digital Twin View Switcher + Note Size */}
       <div className="flex items-center justify-between px-2 gap-3 flex-wrap">
@@ -216,10 +216,10 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
 
       {/* Executive notes scroll as one board; the surrounding page stays in normal flow. */}
       <div
-        className={`${executiveWall ? 'executive-corkboard executive-board-scroll items-stretch ' : 'items-start '}w-full grid grid-cols-1 min-[640px]:grid-cols-2 min-[1100px]:grid-cols-3 gap-5 lg:gap-6`}
+        className={`${executiveWall ? 'executive-corkboard executive-board-scroll items-stretch ' : 'items-start '}studio-board-lanes w-full grid grid-cols-1 min-[640px]:grid-cols-2 min-[1100px]:grid-cols-3 gap-5 lg:gap-6`}
         role={executiveWall ? 'region' : undefined}
-        aria-label={executiveWall ? 'Executive standup corkboard, scroll to see all notes' : undefined}
-        tabIndex={executiveWall ? 0 : undefined}
+        aria-label={executiveWall ? 'Executive standup corkboard; scroll horizontally to switch lanes and vertically to browse notes' : 'Task lanes; scroll horizontally to switch between To Do, In Progress, and Done'}
+        tabIndex={0}
       >
         
         {/* =======================================================================
@@ -229,12 +229,12 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
           onDragOver={(e) => handleColumnDragOver(e, 'todo')}
           onDragLeave={() => setDragOverCol(null)}
           onDrop={(e) => handleColumnDrop(e, 'todo')}
-          className={`flex flex-col items-center transition-all duration-200 rounded-3xl p-1.5 ${
+          className={`studio-lane executive-lane flex flex-col items-center transition-all duration-200 rounded-3xl p-1.5 ${
             dragOverCol === 'todo' ? 'bg-amber-500/10 ring-2 ring-amber-400 scale-[1.01]' : ''
           }`}
         >
           {/* Header Pill matching Image 1: Yellow pill ✓ To Do 3 + */}
-          <div className="w-full max-w-[280px] mb-3">
+          <div className="executive-lane-header w-full max-w-[280px] mb-3">
             <div 
               className="px-4 py-2 rounded-2xl bg-[#F8D979] text-stone-900 shadow-md flex items-center justify-between font-bold text-sm tracking-tight border border-amber-300"
               style={{ transform: 'rotate(-0.6deg)' }}
@@ -262,7 +262,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
           </div>
 
           {/* Desk keeps its compact viewport; the corporate board shows every note in page flow. */}
-          <div className={`${executiveWall ? 'w-full px-1 py-1 space-y-4' : 'w-full max-h-[350px] xl:max-h-[390px] 2xl:max-h-[440px] overflow-y-auto column-scrollbar px-1 py-1'} ${
+          <div className={`studio-lane-notes ${executiveWall ? 'executive-lane-notes w-full px-1 py-1 space-y-4' : 'w-full max-h-[350px] xl:max-h-[390px] 2xl:max-h-[440px] overflow-y-auto column-scrollbar px-1 py-1'} ${
             noteDensity === 'compact' ? 'grid grid-cols-2 gap-2' : 'space-y-3'
           }`}>
             {todoTasks.map((task, idx) => {
@@ -393,12 +393,12 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
           onDragOver={(e) => handleColumnDragOver(e, 'in_progress')}
           onDragLeave={() => setDragOverCol(null)}
           onDrop={(e) => handleColumnDrop(e, 'in_progress')}
-          className={`flex flex-col items-center transition-all duration-200 rounded-3xl p-1.5 ${
+          className={`studio-lane executive-lane flex flex-col items-center transition-all duration-200 rounded-3xl p-1.5 ${
             dragOverCol === 'in_progress' ? 'bg-emerald-500/10 ring-2 ring-emerald-400 scale-[1.01]' : ''
           }`}
         >
           {/* Header Pill matching Image 1: Green pill ✓ In Progress 2 + */}
-          <div className="w-full max-w-[280px] mb-3">
+          <div className="executive-lane-header w-full max-w-[280px] mb-3">
             <div 
               className="px-4 py-2 rounded-2xl bg-[#C6DF9C] text-stone-900 shadow-md flex items-center justify-between font-bold text-sm tracking-tight border border-emerald-300"
               style={{ transform: 'rotate(0.8deg)' }}
@@ -425,7 +425,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
             </div>
           </div>
 
-          <div className={`${executiveWall ? 'w-full px-1 py-1 space-y-4' : 'w-full max-h-[350px] xl:max-h-[390px] 2xl:max-h-[440px] overflow-y-auto column-scrollbar px-1 py-1'} ${
+          <div className={`studio-lane-notes ${executiveWall ? 'executive-lane-notes w-full px-1 py-1 space-y-4' : 'w-full max-h-[350px] xl:max-h-[390px] 2xl:max-h-[440px] overflow-y-auto column-scrollbar px-1 py-1'} ${
             noteDensity === 'compact' ? 'grid grid-cols-2 gap-2' : 'space-y-3'
           }`}>
             {inProgressTasks.map((task, idx) => {
@@ -553,12 +553,12 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
           onDragOver={(e) => handleColumnDragOver(e, 'done')}
           onDragLeave={() => setDragOverCol(null)}
           onDrop={(e) => handleColumnDrop(e, 'done')}
-          className={`flex flex-col items-center transition-all duration-200 rounded-3xl p-1.5 ${
+          className={`studio-lane executive-lane executive-lane--done flex flex-col items-center transition-all duration-200 rounded-3xl p-1.5 ${
             dragOverCol === 'done' ? 'bg-purple-500/10 ring-2 ring-purple-400 scale-[1.01]' : ''
           }`}
         >
           {/* Header Pill matching Image 1: Purple pill ✓ Done 4 */}
-          <div className="w-full max-w-[280px] mb-3">
+          <div className="executive-lane-header w-full max-w-[280px] mb-3">
             <div 
               className="px-4 py-2 rounded-2xl bg-[#D7B7EE] text-stone-900 shadow-md flex items-center justify-between font-bold text-sm tracking-tight border border-purple-300"
               style={{ transform: 'rotate(-0.9deg)' }}
@@ -577,7 +577,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
             </div>
           </div>
 
-          <div className={`${executiveWall ? 'w-full px-1 py-1 space-y-4' : 'w-full max-h-[350px] xl:max-h-[390px] 2xl:max-h-[440px] overflow-y-auto column-scrollbar px-1 py-1'} ${
+          <div className={`studio-lane-notes ${executiveWall ? 'executive-lane-notes w-full px-1 py-1 space-y-4' : 'w-full max-h-[350px] xl:max-h-[390px] 2xl:max-h-[440px] overflow-y-auto column-scrollbar px-1 py-1'} ${
             noteDensity === 'compact' ? 'grid grid-cols-2 gap-2' : 'space-y-3'
           }`}>
             {doneTasks.map((task, idx) => {
@@ -708,6 +708,10 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
         </div>
 
       </div>
+      <p className="mobile-lane-hint hidden items-center justify-between px-1 text-[11px] font-semibold text-stone-600 dark:text-stone-300">
+        <span>Swipe sideways to switch lanes</span>
+        <span>To Do · In Progress · Done</span>
+      </p>
 
       {/* =======================================================================
           BOTTOM WOODEN DESK DASHBOARD CARDS (Directly resting on Desk above fold)

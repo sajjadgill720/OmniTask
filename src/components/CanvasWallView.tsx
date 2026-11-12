@@ -117,6 +117,7 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const touchPanRef = useRef<{ x: number; y: number } | null>(null);
 
   // Active Tool Mode
   const [activeTool, setActiveTool] = useState<'select' | 'sticky' | 'arrow' | 'shape' | 'pen' | 'image'>('select');
@@ -657,7 +658,7 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
 
   return (
     <div 
-      className="relative w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 select-none"
+      className="canvas-wall-hero relative w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 select-none"
       onDragOver={handleCanvasDragOver}
       onDragLeave={handleCanvasDragLeave}
       onDrop={handleCanvasDrop}
@@ -688,7 +689,46 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
         }}
         onMouseMove={handleMouseMoveStage}
         onMouseUp={handleMouseUpStage}
-        className={`relative w-full min-h-[720px] rounded-3xl overflow-hidden shadow-2xl border transition-colors ${
+        onTouchStart={(e) => {
+          const target = e.target as HTMLElement;
+          const touch = e.touches[0];
+          if (!touch) return;
+          const node = target.closest<HTMLElement>('.canvas-node');
+          if (node) {
+            const nodeId = node.dataset.canvasNodeId;
+            if (nodeId) {
+              handleNodeMouseDown({
+                target: e.target,
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                shiftKey: false,
+                stopPropagation: () => e.stopPropagation(),
+              } as unknown as React.MouseEvent, nodeId);
+            }
+            return;
+          }
+          if (target.closest('.floating-toolbar, button, input, textarea')) return;
+          touchPanRef.current = { x: touch.clientX, y: touch.clientY };
+          setIsPanning(true);
+        }}
+        onTouchMove={(e) => {
+          const touch = e.touches[0];
+          if (!touch) return;
+          if (isDraggingNode) {
+            handleMouseMoveStage({ clientX: touch.clientX, clientY: touch.clientY } as React.MouseEvent);
+            return;
+          }
+          if (!touchPanRef.current) return;
+          const dx = touch.clientX - touchPanRef.current.x;
+          const dy = touch.clientY - touchPanRef.current.y;
+          setPanOffset(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+          touchPanRef.current = { x: touch.clientX, y: touch.clientY };
+        }}
+        onTouchEnd={() => {
+          touchPanRef.current = null;
+          handleMouseUpStage();
+        }}
+        className={`canvas-wall-viewport relative w-full min-h-[720px] rounded-3xl overflow-hidden shadow-2xl border transition-colors ${
           isDragOverCanvas 
             ? 'border-amber-400 ring-4 ring-amber-400/30' 
             : 'border-[#695747]/25'
@@ -715,7 +755,7 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
         {/* ===================================================================
             TOP-CENTER CALLIGRAPHY TITLE DIRECTLY ON WALL matching Image 2
             =================================================================== */}
-        <div className="absolute top-5 left-1/2 -translate-x-1/2 z-30 pointer-events-none select-none flex items-center gap-2.5">
+        <div className="canvas-wall-title absolute top-5 left-1/2 -translate-x-1/2 z-30 pointer-events-none select-none flex items-center gap-2.5">
           <span className="text-2xl drop-shadow-xs">💡</span>
           <h2 
             className="text-2xl sm:text-3xl font-bold text-stone-900/90 dark:text-amber-100 font-serif italic tracking-tight drop-shadow-xs"
@@ -732,7 +772,7 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
             TOP-RIGHT FLOATING TOOLBAR matching Image 2 Reference
             (Undo, Redo, Zoom In, Zoom Out, Fit Screen, 3D Cube)
             =================================================================== */}
-        <div className="absolute top-5 right-6 z-40 flex items-center gap-1.5 p-1.5 px-3 rounded-2xl bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/20 shadow-xl text-white">
+        <div className="canvas-wall-tools floating-toolbar absolute top-5 right-6 z-40 flex items-center gap-1.5 p-1.5 px-3 rounded-2xl bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/20 shadow-xl text-white">
           <button
             type="button"
             disabled={historyIndex <= 0}
@@ -1019,7 +1059,7 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
             CANVAS ZOOM & PAN CONTAINER
             =================================================================== */}
         <div 
-          className="relative w-full h-full min-h-[720px] overflow-visible"
+          className="canvas-wall-world relative w-full h-full min-h-[720px] overflow-visible"
           style={{ 
             transform: `scale(${zoomLevel / 100}) translate(${panOffset.x}px, ${panOffset.y}px)`, 
             transformOrigin: 'top left',
@@ -1145,6 +1185,7 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
                     height: `${h}px`,
                     transform: `rotate(${node.rotation}deg)`,
                   }}
+                  data-canvas-node-id={node.id}
                   className={`canvas-node group absolute z-20 rounded-[40px] bg-[#F8D979] border-2 border-dashed border-[#695747] shadow-xl flex items-center justify-center p-3 text-center transition-shadow select-none ${
                     isSource 
                       ? 'ring-4 ring-amber-400 ring-offset-2 scale-105 shadow-2xl animate-pulse' 
@@ -1210,6 +1251,7 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
                     height: `${h}px`,
                     transform: `rotate(${node.rotation}deg)`,
                   }}
+                  data-canvas-node-id={node.id}
                   className={`canvas-node group absolute z-20 p-2.5 pb-4 rounded-xl bg-white border border-black/15 shadow-xl flex flex-col justify-between transition-shadow select-none ${
                     isSource 
                       ? 'ring-4 ring-amber-400 ring-offset-2 scale-105 shadow-2xl animate-pulse' 
@@ -1304,6 +1346,7 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
                   backgroundColor: node.colorHex,
                   transform: `rotate(${node.rotation}deg)`,
                 }}
+                data-canvas-node-id={node.id}
                 className={`canvas-node group absolute z-20 p-3 pt-5 rounded-2xl border border-black/10 shadow-lg flex flex-col justify-between transition-shadow select-none paper-ruling-lines overflow-hidden ${
                   isSource 
                     ? 'ring-4 ring-amber-400 ring-offset-2 scale-105 shadow-2xl animate-pulse' 
@@ -1385,7 +1428,7 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
         </div>
 
         {/* Bottom Right Floating Zoom & Pan Controls Bar */}
-        <div className="absolute bottom-6 right-6 z-40 flex items-center gap-1.5 p-1.5 rounded-2xl bg-black/65 dark:bg-black/75 backdrop-blur-2xl border border-white/20 shadow-2xl text-white">
+        <div className="canvas-wall-zoom floating-toolbar absolute bottom-6 right-6 z-40 flex items-center gap-1.5 p-1.5 rounded-2xl bg-black/65 dark:bg-black/75 backdrop-blur-2xl border border-white/20 shadow-2xl text-white">
           <button
             type="button"
             onClick={() => setZoomLevel(prev => Math.max(50, prev - 15))}

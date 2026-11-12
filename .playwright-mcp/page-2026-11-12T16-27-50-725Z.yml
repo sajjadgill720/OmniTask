@@ -1,0 +1,320 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e553]:
+        - button "Open Navigation" [ref=e554] [cursor=pointer]
+        - generic [ref=e556]:
+          - generic [ref=e557]: ✦
+          - generic [ref=e558]: Omni Sticky
+      - generic [ref=e5]:
+        - generic "Search tasks, jump to views, or run actions (Ctrl K)" [ref=e10] [cursor=pointer]:
+          - textbox "Search tasks..." [ref=e14]
+        - button "Switch to cozy ambient dark studio" [ref=e16] [cursor=pointer]
+        - generic [ref=e19]:
+          - button "Notifications" [ref=e20] [cursor=pointer]
+          - generic [ref=e24]: "2"
+    - generic [ref=e25]:
+      - complementary "Primary navigation" [ref=e26]:
+        - generic [ref=e28]:
+          - generic [aria-hidden] [ref=e29]: ✦
+          - generic [ref=e30]:
+            - generic [ref=e31]: Omni Sticky
+            - generic [ref=e32]: Plan · Focus · Achieve
+        - generic [ref=e37]:
+          - navigation "Main" [ref=e38]:
+            - button "My Board" [ref=e40]
+            - button "Focus Room" [ref=e44]
+            - button "Canvas Wall" [ref=e50]
+            - button "Analytics" [ref=e57]
+          - region "Workflow navigation" [ref=e61]:
+            - button "Workflow" [expanded] [ref=e62]
+            - navigation "Workflow" [ref=e66]:
+              - button "Today 8" [ref=e67]:
+                - generic [ref=e68]: Today
+                - generic [ref=e72]: "8"
+              - button "Inbox" [ref=e73]
+              - button "Upcoming 9" [ref=e79]:
+                - generic [ref=e80]: Upcoming
+                - generic [ref=e84]: "9"
+              - button "Anytime" [ref=e85]
+              - button "Someday 1" [ref=e91]:
+                - generic [ref=e92]: Someday
+                - generic [ref=e97]: "1"
+              - button "Logbook 6" [ref=e98]:
+                - generic [ref=e99]: Logbook
+                - generic [ref=e104]: "6"
+          - region "Projects navigation" [ref=e105]:
+            - generic [ref=e106]:
+              - button "Projects" [ref=e107]
+              - button "Collapse project groups" [expanded] [ref=e109]
+              - button "Create project or group" [ref=e113]
+            - generic [ref=e115]:
+              - generic [ref=e116]:
+                - button "💼 Work & Projects 1" [expanded] [ref=e117]:
+                  - generic [ref=e120]: 💼
+                  - generic [ref=e121]: Work & Projects
+                  - generic [ref=e122]: "1"
+                - button "Q4 Product Launch 0/1" [ref=e124]:
+                  - generic [ref=e128]: Q4 Product Launch
+                  - generic [ref=e129]: 0/1
+              - generic [ref=e130]:
+                - button "🌱 Personal Life 1" [expanded] [ref=e131]:
+                  - generic [ref=e134]: 🌱
+                  - generic [ref=e135]: Personal Life
+                  - generic [ref=e136]: "1"
+                - button "Health & Workout Routine 0/1" [ref=e138]:
+                  - generic [ref=e142]: Health & Workout Routine
+                  - generic [ref=e143]: 0/1
+              - button "📚 Learning & Growth" [expanded] [ref=e145]:
+                - generic [ref=e148]: 📚
+                - generic [ref=e149]: Learning & Growth
+          - region "Tools" [ref=e150]:
+            - button "Tools" [ref=e151]
+        - generic [ref=e155]:
+          - button "Small steps. Big results." [ref=e156]
+          - button "SR Sajjad Ur Rehman" [ref=e160]:
+            - generic [ref=e161]: SR
+            - generic [ref=e162]: Sajjad Ur Rehman
+      - main [ref=e166]:
+        - heading "“Small steps every day lead to remarkable places.”" [level=2] [ref=e169]
+        - generic [ref=e774]:
+          - generic [ref=e775]:
+            - generic [ref=e776]:
+              - button "Desk Workspace" [active] [ref=e1105]
+              - button "Executive Standup Wall ↗" [ref=e1106] [cursor=pointer]
+            - generic [ref=e785]:
+              - button "Normal" [ref=e1110] [cursor=pointer]
+              - button "Full card" [ref=e1114] [cursor=pointer]
+              - button "Compact" [ref=e1118] [cursor=pointer]
+          - generic "Task lanes; scroll horizontally to switch between To Do, In Progress, and Done" [ref=e1125]:
+            - generic [ref=e788]:
+              - generic [ref=e790]:
+                - generic [ref=e791]:
+                  - generic [ref=e792]: ✓
+                  - generic [ref=e793]: To Do
+                - generic [ref=e794]:
+                  - generic [ref=e795]: "7"
+                  - button "Add note to To Do" [ref=e796] [cursor=pointer]
+              - generic [ref=e798]:
+                - generic [ref=e799]:
+                  - generic [ref=e800]:
+                    - button "Click to start task" [ref=e801]
+                    - heading "Refine corporate presentation & finalize deliverables." [level=3] [ref=e802]
+                  - paragraph [ref=e803]: Write notes here...
+                  - generic [ref=e804]:
+                    - generic [ref=e805]: Today
+                    - generic [ref=e809]: Work
+                - generic [ref=e810]:
+                  - generic [ref=e811]:
+                    - button "Click to start task" [ref=e812]
+                    - heading "Deep focus on core essentials" [level=3] [ref=e813]
+                  - paragraph [ref=e814]: Eliminate friction, quiet distractions, and build with clarity.
+                  - list [ref=e815]:
+                    - listitem [ref=e816]:
+                      - generic [aria-hidden] [ref=e817]: ✓
+                      - generic [ref=e818]: Clean horizontal rules
+                    - listitem [ref=e819]:
+                      - generic [aria-hidden] [ref=e820]: ✓
+                      - generic [ref=e821]: Serene sage green paper
+                    - listitem [ref=e822]:
+                      - generic [ref=e824]: Choose from 5 tactile note shapes
+                  - generic [ref=e825]:
+                    - generic [ref=e826]: Today
+                    - generic [ref=e830]: Mindset
+                - generic [ref=e831]:
+                  - generic [ref=e832]:
+                    - button "Click to start task" [ref=e833]
+                    - heading "Weekly grocery run & meal planning" [level=3] [ref=e834]
+                  - paragraph [ref=e835]: Organic oats, almond milk, greens, and fruits.
+                  - generic [ref=e836]:
+                    - generic [ref=e837]: In 2d
+                    - generic [ref=e841]: Health
+                - generic [ref=e842]:
+                  - generic [ref=e843]:
+                    - button "Click to start task" [ref=e844]
+                    - heading "Finish RETECO paper summary" [level=3] [ref=e845]
+                  - paragraph [ref=e846]: Draft executive abstract and synthesize comparative benchmark results.
+                  - list [ref=e847]:
+                    - listitem [ref=e848]:
+                      - generic [aria-hidden] [ref=e849]: ✓
+                      - generic [ref=e850]: Analyze retrieval efficiency
+                    - listitem [ref=e851]:
+                      - generic [ref=e853]: Document latency metrics
+                  - generic [ref=e854]:
+                    - generic [ref=e855]: Tomorrow
+                    - generic [ref=e859]: Research
+                - generic [ref=e860]:
+                  - generic [ref=e861]:
+                    - button "Click to start task" [ref=e862]
+                    - heading "Prepare for CS417 LLMs exam" [level=3] [ref=e863]
+                  - paragraph [ref=e864]: Attention heads, RoPE embeddings, KV cache optimizations.
+                  - generic [ref=e865]:
+                    - generic [ref=e866]: In 3d
+                    - generic [ref=e870]: Study
+                - generic [ref=e871]:
+                  - generic [ref=e872]:
+                    - button "Click to start task" [ref=e873]
+                    - heading "Build DemoFlow v2.0" [level=3] [ref=e874]
+                  - paragraph [ref=e875]: Clean reactive canvas transitions and audio cues.
+                  - generic [ref=e876]:
+                    - generic [ref=e877]: In 4d
+                    - generic [ref=e881]: Project
+                - generic [ref=e882]:
+                  - generic [ref=e883]:
+                    - button "Click to start task" [ref=e884]
+                    - heading "Explore WebAssembly audio modules" [level=3] [ref=e885]
+                  - paragraph [ref=e886]: For advanced client-side sound processing in future updates.
+                  - generic [ref=e887]:
+                    - generic [ref=e888]: Fri, Nov 7
+                    - generic [ref=e892]: R&D
+            - generic [ref=e893]:
+              - generic [ref=e895]:
+                - generic [ref=e896]:
+                  - generic [ref=e897]: ✓
+                  - generic [ref=e898]: In Progress
+                - generic [ref=e899]:
+                  - generic [ref=e900]: "3"
+                  - button "Add note" [ref=e901] [cursor=pointer]
+              - generic [ref=e903]:
+                - generic [ref=e904]:
+                  - generic [ref=e905]:
+                    - button "✓" [ref=e906]
+                    - heading "Simplified" [level=3] [ref=e907]
+                  - paragraph [ref=e908]: Redesigned Intuitive !
+                  - list [ref=e909]:
+                    - listitem [ref=e910]:
+                      - generic [aria-hidden] [ref=e911]: ✓
+                      - generic [ref=e912]: Tactile 3D Red Pushpin
+                    - listitem [ref=e913]:
+                      - generic [aria-hidden] [ref=e914]: ✓
+                      - generic [ref=e915]: Curled 3D Post-it Note Paper
+                    - listitem [ref=e916]:
+                      - generic [aria-hidden] [ref=e917]: ✓
+                      - generic [ref=e918]: Full RGB Color Selection & Ink Effects
+                  - generic [ref=e919]:
+                    - generic [ref=e920]: Today
+                    - generic [ref=e924]: Design
+                - generic [ref=e925]:
+                  - generic [ref=e926]:
+                    - button "✓" [ref=e927]
+                    - heading "Update portfolio with new projects" [level=3] [ref=e928]
+                  - paragraph [ref=e929]: Include interactive live previews and architecture breakdowns.
+                  - generic [ref=e930]:
+                    - generic [ref=e931]: Today
+                    - generic [ref=e935]: Personal
+                - generic [ref=e936]:
+                  - generic [ref=e937]:
+                    - button "✓" [ref=e938]
+                    - heading "Research LLM evaluation methods" [level=3] [ref=e939]
+                  - paragraph [ref=e940]: Automated judge frameworks, win-rate benchmarking, rubric matrices.
+                  - generic [ref=e941]:
+                    - generic [ref=e942]: In 2d
+                    - generic [ref=e946]: Research
+            - generic [ref=e947]:
+              - generic [ref=e949]:
+                - generic [ref=e950]:
+                  - generic [ref=e951]: ✓
+                  - generic [ref=e952]: Done
+                - generic [ref=e953]: "6"
+              - generic [ref=e955]:
+                - generic [ref=e956]:
+                  - generic [ref=e957]:
+                    - button "✓" [ref=e958]
+                    - heading "New Sticky Note" [level=3] [ref=e959]
+                  - paragraph [ref=e960]: Initial project specs & deliverables.
+                  - list [ref=e961]:
+                    - listitem [ref=e962]:
+                      - generic [aria-hidden] [ref=e963]: ✓
+                      - generic [ref=e964]: Verify requirements
+                  - generic [ref=e965]:
+                    - generic [ref=e966]:
+                      - generic [ref=e967]: ✓
+                      - generic [ref=e968]: Done • 5h ago
+                    - button "Delete note" [ref=e969]
+                - generic [ref=e973]:
+                  - generic [ref=e974]:
+                    - button "✓" [ref=e975]
+                    - heading "Evening wind-down & journal reflections" [level=3] [ref=e976]
+                  - paragraph [ref=e977]: Reflect on 3 high-impact accomplishments of the day.
+                  - list [ref=e978]:
+                    - listitem [ref=e979]:
+                      - generic [aria-hidden] [ref=e980]: ✓
+                      - generic [ref=e981]: Log day focus minutes
+                    - listitem [ref=e982]:
+                      - generic [aria-hidden] [ref=e983]: ✓
+                      - generic [ref=e984]: Plan top 3 MITs for tomorrow morning
+                  - generic [ref=e985]:
+                    - generic [ref=e986]:
+                      - generic [ref=e987]: ✓
+                      - generic [ref=e988]: Done • 1d ago
+                    - button "Delete note" [ref=e989]
+                - generic [ref=e993]:
+                  - generic [ref=e994]:
+                    - button "✓" [ref=e995]
+                    - heading "Gym dashboard UI improvements" [level=3] [ref=e996]
+                  - paragraph [ref=e997]: Refactor chart components and add dark glassmorphic panels.
+                  - generic [ref=e998]:
+                    - generic [ref=e999]:
+                      - generic [ref=e1000]: ✓
+                      - generic [ref=e1001]: Done • 1d ago
+                    - button "Delete note" [ref=e1002]
+                - generic [ref=e1006]:
+                  - generic [ref=e1007]:
+                    - button "✓" [ref=e1008]
+                    - heading "Setup LangGraph agents" [level=3] [ref=e1009]
+                  - paragraph [ref=e1010]: Multi-agent state graph with conditional routing checkpoints.
+                  - generic [ref=e1011]:
+                    - generic [ref=e1012]:
+                      - generic [ref=e1013]: ✓
+                      - generic [ref=e1014]: Done • 1d ago
+                    - button "Delete note" [ref=e1015]
+                - generic [ref=e1019]:
+                  - generic [ref=e1020]:
+                    - button "✓" [ref=e1021]
+                    - heading "Email professor (Shaif Chowdhury)" [level=3] [ref=e1022]
+                  - paragraph [ref=e1023]: Send draft thesis proposal and confirm schedule for weekly 1:1.
+                  - generic [ref=e1024]:
+                    - generic [ref=e1025]:
+                      - generic [ref=e1026]: ✓
+                      - generic [ref=e1027]: Done • 1d ago
+                    - button "Delete note" [ref=e1028]
+                - generic [ref=e1032]:
+                  - generic [ref=e1033]:
+                    - button "✓" [ref=e1034]
+                    - heading "Read BART paper" [level=3] [ref=e1035]
+                  - paragraph [ref=e1036]: Sequence-to-sequence pre-training for language generation.
+                  - generic [ref=e1037]:
+                    - generic [ref=e1038]:
+                      - generic [ref=e1039]: ✓
+                      - generic [ref=e1040]: Done • 1d ago
+                    - button "Delete note" [ref=e1041]
+          - paragraph [ref=e1045]:
+            - generic [ref=e1046]: Swipe sideways to switch lanes
+            - generic [ref=e1047]: To Do · In Progress · Done
+          - generic [ref=e1048]:
+            - generic [ref=e1049]:
+              - generic [ref=e1050]:
+                - generic [ref=e1051]: Productivity Overview
+                - generic [ref=e1056] [cursor=pointer]: This Week
+              - generic [ref=e1060]:
+                - generic [ref=e1061]:
+                  - generic [ref=e1062]: 78%
+                  - generic [ref=e1063]:
+                    - generic [ref=e1064]: ↑
+                    - generic [ref=e1065]: 12%
+                - generic [ref=e1066]: Completion Rate
+            - generic [ref=e1071] [cursor=pointer]:
+              - generic [ref=e1072]:
+                - generic [ref=e1073]: Today's Momentum
+                - generic [ref=e1078]: Open insights
+              - generic [ref=e1083]:
+                - strong [ref=e1084]: "2"
+                - paragraph [ref=e1085]: notes completed today
+            - generic [ref=e1093]:
+              - generic [ref=e1094]:
+                - generic [ref=e1095]: Focus Streak
+                - generic [ref=e1099]: 12 Days
+                - generic [ref=e1100]: Keep going!
+              - generic [ref=e1103]: 🏆
+    - button "Quick Add Sticky Note (N)" [ref=e551] [cursor=pointer]
+  - region "Notifications"

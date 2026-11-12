@@ -1,0 +1,147 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e553]:
+        - button "Open Navigation" [ref=e554] [cursor=pointer]
+        - generic [ref=e556]:
+          - generic [ref=e557]: ✦
+          - generic [ref=e558]: Omni Sticky
+      - generic [ref=e5]:
+        - generic "Search tasks, jump to views, or run actions (Ctrl K)" [ref=e10] [cursor=pointer]:
+          - textbox "Search tasks..." [ref=e14]
+        - button "Switch to cozy ambient dark studio" [ref=e16] [cursor=pointer]
+        - generic [ref=e19]:
+          - button "Notifications" [ref=e20] [cursor=pointer]
+          - generic [ref=e24]: "2"
+    - generic [ref=e25]:
+      - complementary "Primary navigation" [ref=e26]:
+        - generic [ref=e28]:
+          - generic [aria-hidden] [ref=e29]: ✦
+          - generic [ref=e30]:
+            - generic [ref=e31]: Omni Sticky
+            - generic [ref=e32]: Plan · Focus · Achieve
+        - generic [ref=e37]:
+          - navigation "Main" [ref=e38]:
+            - button "My Board" [ref=e40]
+            - button "Focus Room" [ref=e44]
+            - button "Canvas Wall" [active] [ref=e50]
+            - button "Analytics" [ref=e57]
+          - region "Workflow navigation" [ref=e61]:
+            - button "Workflow" [expanded] [ref=e62]
+            - navigation "Workflow" [ref=e66]:
+              - button "Today 8" [ref=e67]:
+                - generic [ref=e68]: Today
+                - generic [ref=e72]: "8"
+              - button "Inbox" [ref=e73]
+              - button "Upcoming 9" [ref=e79]:
+                - generic [ref=e80]: Upcoming
+                - generic [ref=e84]: "9"
+              - button "Anytime" [ref=e85]
+              - button "Someday 1" [ref=e91]:
+                - generic [ref=e92]: Someday
+                - generic [ref=e97]: "1"
+              - button "Logbook 6" [ref=e98]:
+                - generic [ref=e99]: Logbook
+                - generic [ref=e104]: "6"
+          - region "Projects navigation" [ref=e105]:
+            - generic [ref=e106]:
+              - button "Projects" [ref=e107]
+              - button "Collapse project groups" [expanded] [ref=e109]
+              - button "Create project or group" [ref=e113]
+            - generic [ref=e115]:
+              - generic [ref=e116]:
+                - button "💼 Work & Projects 1" [expanded] [ref=e117]:
+                  - generic [ref=e120]: 💼
+                  - generic [ref=e121]: Work & Projects
+                  - generic [ref=e122]: "1"
+                - button "Q4 Product Launch 0/1" [ref=e124]:
+                  - generic [ref=e128]: Q4 Product Launch
+                  - generic [ref=e129]: 0/1
+              - generic [ref=e130]:
+                - button "🌱 Personal Life 1" [expanded] [ref=e131]:
+                  - generic [ref=e134]: 🌱
+                  - generic [ref=e135]: Personal Life
+                  - generic [ref=e136]: "1"
+                - button "Health & Workout Routine 0/1" [ref=e138]:
+                  - generic [ref=e142]: Health & Workout Routine
+                  - generic [ref=e143]: 0/1
+              - button "📚 Learning & Growth" [expanded] [ref=e145]:
+                - generic [ref=e148]: 📚
+                - generic [ref=e149]: Learning & Growth
+          - region "Tools" [ref=e150]:
+            - button "Tools" [ref=e151]
+        - generic [ref=e155]:
+          - button "Small steps. Big results." [ref=e156]
+          - button "SR Sajjad Ur Rehman" [ref=e160]:
+            - generic [ref=e161]: SR
+            - generic [ref=e162]: Sajjad Ur Rehman
+      - main [ref=e166]:
+        - heading "“Small steps every day lead to remarkable places.”" [level=2] [ref=e169]
+        - generic [ref=e588]:
+          - generic:
+            - generic: 💡
+            - heading "Ideas Board" [level=2]
+          - generic [ref=e589]:
+            - button "Undo (Ctrl + Z)" [disabled] [ref=e590] [cursor=pointer]
+            - button "Redo (Ctrl + Shift + Z)" [disabled] [ref=e594] [cursor=pointer]
+            - button "Zoom In" [ref=e599] [cursor=pointer]
+            - button "Zoom Out" [ref=e603] [cursor=pointer]
+            - button "Fit to Screen (100%)" [ref=e607] [cursor=pointer]
+          - generic [ref=e613]:
+            - button "Selection & Move Tool (V)" [ref=e614] [cursor=pointer]
+            - button "Add Sticky Note" [ref=e618] [cursor=pointer]
+            - 'button "Flow Connector Tool (Style: curved)" [ref=e622] [cursor=pointer]'
+            - button "Add Milestone Hub" [ref=e626] [cursor=pointer]
+            - button "Upload Multiple Photos from Device" [ref=e629] [cursor=pointer]
+            - button "Undo (Cmd/Ctrl + Z)" [disabled] [ref=e635] [cursor=pointer]
+            - button "Redo (Cmd/Ctrl + Shift + Z)" [disabled] [ref=e639] [cursor=pointer]
+          - generic [ref=e643]:
+            - img [ref=e644]:
+              - generic [ref=e645] [cursor=pointer]: ×
+              - generic [ref=e651] [cursor=pointer]: ×
+              - generic [ref=e657] [cursor=pointer]: ×
+              - generic [ref=e663] [cursor=pointer]: ×
+              - generic [ref=e669] [cursor=pointer]: ×
+              - generic [ref=e675] [cursor=pointer]: ×
+              - generic [ref=e681] [cursor=pointer]: ×
+            - generic [ref=e687]:
+              - generic [ref=e688]:
+                - heading "Omni Sticky Vision" [level=4]
+                - generic [ref=e689]: Mission
+              - button "Connect" [ref=e690] [cursor=pointer]
+            - generic [ref=e695]:
+              - paragraph: AI Productivity Assistant
+              - generic [ref=e696]: Feature
+              - button "Connect" [ref=e698] [cursor=pointer]
+            - generic [ref=e704]:
+              - paragraph: Smart Learning Path
+              - generic [ref=e705]: Feature
+              - button "Connect" [ref=e707] [cursor=pointer]
+            - generic [ref=e713]:
+              - paragraph: Financial Literacy Game
+              - generic [ref=e714]: Goal
+              - button "Connect" [ref=e716] [cursor=pointer]
+            - generic [ref=e722]:
+              - paragraph: Global Expansion
+              - generic [ref=e723]: Goal
+              - button "Connect" [ref=e725] [cursor=pointer]
+            - generic [ref=e731]:
+              - paragraph: Community Platform
+              - generic [ref=e732]: Goal
+              - button "Connect" [ref=e734] [cursor=pointer]
+            - generic [ref=e740]:
+              - paragraph: Gamification + Rewards
+              - generic [ref=e741]: Goal
+              - button "Connect" [ref=e743] [cursor=pointer]
+            - generic [ref=e749]:
+              - generic [ref=e750]:
+                - img "Aspiration 2026"
+              - generic: Aspiration 2026
+              - button "Connect" [ref=e751] [cursor=pointer]
+          - generic [ref=e757]:
+            - button "Zoom Out (-)" [ref=e758] [cursor=pointer]
+            - generic [ref=e762]: 100%
+            - button "Zoom In (+)" [ref=e763] [cursor=pointer]
+            - button "Reset Zoom & Pan" [ref=e767] [cursor=pointer]
+    - button "Quick Add Sticky Note (N)" [ref=e551] [cursor=pointer]
+  - region "Notifications"
