@@ -349,22 +349,22 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
 
         {/* 
           SOLID BEVELED WOODEN CORKBOARD FRAME
-          Amorim natural cork pinboard texture with physical depth & shadows
+          Cozy Warm Roasted Walnut Frame with Toasted Honey-Caramel Cork Texture
         */}
         <div 
-          className="w-full rounded-2xl md:rounded-3xl relative overflow-hidden border-[14px] sm:border-[18px] md:border-[20px] border-[#7D4F27]"
+          className="w-full rounded-2xl md:rounded-3xl relative overflow-hidden border-[14px] sm:border-[18px] md:border-[20px] border-[#54321A]"
           style={{
-            backgroundColor: '#B58249',
+            backgroundColor: '#8E5A2E',
             backgroundImage: `
-              radial-gradient(circle at 60% 40%, rgba(220, 165, 100, 0.45) 0%, rgba(160, 105, 55, 0.35) 60%),
-              radial-gradient(circle at 20% 80%, rgba(140, 85, 40, 0.3) 0%, transparent 50%),
-              linear-gradient(135deg, #C28F54 0%, #A67038 50%, #8C5524 100%)
+              radial-gradient(circle at 50% 30%, rgba(195, 145, 90, 0.36) 0%, rgba(120, 72, 35, 0.30) 65%),
+              radial-gradient(circle at 20% 80%, rgba(95, 52, 22, 0.28) 0%, transparent 50%),
+              linear-gradient(145deg, #996435 0%, #7E4A20 50%, #663815 100%)
             `,
             boxShadow: `
-              0 30px 60px -15px rgba(45, 25, 10, 0.50),
-              0 15px 25px -5px rgba(0, 0, 0, 0.25),
-              inset 0 4px 12px rgba(0, 0, 0, 0.45),
-              inset 0 1px 3px rgba(255, 255, 255, 0.25)
+              0 32px 64px -16px rgba(35, 18, 8, 0.58),
+              0 16px 28px -6px rgba(0, 0, 0, 0.32),
+              inset 0 6px 16px rgba(0, 0, 0, 0.52),
+              inset 0 1px 3px rgba(255, 230, 180, 0.22)
             `,
           }}
         >
@@ -373,10 +373,10 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
             className="absolute inset-0 opacity-40 mix-blend-overlay pointer-events-none"
             style={{
               backgroundImage: `
-                radial-gradient(circle at 25% 30%, #5E3814 1.5px, transparent 2px),
-                radial-gradient(circle at 75% 65%, #3E240D 1.5px, transparent 2px),
-                radial-gradient(circle at 45% 85%, #8B5827 2px, transparent 2.5px),
-                radial-gradient(circle at 85% 20%, #F5CE98 1.5px, transparent 2px)
+                radial-gradient(circle at 25% 30%, #3B1F08 1.5px, transparent 2px),
+                radial-gradient(circle at 75% 65%, #2B1505 1.5px, transparent 2px),
+                radial-gradient(circle at 45% 85%, #5E3612 2px, transparent 2.5px),
+                radial-gradient(circle at 85% 20%, #D8A572 1.5px, transparent 2px)
               `,
               backgroundSize: '40px 40px, 35px 35px, 50px 50px, 45px 45px',
             }}

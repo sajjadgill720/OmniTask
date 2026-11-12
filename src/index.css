@@ -381,17 +381,17 @@
    Hyper-Realistic Physical Wall Surfaces (Corkboard, Plaster, Dark Pegboard)
    ========================================================================== */
 
-/* 1. Warm Corkboard Texture */
+/* 1. Cozy Warm Corkboard Texture */
 .wall-cork {
-  background-color: #c49258;
+  background-color: #8E5A2E;
   background-image: 
-    radial-gradient(circle at 50% 50%, rgba(255, 230, 180, 0.18), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 20% 30%, rgba(160, 95, 40, 0.25), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 80% 70%, rgba(130, 75, 25, 0.3), transparent 70%),
-    repeating-radial-gradient(circle at 17% 23%, rgba(110, 60, 20, 0.16) 0, rgba(110, 60, 20, 0.16) 1.5px, transparent 1.5px, transparent 12px),
-    repeating-radial-gradient(circle at 67% 73%, rgba(85, 45, 15, 0.18) 0, rgba(85, 45, 15, 0.18) 1.2px, transparent 1.2px, transparent 16px),
-    linear-gradient(135deg, rgba(196, 146, 88, 1) 0%, rgba(175, 122, 68, 1) 50%, rgba(148, 98, 48, 1) 100%);
-  box-shadow: inset 0 0 100px rgba(70, 35, 10, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    radial-gradient(circle at 50% 30%, rgba(195, 145, 90, 0.36), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 20% 30%, rgba(120, 72, 35, 0.30), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 80% 70%, rgba(95, 52, 22, 0.28), transparent 70%),
+    repeating-radial-gradient(circle at 17% 23%, rgba(59, 31, 8, 0.18) 0, rgba(59, 31, 8, 0.18) 1.5px, transparent 1.5px, transparent 12px),
+    repeating-radial-gradient(circle at 67% 73%, rgba(43, 21, 5, 0.20) 0, rgba(43, 21, 5, 0.20) 1.2px, transparent 1.2px, transparent 16px),
+    linear-gradient(145deg, #996435 0%, #7E4A20 50%, #663815 100%);
+  box-shadow: inset 0 0 100px rgba(50, 25, 10, 0.55), inset 0 2px 4px rgba(255, 230, 180, 0.25);
 }
 
 /* 2. Textured Plaster Wall (Architectural Stucco / Drywall) */
@@ -541,18 +541,15 @@
   position: relative;
   margin-top: 0;
   padding: clamp(24px, 2.4vw, 36px) clamp(14px, 1.5vw, 22px) 28px;
-  border: 11px solid transparent;
-  border-radius: 13px;
-  background-color: #a96834;
+  border: 11px solid #54321A;
+  border-radius: 16px;
+  background-color: #8E5A2E;
   background-image:
-    linear-gradient(rgba(82, 43, 20, .10), rgba(82, 43, 20, .10)),
-    url('/cork-texture.png'),
-    linear-gradient(135deg, #d3944a 0%, #8b4d22 18%, #bd7937 48%, #75401f 74%, #cb8842 100%);
-  background-size: auto, 300px 300px, auto;
-  background-repeat: no-repeat, repeat, no-repeat;
-  background-origin: padding-box, padding-box, border-box;
-  background-clip: padding-box, padding-box, border-box;
-  box-shadow: inset 0 0 22px rgba(53, 29, 13, .48), 0 10px 24px rgba(50, 28, 13, .32), 0 0 0 3px rgba(236, 175, 101, .6);
+    linear-gradient(rgba(70, 35, 15, .15), rgba(70, 35, 15, .15)),
+    radial-gradient(circle at 50% 30%, rgba(195, 145, 90, 0.36) 0%, rgba(120, 72, 35, 0.30) 65%),
+    linear-gradient(145deg, #996435 0%, #7E4A20 50%, #663815 100%);
+  background-size: auto, auto, auto;
+  box-shadow: inset 0 0 26px rgba(35, 18, 8, .55), 0 16px 32px rgba(30, 15, 6, .38), 0 0 0 3px rgba(210, 155, 90, .45);
 }
 .executive-corkboard::after {
   content: '';

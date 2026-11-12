@@ -251,8 +251,8 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
 
         </div>
 
-        {/* WIDGET STAGE AREA */}
-        <div className="executive-corkboard relative flex-1 flex items-center justify-center p-3 sm:p-6 min-h-[300px] sm:min-h-[380px] max-h-[64dvh] overflow-y-auto">
+        {/* WIDGET STAGE AREA (Clean, cozy backdrop - corkboard removed) */}
+        <div className="relative flex-1 flex items-center justify-center p-3 sm:p-6 min-h-[300px] sm:min-h-[380px] max-h-[64dvh] overflow-y-auto rounded-2xl bg-black/5 dark:bg-black/35 border border-black/10 dark:border-white/10 shadow-inner">
           
           {/* 1. TODAY FOCUS WIDGET (Lockscreen & Banner Format) */}
           {activeWidget === 'today_focus' && (
@@ -472,7 +472,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
 
           {/* 3. STANDBY DESK DISPLAY WIDGET (Nightstand Clock) */}
           {activeWidget === 'standby_clock' && (
-            <div className="relative w-full max-w-lg rounded-[14px] border-[9px] border-[#956035] bg-[#774a2b] p-1.5 shadow-[0_22px_34px_-18px_rgba(25,13,6,.8),inset_0_1px_rgba(255,255,255,.35)] select-none">
+            <div className="relative w-full max-w-lg rounded-2xl border-4 border-stone-700/60 bg-stone-900/90 p-1.5 shadow-2xl select-none">
               <span aria-hidden="true" className="widget-paper-pin" />
               <div className={`${nightMode ? 'bg-[#250e0b] text-red-400 border-red-950' : 'bg-[#171714] text-amber-50 border-black'} rounded-[6px] p-5 sm:p-7 shadow-inner flex flex-col justify-between border transition-colors`}>
               
