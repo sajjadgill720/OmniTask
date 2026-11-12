@@ -166,3 +166,4 @@ test('Network Graph: search accurately matches titles and #tags and ignores non-
   assert.equal(tagMatches.length, 1);
   assert.equal(tagMatches[0].id, '1');
 });
+
