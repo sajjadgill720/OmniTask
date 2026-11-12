@@ -4,32 +4,24 @@ import {
   Clock, 
   CheckCircle2, 
   Folder, 
-  Calendar, 
-  Network, 
-  ArrowUpRight, 
-  Maximize2, 
-  Search, 
-  Filter, 
-  Star,
-  Activity,
-  ChevronRight
 } from 'lucide-react';
 import { Task, Project } from '../types';
+import { NetworkGraph } from './NetworkGraph';
 
 interface AnalyticsDashboardViewProps {
   tasks: Task[];
   projects: Project[];
   onSelectTask: (task: Task) => void;
+  onSelectProject?: (projectId: string) => void;
 }
 
 export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
   tasks,
   projects,
   onSelectTask,
+  onSelectProject,
 }) => {
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'year'>('week');
-  const [graphFilter, setGraphFilter] = useState<'all' | 'tasks' | 'projects' | 'notes'>('all');
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   // Computed metrics from real user tasks
   const completedTasks = tasks.filter(t => t.status === 'done');
@@ -95,78 +87,6 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
   const todoPct = Math.round((todoTasks.length / totalTasks) * 100) || 40;
   const inProgPct = Math.round((inProgressTasks.length / totalTasks) * 100) || 25;
   const donePct = Math.round((completedTasks.length / totalTasks) * 100) || 35;
-
-  // Real graph nodes computed from live tasks & projects
-  const graphNodes = useMemo(() => {
-    let sourceItems: { id: string; title: string; type: 'task' | 'project'; status?: string; color: string; rawTask?: Task }[] = [];
-
-    if (graphFilter === 'projects') {
-      sourceItems = projects.map(p => ({
-        id: p.id,
-        title: p.title,
-        type: 'project',
-        color: p.colorHex || '#a855f7',
-      }));
-    } else if (graphFilter === 'notes') {
-      sourceItems = tasks.filter(t => t.notes).map(t => ({
-        id: t.id,
-        title: t.title,
-        type: 'task',
-        status: t.status,
-        color: '#F8D979',
-        rawTask: t,
-      }));
-    } else if (graphFilter === 'tasks') {
-      sourceItems = tasks.map(t => ({
-        id: t.id,
-        title: t.title,
-        type: 'task',
-        status: t.status,
-        color: t.status === 'done' ? '#34d399' : t.status === 'in_progress' ? '#38bdf8' : '#fbbf24',
-        rawTask: t,
-      }));
-    } else {
-      // all
-      const taskItems = tasks.slice(0, 8).map(t => ({
-        id: t.id,
-        title: t.title,
-        type: 'task' as const,
-        status: t.status,
-        color: t.status === 'done' ? '#34d399' : t.status === 'in_progress' ? '#38bdf8' : '#fbbf24',
-        rawTask: t,
-      }));
-      const projItems = projects.slice(0, 4).map(p => ({
-        id: p.id,
-        title: p.title,
-        type: 'project' as const,
-        color: p.colorHex || '#a855f7',
-      }));
-      sourceItems = [...taskItems, ...projItems];
-    }
-
-    const count = sourceItems.length || 1;
-    const centerX = 260; // relative to canvas viewBox / container
-    const centerY = 160;
-    const radiusX = 180;
-    const radiusY = 100;
-
-    return sourceItems.map((item, idx) => {
-      const angle = (idx / count) * 2 * Math.PI - Math.PI / 2;
-      const x = Math.round(centerX + radiusX * Math.cos(angle));
-      const y = Math.round(centerY + radiusY * Math.sin(angle));
-      return {
-        ...item,
-        x: Math.max(30, Math.min(490, x)),
-        y: Math.max(25, Math.min(290, y)),
-      };
-    });
-  }, [graphFilter, tasks, projects]);
-
-  // Selected node details
-  const activeSelectedNode = useMemo(() => {
-    if (!selectedNodeId) return graphNodes[0] || null;
-    return graphNodes.find(n => n.id === selectedNodeId) || graphNodes[0] || null;
-  }, [selectedNodeId, graphNodes]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-4 select-none space-y-6">
@@ -397,169 +317,14 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
       </div>
 
       {/* =======================================================================
-          4. INTERACTIVE NETWORK GRAPH SECTION (From Sheet 2 Mockup)
+          4. INTERACTIVE KNOWLEDGE NETWORK GRAPH SECTION
           ======================================================================= */}
-      <div className="p-6 rounded-3xl bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/15 shadow-2xl text-white">
-        
-        {/* Section Header & Filter Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-white/10 gap-3">
-          <div className="flex items-center gap-2.5">
-            <Network className="w-5 h-5 text-indigo-400" />
-            <div>
-              <h3 className="font-extrabold text-base text-white">Network Graph</h3>
-              <p className="text-[10px] text-white/50">Interactive relationships between you, tasks, and projects</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Filter Pills with real counts */}
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/5 border border-white/10 text-xs">
-            {(['all', 'tasks', 'projects', 'notes'] as const).map(tab => {
-              const count = tab === 'all' 
-                ? (tasks.length + projects.length)
-                : tab === 'tasks' 
-                ? tasks.length 
-                : tab === 'projects' 
-                ? projects.length 
-                : tasks.filter(t => t.notes).length;
-
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setGraphFilter(tab)}
-                  className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer capitalize ${
-                    graphFilter === tab ? 'bg-amber-400 text-stone-950 shadow-xs' : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  {tab} ({count})
-                </button>
-              );
-            })}
-            </div>
-          </div>
-        </div>
-
-        {/* Visual Constellation Graph Container */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          
-          {/* Main Visual Constellation Canvas */}
-          <div className="lg:col-span-8 relative h-72 sm:h-80 rounded-2xl bg-gradient-to-br from-[#181520] via-[#1c1827] to-[#120f18] border border-white/10 overflow-hidden flex items-center justify-center">
-            
-            {/* SVG Connecting Luminous Beams */}
-            <svg viewBox="0 0 520 320" className="absolute inset-0 w-full h-full pointer-events-auto">
-              <defs>
-                <radialGradient id="hubHalo" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#a855f7" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="#7c3aed" stopOpacity="0.0" />
-                </radialGradient>
-              </defs>
-
-              {/* Luminous orbital connecting lines from Center (260, 160) */}
-              {graphNodes.map((node) => {
-                const isSelected = activeSelectedNode?.id === node.id;
-                return (
-                  <g key={node.id} onClick={() => setSelectedNodeId(node.id)} className="cursor-pointer group">
-                    <line
-                      x1={260}
-                      y1={160}
-                      x2={node.x}
-                      y2={node.y}
-                      stroke={node.color}
-                      strokeWidth={isSelected ? 2.5 : 1.2}
-                      opacity={isSelected ? 0.9 : 0.45}
-                      className="transition-all duration-300"
-                    />
-                    <circle 
-                      cx={node.x} 
-                      cy={node.y} 
-                      r={isSelected ? 9 : 6} 
-                      fill={node.color} 
-                      className={`transition-all duration-300 ${isSelected ? 'stroke-white stroke-2' : 'hover:scale-125'}`}
-                    />
-                    <text
-                      x={node.x}
-                      y={node.y > 160 ? node.y + 14 : node.y - 10}
-                      fill={isSelected ? '#ffffff' : 'rgba(255,255,255,0.6)'}
-                      fontSize={9}
-                      textAnchor="middle"
-                      className="font-sans font-semibold select-none pointer-events-none"
-                    >
-                      {node.title.length > 12 ? node.title.slice(0, 11) + '…' : node.title}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-
-            {/* Central "You" / Hub Node */}
-            <div 
-              onClick={() => setSelectedNodeId(null)}
-              className="relative z-10 w-16 h-16 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-amber-300 shadow-2xl flex flex-col items-center justify-center ring-4 ring-purple-400/30 cursor-pointer hover:scale-105 transition-transform"
-              title="Central Node: You"
-            >
-              <Star className="w-6 h-6 fill-white text-white drop-shadow-md" />
-              <span className="text-[9px] font-black uppercase tracking-wider text-white mt-0.5">You</span>
-            </div>
-
-          </div>
-
-          {/* Right Side: Selected Node Details Card */}
-          <div className="lg:col-span-4 p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b border-white/10">
-              <div 
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold shadow-xs"
-                style={{ backgroundColor: `${activeSelectedNode?.color || '#a855f7'}33`, color: activeSelectedNode?.color || '#a855f7' }}
-              >
-                ✦
-              </div>
-              <div className="truncate flex-1">
-                <h4 className="text-xs font-bold text-white truncate">
-                  {activeSelectedNode?.title || 'Central Hub: You'}
-                </h4>
-                <span className="text-[10px] text-white/50 capitalize">
-                  {activeSelectedNode?.type || 'Hub'} • {activeSelectedNode?.status || 'Active'}
-                </span>
-              </div>
-            </div>
-
-            {/* If task is selected, provide inspection button */}
-            {activeSelectedNode?.rawTask && (
-              <button
-                type="button"
-                onClick={() => onSelectTask(activeSelectedNode.rawTask!)}
-                className="w-full py-1.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs"
-              >
-                <span>Inspect Task Details</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </button>
-            )}
-
-            <div className="space-y-2 text-xs pt-1">
-              <span className="text-[10px] font-bold text-white/60 uppercase tracking-wider block">
-                Workstream Projects ({projects.length})
-              </span>
-              {projects.slice(0, 3).map(proj => {
-                const count = tasks.filter(t => t.projectId === proj.id).length;
-                return (
-                  <div 
-                    key={proj.id} 
-                    className="flex items-center justify-between p-2 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer transition"
-                  >
-                    <span className="flex items-center gap-1.5 truncate">
-                      <Folder className="w-3.5 h-3.5" style={{ color: proj.colorHex || '#3b82f6' }} />
-                      <span className="truncate">{proj.title}</span>
-                    </span>
-                    <span className="font-mono text-white/50 text-[10px] shrink-0">{count} tasks</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-        </div>
-
-      </div>
+      <NetworkGraph
+        tasks={tasks}
+        projects={projects}
+        onSelectTask={onSelectTask}
+        onSelectProject={onSelectProject}
+      />
 
     </div>
   );

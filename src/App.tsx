@@ -570,6 +570,10 @@ export function App() {
                 tasks={tasks}
                 projects={projects}
                 onSelectTask={setSelectedTask}
+                onSelectProject={(id) => {
+                  setSelectedProjectId(id);
+                  handleChangeViewMode('things_list');
+                }}
               />
             ) : (
               /* Workflow Stages: Today, Inbox, Upcoming, Anytime, Someday, Logbook */
