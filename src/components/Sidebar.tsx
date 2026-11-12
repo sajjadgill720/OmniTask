@@ -202,19 +202,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
               =================================================================== */}
           <nav className="space-y-1 text-xs font-semibold pb-4 border-b border-white/10">
 
-            {/* My Board (Desk Workspace & Executive Standup Wall) */}
+            {/* My Board (Executive Standup Wall & Desk Workspace) */}
             <button
               type="button"
               onClick={() => {
                 onSelectProject(null);
-                onChangeViewMode('board');
+                onChangeViewMode('canvas_3d');
                 onCloseMobile();
               }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition cursor-pointer ${(viewMode === 'board' || viewMode === 'canvas_3d') && !selectedProjectId
                   ? 'bg-white/20 text-white font-bold shadow-sm backdrop-blur-md border border-white/10'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
                 } ${isCollapsed ? 'justify-center px-0' : ''}`}
-              title="My Board (Desk Workspace & Executive Standup Wall)"
+              title="My Board (Executive Standup Wall)"
             >
               <Columns3 className="w-4 h-4 text-amber-300 shrink-0" />
               {!isCollapsed && <span>My Board</span>}

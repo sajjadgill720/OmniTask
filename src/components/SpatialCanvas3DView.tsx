@@ -4,10 +4,6 @@ import {
   Plus,
   Check,
   Calendar,
-  Zap,
-  FolderPlus,
-  FilePlus,
-  Sparkles,
   MousePointer,
   StickyNote,
   Type,
@@ -15,14 +11,11 @@ import {
   Link2,
   Grid,
   Maximize2,
-  ZoomIn,
-  ZoomOut,
   ChevronDown
 } from 'lucide-react';
 import { Task, Project } from '../types';
 import { playCompletionSound } from '../utils/permissions';
 import { RedPushPin, PinColor } from './RedPushPin';
-import { checkDueDate } from '../utils/storage';
 import confetti from 'canvas-confetti';
 
 interface SpatialCanvas3DViewProps {
@@ -43,8 +36,7 @@ interface SpatialCanvas3DViewProps {
   onOpenNewProject?: () => void;
 }
 
-// 8 Pinboard slots matching reference photo exactly
-interface CorkboardSlot {
+interface DefaultNoteDef {
   id: string;
   defaultTitle: string;
   bg: string;
@@ -54,86 +46,180 @@ interface CorkboardSlot {
   completed?: boolean;
 }
 
-const DEFAULT_SLOTS: CorkboardSlot[] = [
-  { id: 'slot-1', defaultTitle: 'Prepare presentation', bg: '#FEE575', pin: 'red', tag: 'Work', date: 'Nov 14' },
-  { id: 'slot-2', defaultTitle: 'Update portfolio with new projects', bg: '#BAEBC7', pin: 'green', tag: 'Personal', date: 'Today' },
-  { id: 'slot-3', defaultTitle: 'Plan next sprint', bg: '#FFAFA8', pin: 'blue', tag: 'Work', date: 'Nov 15' },
-  { id: 'slot-4', defaultTitle: 'Financial literacy', bg: '#DDBDF5', pin: 'blue', tag: 'Finance', date: 'Nov 11' },
-  { id: 'slot-5', defaultTitle: 'Research LLM evaluation methods', bg: '#BDE3F5', pin: 'yellow', tag: 'Research', date: 'Sat, Nov 8' },
-  { id: 'slot-6', defaultTitle: 'Gym session', bg: '#DCF0B9', pin: 'green', tag: 'Health', date: 'Today', completed: true },
+const TODO_DEFAULTS: DefaultNoteDef[] = [
+  { id: 'todo-1', defaultTitle: 'Prepare presentation', bg: '#FEE575', pin: 'red', tag: 'Work', date: 'Nov 14' },
+  { id: 'todo-2', defaultTitle: 'Financial literacy', bg: '#FFAFA8', pin: 'blue', tag: 'Finance', date: 'Nov 11' },
+  { id: 'todo-3', defaultTitle: 'Plan Q4 strategy', bg: '#FEE575', pin: 'red', tag: 'Work', date: 'Nov 16' },
 ];
 
+const IN_PROGRESS_DEFAULTS: DefaultNoteDef[] = [
+  { id: 'prog-1', defaultTitle: 'Update portfolio with new projects', bg: '#BAEBC7', pin: 'green', tag: 'Personal', date: 'Today' },
+  { id: 'prog-2', defaultTitle: 'Research LLM evaluation methods', bg: '#BDE3F5', pin: 'yellow', tag: 'Research', date: 'Sat, Nov 8' },
+  { id: 'prog-3', defaultTitle: 'Build DemoFlow v2.0', bg: '#DDBDF5', pin: 'purple', tag: 'Project', date: 'Nov 13' },
+];
+
+const DONE_DEFAULTS: DefaultNoteDef[] = [
+  { id: 'done-1', defaultTitle: 'Gym session', bg: '#FFAFA8', pin: 'blue', tag: 'Health', date: 'Today', completed: true },
+  { id: 'done-2', defaultTitle: 'Email professor (Shaif Chowdhury)', bg: '#DCF0B9', pin: 'green', tag: 'Work', date: 'Done • 1d ago', completed: true },
+];
+
+const SKYLINE_PHOTO_URL = 'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=600&q=80';
+const MOUNTAIN_PHOTO_URL = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80';
+
 export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
-  title,
-  subtitle,
   tasks,
-  projects,
   onToggleComplete,
   onSelectTask,
   audioEnabled,
   onQuickAdd,
+  onMoveTaskStatus,
   onBack,
-  onOpenNewProject,
 }) => {
   const [activeTool, setActiveTool] = useState<'select' | 'sticky' | 'text' | 'image' | 'link' | 'grid'>('sticky');
-  const [memoText, setMemoText] = useState('Keep going! 😊');
+  const [memoText, setMemoText] = useState('Dream Bigger 😊');
   const [isEditingMemo, setIsEditingMemo] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<Task['status'] | null>(null);
 
-  // Map real tasks onto slots
-  const displayedNotes = useMemo(() => {
-    return DEFAULT_SLOTS.map((slot, idx) => {
-      const realTask = tasks[idx];
+  // Group real tasks by status
+  const realTodo = useMemo(() => tasks.filter(t => t.status === 'todo'), [tasks]);
+  const realInProgress = useMemo(() => tasks.filter(t => t.status === 'in_progress'), [tasks]);
+  const realDone = useMemo(() => tasks.filter(t => t.status === 'done'), [tasks]);
+
+  // Merge real tasks with reference slots so the board is always full and beautiful
+  const todoItems = useMemo(() => {
+    return TODO_DEFAULTS.map((def, idx) => {
+      const real = realTodo[idx];
       return {
-        slot,
-        task: realTask || {
-          id: `virtual_${slot.id}`,
-          title: slot.defaultTitle,
-          status: slot.completed ? 'done' : 'todo',
+        def,
+        task: real || ({
+          id: `virtual_${def.id}`,
+          title: def.defaultTitle,
+          status: 'todo',
           priority: 'normal',
-          tags: [slot.tag],
+          tags: [def.tag],
           section: 'today',
-          colorHex: slot.bg,
+          colorHex: def.bg,
           checklists: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           timeSpentSeconds: 0,
-        } as Task,
+        } as Task),
       };
     });
-  }, [tasks]);
+  }, [realTodo]);
 
-  // Upcoming real tasks
-  const upcomingTasks = useMemo(() => {
-    return tasks
-      .filter(t => t.status !== 'done' && t.dueDate)
-      .slice(0, 3);
-  }, [tasks]);
+  const inProgressItems = useMemo(() => {
+    return IN_PROGRESS_DEFAULTS.map((def, idx) => {
+      const real = realInProgress[idx];
+      return {
+        def,
+        task: real || ({
+          id: `virtual_${def.id}`,
+          title: def.defaultTitle,
+          status: 'in_progress',
+          priority: 'normal',
+          tags: [def.tag],
+          section: 'today',
+          colorHex: def.bg,
+          checklists: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          timeSpentSeconds: 0,
+        } as Task),
+      };
+    });
+  }, [realInProgress]);
 
+  const doneItems = useMemo(() => {
+    return DONE_DEFAULTS.map((def, idx) => {
+      const real = realDone[idx];
+      return {
+        def,
+        task: real || ({
+          id: `virtual_${def.id}`,
+          title: def.defaultTitle,
+          status: 'done',
+          priority: 'normal',
+          tags: [def.tag],
+          section: 'today',
+          colorHex: def.bg,
+          checklists: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          timeSpentSeconds: 0,
+        } as Task),
+      };
+    });
+  }, [realDone]);
+
+  // Completion toggle with sound and confetti
   const handleCheckTask = (e: React.MouseEvent, task: Task) => {
     e.stopPropagation();
     onToggleComplete(task.id);
     if (audioEnabled) playCompletionSound();
     if (task.status !== 'done') {
       confetti({
-        particleCount: 25,
-        spread: 55,
+        particleCount: 30,
+        spread: 60,
         origin: { y: 0.65 },
         colors: ['#FEE575', '#BAEBC7', '#FFAFA8', '#3B82F6'],
       });
     }
   };
 
-  const mountainPhotoUrl = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80";
+  // Drag and drop handlers between corkboard columns
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    e.dataTransfer.setData('text/plain', taskId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleColumnDragOver = (e: React.DragEvent, status: Task['status']) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverCol !== status) {
+      setDragOverCol(status);
+    }
+  };
+
+  const handleColumnDrop = (e: React.DragEvent, targetStatus: Task['status']) => {
+    e.preventDefault();
+    setDragOverCol(null);
+    const taskId = e.dataTransfer.getData('text/plain');
+    if (!taskId) return;
+
+    if (onMoveTaskStatus) {
+      onMoveTaskStatus(taskId, targetStatus);
+    } else {
+      const found = tasks.find(t => t.id === taskId);
+      if (found) {
+        if (targetStatus === 'done' && found.status !== 'done') {
+          onToggleComplete(taskId);
+        } else if (targetStatus !== 'done' && found.status === 'done') {
+          onToggleComplete(taskId);
+        }
+      }
+    }
+
+    if (audioEnabled) playCompletionSound();
+    if (targetStatus === 'done') {
+      confetti({
+        particleCount: 35,
+        spread: 60,
+        origin: { y: 0.7 },
+        colors: ['#FEE575', '#BAEBC7', '#FFAFA8', '#3B82F6'],
+      });
+    }
+  };
 
   return (
     <div className="w-full flex items-start justify-center gap-3 sm:gap-4 lg:gap-5 pb-8 select-none font-sans">
       
       {/* 
-        1. FLOATING VERTICAL TOOL PALETTE (Docked Next to Left Sidebar)
+        1. FLOATING VERTICAL TOOL PALETTE (Docked beside left sidebar)
         Matching Reference Photo: [ ↖, 📝 (active), T, 🖼️, 🔗, ⊞ ]
       */}
-      <div className="shrink-0 flex flex-col gap-2 p-1.5 bg-black/65 dark:bg-black/80 backdrop-blur-md rounded-2xl border border-white/15 shadow-2xl z-20 mt-10">
+      <div className="shrink-0 flex flex-col gap-2 p-1.5 bg-black/65 dark:bg-black/80 backdrop-blur-md rounded-2xl border border-white/15 shadow-2xl z-20 mt-12">
         <button
           type="button"
           onClick={() => setActiveTool('select')}
@@ -147,33 +233,42 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
 
         <button
           type="button"
-          onClick={() => setActiveTool('sticky')}
+          onClick={() => {
+            setActiveTool('sticky');
+            onQuickAdd('todo');
+          }}
           className={`p-2 rounded-xl transition cursor-pointer ${
             activeTool === 'sticky' ? 'bg-amber-400 text-stone-950 font-bold shadow-xs' : 'text-stone-300 hover:text-white hover:bg-white/10'
           }`}
-          title="Sticky Note Tool (📝)"
+          title="Sticky Note Tool (📝) - Click to add note"
         >
           <StickyNote className="w-4 h-4" />
         </button>
 
         <button
           type="button"
-          onClick={() => setActiveTool('text')}
+          onClick={() => {
+            setActiveTool('text');
+            setIsEditingMemo(true);
+          }}
           className={`p-2 rounded-xl transition cursor-pointer ${
             activeTool === 'text' ? 'bg-white/20 text-white' : 'text-stone-300 hover:text-white hover:bg-white/10'
           }`}
-          title="Text Tool (T)"
+          title="Text Tool (T) - Edit corkboard memo"
         >
           <Type className="w-4 h-4" />
         </button>
 
         <button
           type="button"
-          onClick={() => setActiveTool('image')}
+          onClick={() => {
+            setActiveTool('image');
+            setSelectedPhoto(SKYLINE_PHOTO_URL);
+          }}
           className={`p-2 rounded-xl transition cursor-pointer ${
             activeTool === 'image' ? 'bg-white/20 text-white' : 'text-stone-300 hover:text-white hover:bg-white/10'
           }`}
-          title="Image Tool (🖼️)"
+          title="Image Tool (🖼️) - View photographs"
         >
           <ImageIcon className="w-4 h-4" />
         </button>
@@ -202,13 +297,14 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
       </div>
 
       {/* 
-        2. CENTERPIECE: SOLID WOODEN BEVELED CORKBOARD
-        Amorim natural cork pinboard with 6 pinned sticky notes + 1 Polaroid + 1 Memo
+        2. CENTERPIECE: SOLID BEVELED WOODEN CORKBOARD
+        Pure centerpiece — NO DUPLICATE right sidebar here!
+        (StudioRightPanel.tsx on the far right handles the Upcoming, Quick Actions, and Productivity panels)
       */}
-      <div className="flex-1 min-w-0 max-w-4xl flex flex-col items-center">
+      <div className="flex-1 min-w-0 max-w-5xl flex flex-col items-center">
         
         {/* Header Pill Capsule Above Corkboard */}
-        <div className="w-full flex items-center justify-between p-2 mb-2 bg-white/40 dark:bg-black/30 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm gap-2">
+        <div className="w-full flex items-center justify-between p-2 mb-2.5 bg-white/45 dark:bg-black/35 backdrop-blur-md rounded-2xl border border-white/50 dark:border-white/15 shadow-sm gap-2">
           <div className="flex items-center gap-2">
             {onBack && (
               <button
@@ -224,26 +320,26 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
 
             <div className="flex items-center gap-1.5">
               <span className="text-base">🏛️</span>
-              <span className="font-bold text-sm text-stone-900 tracking-tight">Executive Standup Wall</span>
-              <span className="px-2 py-0.5 rounded-full bg-amber-400/30 text-amber-900 text-[11px] font-mono font-bold">
+              <span className="font-bold text-sm text-stone-900 dark:text-white tracking-tight">Executive Standup Wall</span>
+              <span className="px-2 py-0.5 rounded-full bg-amber-400/30 text-amber-900 dark:text-amber-200 text-[11px] font-mono font-bold">
                 {tasks.length} Deliverables
               </span>
             </div>
           </div>
 
-          <p className="text-[11px] text-stone-600 font-medium hidden md:block">
+          <p className="text-[11px] text-stone-600 dark:text-stone-300 font-medium hidden md:block">
             Corporate Sprint Review • Live physical digital twin of your team workspace.
           </p>
 
           {/* Zoom / Fullscreen Suite */}
           <div className="flex items-center gap-1">
-            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-black/60 text-white text-xs font-mono font-bold shadow-xs">
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-black/60 text-white text-xs font-mono font-bold shadow-xs">
               <span>100%</span>
               <ChevronDown className="w-3 h-3 text-stone-300" />
             </div>
             <button
               type="button"
-              className="p-1 rounded-lg bg-black/60 text-white hover:bg-black/80 transition cursor-pointer shadow-xs"
+              className="p-1.5 rounded-lg bg-black/60 text-white hover:bg-black/80 transition cursor-pointer shadow-xs"
               title="Fullscreen"
             >
               <Maximize2 className="w-3.5 h-3.5" />
@@ -265,10 +361,10 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
               linear-gradient(135deg, #C28F54 0%, #A67038 50%, #8C5524 100%)
             `,
             boxShadow: `
-              0 30px 60px -15px rgba(45, 25, 10, 0.45),
-              0 15px 25px -5px rgba(0, 0, 0, 0.2),
-              inset 0 4px 12px rgba(0, 0, 0, 0.4),
-              inset 0 1px 3px rgba(255, 255, 255, 0.2)
+              0 30px 60px -15px rgba(45, 25, 10, 0.50),
+              0 15px 25px -5px rgba(0, 0, 0, 0.25),
+              inset 0 4px 12px rgba(0, 0, 0, 0.45),
+              inset 0 1px 3px rgba(255, 255, 255, 0.25)
             `,
           }}
         >
@@ -287,300 +383,386 @@ export const SpatialCanvas3DView: React.FC<SpatialCanvas3DViewProps> = ({
           />
 
           {/* 
-            PINNED CONTENT GRID ON CORKBOARD (2 Rows x 4 Columns)
-            Matching Reference Photo Exactly!
+            3-COLUMN PHYSICAL PINBOARD WORKSPACE
+            Matching media_1794486913010_1bde6093.jpg:
+            Column 1: TO DO (Tape Header, Skyline Photo, Torn Memo, 3 Notes)
+            Column 2: IN PROGRESS (Tape Header, 3 Notes)
+            Column 3: DONE (Tape Header, 2 Checked Notes, Mountain Photo w/ Binder Clip)
           */}
-          <div className="relative z-10 w-full p-4 sm:p-6 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 md:gap-5 items-start justify-items-center">
+          <div className="relative z-10 w-full p-4 sm:p-5 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 items-start">
             
-            {/* ROW 1: Note 1 (Yellow), Note 2 (Green), Note 3 (Pink), Mountain Polaroid */}
-            {displayedNotes.slice(0, 3).map(({ slot, task }, idx) => {
-              const isDone = task.status === 'done';
-              const rotation = idx === 0 ? -1.5 : idx === 1 ? 0.8 : -1.2;
-
-              return (
-                <div
-                  key={task.id}
-                  onClick={() => onSelectTask(task)}
-                  className="group relative w-36 h-36 sm:w-40 sm:h-40 md:w-44 md:h-44 p-3 rounded-xs flex flex-col justify-between transition-all duration-200 hover:scale-105 hover:-translate-y-1 hover:z-30 cursor-pointer shadow-lg select-none"
-                  style={{
-                    transform: `rotate(${rotation}deg)`,
-                    backgroundColor: slot.bg,
-                    boxShadow: '0 12px 24px -4px rgba(45, 25, 10, 0.32), 0 3px 6px rgba(0,0,0,0.12)',
-                  }}
-                  title="Click sticky note to open in full detail"
-                >
-                  {/* 3D Push-Pin at Top Center */}
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 pointer-events-none drop-shadow-md">
-                    <RedPushPin size={30} color={slot.pin} />
-                  </div>
-
-                  {/* Top Row: Checkbox */}
-                  <div className="flex items-center justify-between pt-1">
-                    <button
-                      type="button"
-                      onClick={(e) => handleCheckTask(e, task)}
-                      className={`w-4 h-4 rounded-full border flex items-center justify-center transition cursor-pointer ${
-                        isDone 
-                          ? 'bg-emerald-600 border-emerald-700 text-white' 
-                          : 'border-stone-800/40 hover:border-stone-900 bg-black/5 hover:bg-black/10'
-                      }`}
-                      title={isDone ? 'Mark as Incomplete' : 'Mark as Complete'}
-                    >
-                      {isDone && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                    </button>
-                  </div>
-
-                  {/* Note Title in Authentic Marker Handwriting */}
-                  <div className="my-auto px-0.5">
-                    <p className={`font-handwriting font-bold text-stone-900 text-base sm:text-lg leading-tight line-clamp-3 ${
-                      isDone ? 'line-through opacity-55' : ''
-                    }`}>
-                      {task.title}
-                    </p>
-                  </div>
-
-                  {/* Bottom Meta: Date & Tag */}
-                  <div className="pt-1 flex items-center justify-between text-[10px] font-bold border-t border-black/10">
-                    <span className="text-stone-700/80">{slot.date}</span>
-                    <span className="px-1.5 py-0.5 rounded-xs bg-black/10 text-stone-900 font-sans text-[9px]">
-                      {slot.tag}
-                    </span>
-                  </div>
-
-                  {/* Paper Dog-Ear Curl */}
-                  <div className="paper-dogear-curl" />
-                </div>
-              );
-            })}
-
-            {/* Alpine Mountain Polaroid Photo with Black Binder Clip */}
+            {/* =======================================================================
+                COLUMN 1: TO DO
+                ======================================================================= */}
             <div 
-              onClick={() => setSelectedPhoto(mountainPhotoUrl)}
-              className="relative w-36 sm:w-40 md:w-44 bg-white p-2.5 pb-4 rounded-xs shadow-xl rotate-[1.5deg] hover:scale-105 hover:z-30 transition-all cursor-pointer group"
-              style={{
-                boxShadow: '0 15px 30px -5px rgba(45, 25, 10, 0.38), 0 4px 8px rgba(0,0,0,0.15)',
-              }}
-              title="Click photo to view full image"
+              onDragOver={(e) => handleColumnDragOver(e, 'todo')}
+              onDragLeave={() => setDragOverCol(null)}
+              onDrop={(e) => handleColumnDrop(e, 'todo')}
+              className={`flex flex-col items-center gap-3.5 transition-all duration-200 rounded-2xl p-1.5 ${
+                dragOverCol === 'todo' ? 'bg-black/10 ring-2 ring-amber-400' : ''
+              }`}
             >
-              {/* Black Metal Binder Clip at Top Center */}
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center pointer-events-none drop-shadow-md">
-                <div className="w-5 h-4 border-2 border-stone-300 rounded-t-sm mb-[-2px]" />
-                <div className="w-7 h-3.5 bg-stone-900 rounded-xs shadow-xs border border-stone-800" />
-              </div>
-
-              {/* Photo Image */}
-              <div className="w-full aspect-4/3 overflow-hidden rounded-2xs bg-stone-100">
-                <img 
-                  src={mountainPhotoUrl} 
-                  alt="Alpine Mountain Summit" 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                />
-              </div>
-            </div>
-
-            {/* ROW 2: Note 4 (Purple), Note 5 (Blue), Note 6 (Lime - Checked), Crumpled Memo */}
-            {displayedNotes.slice(3, 6).map(({ slot, task }, idx) => {
-              const isDone = task.status === 'done' || slot.completed;
-              const rotation = idx === 0 ? 1.0 : idx === 1 ? -1.8 : 0.5;
-
-              return (
-                <div
-                  key={task.id}
-                  onClick={() => onSelectTask(task)}
-                  className="group relative w-36 h-36 sm:w-40 sm:h-40 md:w-44 md:h-44 p-3 rounded-xs flex flex-col justify-between transition-all duration-200 hover:scale-105 hover:-translate-y-1 hover:z-30 cursor-pointer shadow-lg select-none"
-                  style={{
-                    transform: `rotate(${rotation}deg)`,
-                    backgroundColor: slot.bg,
-                    boxShadow: '0 12px 24px -4px rgba(45, 25, 10, 0.32), 0 3px 6px rgba(0,0,0,0.12)',
-                  }}
-                  title="Click sticky note to open in full detail"
-                >
-                  {/* 3D Push-Pin at Top Center */}
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 pointer-events-none drop-shadow-md">
-                    <RedPushPin size={30} color={slot.pin} />
-                  </div>
-
-                  {/* Top Row: Checkbox */}
-                  <div className="flex items-center justify-between pt-1">
-                    <button
-                      type="button"
-                      onClick={(e) => handleCheckTask(e, task)}
-                      className={`w-4 h-4 rounded-full border flex items-center justify-center transition cursor-pointer ${
-                        isDone 
-                          ? 'bg-emerald-600 border-emerald-700 text-white' 
-                          : 'border-stone-800/40 hover:border-stone-900 bg-black/5 hover:bg-black/10'
-                      }`}
-                      title={isDone ? 'Mark as Incomplete' : 'Mark as Complete'}
-                    >
-                      {isDone && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                    </button>
-                  </div>
-
-                  {/* Note Title in Authentic Marker Handwriting */}
-                  <div className="my-auto px-0.5">
-                    <p className={`font-handwriting font-bold text-stone-900 text-base sm:text-lg leading-tight line-clamp-3 ${
-                      isDone ? 'line-through opacity-55' : ''
-                    }`}>
-                      {task.title}
-                    </p>
-                  </div>
-
-                  {/* Bottom Meta: Date & Tag */}
-                  <div className="pt-1 flex items-center justify-between text-[10px] font-bold border-t border-black/10">
-                    <span className="text-stone-700/80">{slot.date}</span>
-                    <span className="px-1.5 py-0.5 rounded-xs bg-black/10 text-stone-900 font-sans text-[9px]">
-                      {slot.tag}
-                    </span>
-                  </div>
-
-                  {/* Paper Dog-Ear Curl */}
-                  <div className="paper-dogear-curl" />
-                </div>
-              );
-            })}
-
-            {/* Crumpled Craft Paper Memo: "Keep going! 😊" */}
-            <div 
-              onClick={() => setIsEditingMemo(true)}
-              className="relative w-36 sm:w-40 md:w-44 p-3.5 pt-4.5 rounded-xs rotate-[1.5deg] shadow-lg hover:scale-105 hover:z-30 transition-all cursor-pointer select-none"
-              style={{
-                backgroundColor: '#F5EBE1',
-                backgroundImage: 'radial-gradient(circle at 50% 50%, #FAF5EE 0%, #E8D9C8 100%)',
-                boxShadow: '0 10px 20px -3px rgba(45, 25, 10, 0.28), 0 2px 5px rgba(0,0,0,0.1)',
-              }}
-              title="Click to edit personal memo"
-            >
-              {/* Semi-translucent Masking Tape at Top */}
+              {/* Masking Tape Header: TO DO */}
               <div 
-                className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-30 w-14 h-4 shadow-xs border-y border-white/20 pointer-events-none"
+                className="relative px-6 py-1.5 shadow-md border-y border-stone-300/40 select-none flex items-center justify-between gap-3 w-44 sm:w-48"
                 style={{
-                  backgroundColor: 'rgba(225, 175, 110, 0.85)',
-                  transform: 'rotate(2deg)',
+                  backgroundColor: '#F5EBE1',
+                  backgroundImage: 'linear-gradient(90deg, #EFE2D3 0%, #F8F1E7 50%, #EFE2D3 100%)',
+                  transform: 'rotate(-0.8deg)',
+                  boxShadow: '0 3px 6px -1px rgba(45, 25, 10, 0.35)',
                 }}
-              />
-
-              {/* Memo Text in Ballpoint Ink */}
-              {isEditingMemo ? (
-                <input
-                  type="text"
-                  autoFocus
-                  value={memoText}
-                  onChange={(e) => setMemoText(e.target.value)}
-                  onBlur={() => setIsEditingMemo(false)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') setIsEditingMemo(false); }}
-                  className="w-full font-handwriting text-xl font-black text-stone-900 bg-transparent border-b border-black/20 outline-none text-center"
-                />
-              ) : (
-                <div className="text-center py-2.5">
-                  <p className="font-handwriting font-black text-2xl text-stone-900 leading-tight">
-                    {memoText}
-                  </p>
-                </div>
-              )}
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      {/* 
-        3. RIGHT SIDEBAR WORKSPACE PANELS (Matching Reference Photo)
-        - Upcoming panel
-        - Quick Actions panel
-        - You're doing great! card
-      */}
-      <div className="w-64 sm:w-72 xl:w-80 flex flex-col gap-3 z-20 shrink-0">
-        
-        {/* 1. UPCOMING PANEL */}
-        <div className="p-4 rounded-2xl bg-white/70 dark:bg-black/40 backdrop-blur-md border border-stone-200/60 dark:border-white/10 shadow-lg text-stone-900 dark:text-white">
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-stone-200 dark:border-white/10">
-            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-800 dark:text-amber-300">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Upcoming</span>
-            </div>
-            <span className="text-[10px] font-bold text-stone-500 hover:text-stone-900 dark:text-stone-300 cursor-pointer">
-              View all →
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            <div className="p-2 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="text-xs font-medium">CS251 DAA Assignment</span>
-              </div>
-              <span className="text-[10px] text-stone-500 dark:text-stone-400">Tomorrow</span>
-            </div>
-
-            <div className="p-2 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-purple-500" />
-                <span className="text-xs font-medium">NTAC Planning Meeting</span>
-              </div>
-              <span className="text-[10px] text-stone-500 dark:text-stone-400">Fri, 4:00 PM</span>
-            </div>
-
-            <div className="p-2 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
-                <span className="text-xs font-medium">SemEval RETECO Review</span>
-              </div>
-              <span className="text-[10px] text-stone-500 dark:text-stone-400">Sat, 6:00 PM</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 2. QUICK ACTIONS PANEL */}
-        <div className="p-4 rounded-2xl bg-white/70 dark:bg-black/40 backdrop-blur-md border border-stone-200/60 dark:border-white/10 shadow-lg text-stone-900 dark:text-white">
-          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-300 pb-2 mb-2 border-b border-stone-200 dark:border-white/10">
-            <Zap className="w-3.5 h-3.5" />
-            <span>Quick Actions</span>
-          </div>
-
-          <div className="space-y-1.5">
-            <button
-              type="button"
-              onClick={() => onQuickAdd('todo')}
-              className="w-full py-2 px-3 rounded-xl bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 transition flex items-center gap-2 text-xs font-bold cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 text-amber-600 dark:text-amber-300" />
-              <span>+ Add Task</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onQuickAdd('todo')}
-              className="w-full py-2 px-3 rounded-xl bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 transition flex items-center gap-2 text-xs font-bold cursor-pointer"
-            >
-              <FilePlus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-300" />
-              <span>New Note</span>
-            </button>
-
-            {onOpenNewProject && (
-              <button
-                type="button"
-                onClick={onOpenNewProject}
-                className="w-full py-2 px-3 rounded-xl bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 transition flex items-center gap-2 text-xs font-bold cursor-pointer"
               >
-                <FolderPlus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-300" />
-                <span>New Project</span>
-              </button>
-            )}
-          </div>
-        </div>
+                <span className="font-handwriting font-black text-lg text-stone-900 tracking-wider">
+                  TO DO
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onQuickAdd('todo')}
+                  className="w-5 h-5 rounded-full hover:bg-stone-900/10 text-stone-800 flex items-center justify-center transition cursor-pointer"
+                  title="Add note to TO DO"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                </button>
+              </div>
 
-        {/* 3. MOTIVATIONAL PROGRESS CARD */}
-        <div className="p-3.5 rounded-2xl bg-white/70 dark:bg-black/40 backdrop-blur-md border border-stone-200/60 dark:border-white/10 shadow-lg flex items-center justify-between text-stone-900 dark:text-white">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
-            <div>
-              <p className="text-xs font-bold">You're doing great!</p>
-              <p className="text-[10px] text-stone-500 dark:text-stone-300">Keep going, on track →</p>
+              {/* Skyline Sunset Polaroid Photo */}
+              <div 
+                onClick={() => setSelectedPhoto(SKYLINE_PHOTO_URL)}
+                className="relative w-36 sm:w-40 bg-white p-2 pb-3.5 rounded-xs shadow-xl rotate-[-2deg] hover:scale-105 hover:z-30 transition-all cursor-pointer group"
+                style={{
+                  boxShadow: '0 12px 24px -4px rgba(45, 25, 10, 0.38), 0 3px 6px rgba(0,0,0,0.15)',
+                }}
+                title="Click photo to view full image"
+              >
+                {/* 3D Pushpin at Top */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-30 pointer-events-none drop-shadow-md">
+                  <RedPushPin size={26} color="red" />
+                </div>
+
+                <div className="w-full aspect-4/3 overflow-hidden rounded-2xs bg-stone-100">
+                  <img 
+                    src={SKYLINE_PHOTO_URL} 
+                    alt="City Skyline Sunset" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                  />
+                </div>
+              </div>
+
+              {/* Torn Craft Paper Memo: "Dream Bigger 😊" */}
+              <div 
+                onClick={() => setIsEditingMemo(true)}
+                className="relative w-36 sm:w-40 p-2.5 pt-3.5 rounded-xs rotate-[2deg] shadow-lg hover:scale-105 hover:z-30 transition-all cursor-pointer select-none"
+                style={{
+                  backgroundColor: '#F5EBE1',
+                  backgroundImage: 'radial-gradient(circle at 50% 50%, #FAF5EE 0%, #E8D9C8 100%)',
+                  boxShadow: '0 8px 18px -3px rgba(45, 25, 10, 0.28), 0 2px 4px rgba(0,0,0,0.1)',
+                }}
+                title="Click to edit personal memo"
+              >
+                {/* Masking Tape at Top */}
+                <div 
+                  className="absolute -top-2 left-1/2 -translate-x-1/2 z-30 w-12 h-3.5 shadow-xs border-y border-white/20 pointer-events-none"
+                  style={{
+                    backgroundColor: 'rgba(225, 175, 110, 0.85)',
+                    transform: 'rotate(-1.5deg)',
+                  }}
+                />
+
+                {isEditingMemo ? (
+                  <input
+                    type="text"
+                    autoFocus
+                    value={memoText}
+                    onChange={(e) => setMemoText(e.target.value)}
+                    onBlur={() => setIsEditingMemo(false)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') setIsEditingMemo(false); }}
+                    className="w-full font-handwriting text-lg font-black text-stone-900 bg-transparent border-b border-black/20 outline-none text-center"
+                  />
+                ) : (
+                  <div className="text-center py-1">
+                    <p className="font-handwriting font-black text-xl text-stone-900 leading-tight">
+                      {memoText}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Pinned Sticky Notes in TO DO */}
+              {todoItems.map(({ def, task }, idx) => {
+                const rotation = idx === 0 ? -1.2 : idx === 1 ? 1.0 : -0.8;
+                const isDone = task.status === 'done';
+
+                return (
+                  <div
+                    key={task.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, task.id)}
+                    onClick={() => onSelectTask(task)}
+                    className="group relative w-36 h-36 sm:w-40 sm:h-40 md:w-44 md:h-44 p-3 rounded-xs flex flex-col justify-between transition-all duration-200 hover:scale-105 hover:-translate-y-1 hover:z-30 cursor-grab active:cursor-grabbing shadow-lg select-none"
+                    style={{
+                      transform: `rotate(${rotation}deg)`,
+                      backgroundColor: def.bg,
+                      boxShadow: '0 12px 24px -4px rgba(45, 25, 10, 0.32), 0 3px 6px rgba(0,0,0,0.12)',
+                    }}
+                    title="Click to open sticky note in full detail • Drag to move columns"
+                  >
+                    {/* 3D Push-Pin at Top Center */}
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 pointer-events-none drop-shadow-md">
+                      <RedPushPin size={30} color={def.pin} />
+                    </div>
+
+                    {/* Top Row: Checkbox */}
+                    <div className="flex items-center justify-between pt-1">
+                      <button
+                        type="button"
+                        onClick={(e) => handleCheckTask(e, task)}
+                        className={`w-4 h-4 rounded-full border flex items-center justify-center transition cursor-pointer ${
+                          isDone 
+                            ? 'bg-emerald-600 border-emerald-700 text-white' 
+                            : 'border-stone-800/40 hover:border-stone-900 bg-black/5 hover:bg-black/10'
+                        }`}
+                        title={isDone ? 'Mark as Incomplete' : 'Mark as Complete'}
+                      >
+                        {isDone && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                      </button>
+                    </div>
+
+                    {/* Note Title in Authentic Marker Handwriting */}
+                    <div className="my-auto px-0.5">
+                      <p className={`font-handwriting font-bold text-stone-900 text-base sm:text-lg leading-tight line-clamp-3 ${
+                        isDone ? 'line-through opacity-55' : ''
+                      }`}>
+                        {task.title}
+                      </p>
+                    </div>
+
+                    {/* Bottom Meta: Date & Tag */}
+                    <div className="pt-1 flex items-center justify-between text-[10px] font-bold border-t border-black/10">
+                      <span className="text-stone-700/80">{def.date}</span>
+                      <span className="px-1.5 py-0.5 rounded-xs bg-black/10 text-stone-900 font-sans text-[9px]">
+                        {def.tag}
+                      </span>
+                    </div>
+
+                    {/* Paper Dog-Ear Curl */}
+                    <div className="paper-dogear-curl" />
+                  </div>
+                );
+              })}
             </div>
-          </div>
-          <span className="text-xl">🏔️</span>
-        </div>
 
+            {/* =======================================================================
+                COLUMN 2: IN PROGRESS
+                ======================================================================= */}
+            <div 
+              onDragOver={(e) => handleColumnDragOver(e, 'in_progress')}
+              onDragLeave={() => setDragOverCol(null)}
+              onDrop={(e) => handleColumnDrop(e, 'in_progress')}
+              className={`flex flex-col items-center gap-3.5 transition-all duration-200 rounded-2xl p-1.5 ${
+                dragOverCol === 'in_progress' ? 'bg-black/10 ring-2 ring-amber-400' : ''
+              }`}
+            >
+              {/* Masking Tape Header: IN PROGRESS */}
+              <div 
+                className="relative px-6 py-1.5 shadow-md border-y border-stone-300/40 select-none flex items-center justify-between gap-3 w-48 sm:w-52"
+                style={{
+                  backgroundColor: '#F5EBE1',
+                  backgroundImage: 'linear-gradient(90deg, #EFE2D3 0%, #F8F1E7 50%, #EFE2D3 100%)',
+                  transform: 'rotate(0.6deg)',
+                  boxShadow: '0 3px 6px -1px rgba(45, 25, 10, 0.35)',
+                }}
+              >
+                <span className="font-handwriting font-black text-lg text-stone-900 tracking-wider">
+                  IN PROGRESS
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onQuickAdd('in_progress')}
+                  className="w-5 h-5 rounded-full hover:bg-stone-900/10 text-stone-800 flex items-center justify-center transition cursor-pointer"
+                  title="Add note to IN PROGRESS"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                </button>
+              </div>
+
+              {/* Pinned Sticky Notes in IN PROGRESS */}
+              {inProgressItems.map(({ def, task }, idx) => {
+                const rotation = idx === 0 ? 0.8 : idx === 1 ? -1.5 : 1.2;
+                const isDone = task.status === 'done';
+
+                return (
+                  <div
+                    key={task.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, task.id)}
+                    onClick={() => onSelectTask(task)}
+                    className="group relative w-36 h-36 sm:w-40 sm:h-40 md:w-44 md:h-44 p-3 rounded-xs flex flex-col justify-between transition-all duration-200 hover:scale-105 hover:-translate-y-1 hover:z-30 cursor-grab active:cursor-grabbing shadow-lg select-none"
+                    style={{
+                      transform: `rotate(${rotation}deg)`,
+                      backgroundColor: def.bg,
+                      boxShadow: '0 12px 24px -4px rgba(45, 25, 10, 0.32), 0 3px 6px rgba(0,0,0,0.12)',
+                    }}
+                    title="Click to open sticky note in full detail • Drag to move columns"
+                  >
+                    {/* 3D Push-Pin at Top Center */}
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 pointer-events-none drop-shadow-md">
+                      <RedPushPin size={30} color={def.pin} />
+                    </div>
+
+                    {/* Top Row: Checkbox */}
+                    <div className="flex items-center justify-between pt-1">
+                      <button
+                        type="button"
+                        onClick={(e) => handleCheckTask(e, task)}
+                        className={`w-4 h-4 rounded-full border flex items-center justify-center transition cursor-pointer ${
+                          isDone 
+                            ? 'bg-emerald-600 border-emerald-700 text-white' 
+                            : 'border-stone-800/40 hover:border-stone-900 bg-black/5 hover:bg-black/10'
+                        }`}
+                        title={isDone ? 'Mark as Incomplete' : 'Mark as Complete'}
+                      >
+                        {isDone && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                      </button>
+                    </div>
+
+                    {/* Note Title in Authentic Marker Handwriting */}
+                    <div className="my-auto px-0.5">
+                      <p className={`font-handwriting font-bold text-stone-900 text-base sm:text-lg leading-tight line-clamp-3 ${
+                        isDone ? 'line-through opacity-55' : ''
+                      }`}>
+                        {task.title}
+                      </p>
+                    </div>
+
+                    {/* Bottom Meta: Date & Tag */}
+                    <div className="pt-1 flex items-center justify-between text-[10px] font-bold border-t border-black/10">
+                      <span className="text-stone-700/80">{def.date}</span>
+                      <span className="px-1.5 py-0.5 rounded-xs bg-black/10 text-stone-900 font-sans text-[9px]">
+                        {def.tag}
+                      </span>
+                    </div>
+
+                    {/* Paper Dog-Ear Curl */}
+                    <div className="paper-dogear-curl" />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* =======================================================================
+                COLUMN 3: DONE
+                ======================================================================= */}
+            <div 
+              onDragOver={(e) => handleColumnDragOver(e, 'done')}
+              onDragLeave={() => setDragOverCol(null)}
+              onDrop={(e) => handleColumnDrop(e, 'done')}
+              className={`flex flex-col items-center gap-3.5 transition-all duration-200 rounded-2xl p-1.5 ${
+                dragOverCol === 'done' ? 'bg-black/10 ring-2 ring-emerald-400' : ''
+              }`}
+            >
+              {/* Masking Tape Header: DONE */}
+              <div 
+                className="relative px-6 py-1.5 shadow-md border-y border-stone-300/40 select-none flex items-center justify-between gap-3 w-40 sm:w-44"
+                style={{
+                  backgroundColor: '#F5EBE1',
+                  backgroundImage: 'linear-gradient(90deg, #EFE2D3 0%, #F8F1E7 50%, #EFE2D3 100%)',
+                  transform: 'rotate(-0.5deg)',
+                  boxShadow: '0 3px 6px -1px rgba(45, 25, 10, 0.35)',
+                }}
+              >
+                <span className="font-handwriting font-black text-lg text-stone-900 tracking-wider">
+                  DONE
+                </span>
+                <span className="w-5 h-5 rounded-full bg-emerald-600/20 text-emerald-900 text-[11px] font-mono font-bold flex items-center justify-center">
+                  {realDone.length}
+                </span>
+              </div>
+
+              {/* Pinned Sticky Notes in DONE (Checked with green Check button) */}
+              {doneItems.map(({ def, task }, idx) => {
+                const rotation = idx === 0 ? 1.0 : -1.2;
+                const isDone = true;
+
+                return (
+                  <div
+                    key={task.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, task.id)}
+                    onClick={() => onSelectTask(task)}
+                    className="group relative w-36 h-36 sm:w-40 sm:h-40 md:w-44 md:h-44 p-3 rounded-xs flex flex-col justify-between transition-all duration-200 hover:scale-105 hover:-translate-y-1 hover:z-30 cursor-grab active:cursor-grabbing shadow-lg select-none"
+                    style={{
+                      transform: `rotate(${rotation}deg)`,
+                      backgroundColor: def.bg,
+                      boxShadow: '0 12px 24px -4px rgba(45, 25, 10, 0.32), 0 3px 6px rgba(0,0,0,0.12)',
+                    }}
+                    title="Click to open sticky note in full detail • Drag to move columns"
+                  >
+                    {/* 3D Push-Pin at Top Center */}
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 pointer-events-none drop-shadow-md">
+                      <RedPushPin size={30} color={def.pin} />
+                    </div>
+
+                    {/* Top Row: Completed Green Checkbox */}
+                    <div className="flex items-center justify-between pt-1">
+                      <button
+                        type="button"
+                        onClick={(e) => handleCheckTask(e, task)}
+                        className="w-4 h-4 rounded-full border border-emerald-700 bg-emerald-600 text-white flex items-center justify-center transition cursor-pointer"
+                        title="Mark as Incomplete"
+                      >
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      </button>
+                    </div>
+
+                    {/* Note Title in Authentic Marker Handwriting with strikethrough */}
+                    <div className="my-auto px-0.5">
+                      <p className="font-handwriting font-bold text-stone-900 text-base sm:text-lg leading-tight line-clamp-3 line-through opacity-70">
+                        {task.title}
+                      </p>
+                    </div>
+
+                    {/* Bottom Meta: Date & Tag */}
+                    <div className="pt-1 flex items-center justify-between text-[10px] font-bold border-t border-black/10">
+                      <span className="text-stone-700/80">{def.date}</span>
+                      <span className="px-1.5 py-0.5 rounded-xs bg-black/10 text-stone-900 font-sans text-[9px]">
+                        {def.tag}
+                      </span>
+                    </div>
+
+                    {/* Paper Dog-Ear Curl */}
+                    <div className="paper-dogear-curl" />
+                  </div>
+                );
+              })}
+
+              {/* Alpine Mountain Lake Polaroid Photo with Black Metal Binder Clip */}
+              <div 
+                onClick={() => setSelectedPhoto(MOUNTAIN_PHOTO_URL)}
+                className="relative w-36 sm:w-40 bg-white p-2 pb-3.5 rounded-xs shadow-xl rotate-[1.5deg] hover:scale-105 hover:z-30 transition-all cursor-pointer group mt-2"
+                style={{
+                  boxShadow: '0 14px 28px -5px rgba(45, 25, 10, 0.40), 0 4px 8px rgba(0,0,0,0.15)',
+                }}
+                title="Click photo to view full image"
+              >
+                {/* Black Metal Binder Clip at Top Center */}
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center pointer-events-none drop-shadow-md">
+                  <div className="w-4.5 h-3.5 border-2 border-stone-300 rounded-t-sm mb-[-2px]" />
+                  <div className="w-6.5 h-3 bg-stone-900 rounded-xs shadow-xs border border-stone-800" />
+                </div>
+
+                <div className="w-full aspect-4/3 overflow-hidden rounded-2xs bg-stone-100">
+                  <img 
+                    src={MOUNTAIN_PHOTO_URL} 
+                    alt="Alpine Mountain Lake" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                  />
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
       </div>
 
       {/* FULL PHOTO LIGHTBOX PREVIEW MODAL */}

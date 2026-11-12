@@ -83,13 +83,13 @@ export function App() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // View Mode: 'board' (default Studio Wall) | 'focus' | 'canvas' | 'canvas_3d' | 'analytics' | 'projects'
+  // View Mode: 'canvas_3d' (Executive Corkboard Studio) | 'board' | 'focus' | 'canvas' | 'analytics' | 'projects'
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const saved = localStorage.getItem('omnisticky_view_mode');
-    if (saved === 'kanban' || saved === 'board') return 'board';
+    if (saved === 'kanban') return 'board';
     if (saved === 'sticky_wall') return 'canvas';
-    if (saved === 'focus' || saved === 'canvas' || saved === 'canvas_3d' || saved === 'analytics' || saved === 'projects') return saved as ViewMode;
-    return 'board';
+    if (saved === 'focus' || saved === 'canvas' || saved === 'canvas_3d' || saved === 'analytics' || saved === 'projects' || saved === 'board') return saved as ViewMode;
+    return 'canvas_3d';
   });
 
   // Density Mode: 'comfortable' | 'compact'

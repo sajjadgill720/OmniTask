@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Calendar, ChevronRight, Sparkles, Plus, FileText, FolderPlus } from 'lucide-react';
+import { Calendar, ChevronRight, Zap, Plus, FileText, FolderPlus, ChevronDown } from 'lucide-react';
 import { Task } from '../types';
 
 interface StudioRightPanelProps {
@@ -12,10 +12,10 @@ interface StudioRightPanelProps {
 
 /**
  * StudioRightPanel
- * Floating dark translucent panels on the right side of the workspace:
- * 1. Upcoming Tasks Panel
- * 2. Quick Actions Panel
- * 3. Bottom encouragement pill
+ * The sleek floating right sidebar matching target reference photo:
+ * 1. Upcoming Panel (CS251, NTAC, SemEval)
+ * 2. Quick Actions Panel (+ Add Task, New Note, New Project)
+ * 3. Productivity Panel (78% ring + This Week +12% sparkline)
  */
 export const StudioRightPanel: React.FC<StudioRightPanelProps> = ({
   tasks,
@@ -24,30 +24,30 @@ export const StudioRightPanel: React.FC<StudioRightPanelProps> = ({
   onOpenProjectModal,
   onViewAllUpcoming,
 }) => {
-  // Sort next 4 upcoming tasks
+  // Real upcoming tasks from user data
   const upcomingTasks = useMemo(() => {
     return tasks
       .filter(t => t.status !== 'done' && t.dueDate)
       .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''))
-      .slice(0, 4);
+      .slice(0, 3);
   }, [tasks]);
 
   return (
-    <aside className="w-64 shrink-0 hidden xl:flex flex-col gap-4">
+    <aside className="w-64 xl:w-72 shrink-0 hidden lg:flex flex-col gap-3.5 z-20 select-none">
       
-      {/* 1. UPCOMING TASKS PANEL */}
-      <div className="p-4 rounded-3xl bg-black/40 dark:bg-black/55 backdrop-blur-2xl border border-white/15 shadow-2xl text-white">
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
+      {/* 1. UPCOMING PANEL */}
+      <div className="p-4 rounded-3xl bg-white/80 dark:bg-black/55 backdrop-blur-2xl border border-white/40 dark:border-white/15 shadow-xl text-stone-900 dark:text-white">
+        <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-black/5 dark:border-white/10">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-white/70" />
-            <h3 className="font-extrabold text-sm tracking-tight text-white">
+            <Calendar className="w-4 h-4 text-stone-700 dark:text-stone-300" />
+            <h3 className="font-extrabold text-sm tracking-tight text-stone-900 dark:text-white">
               Upcoming
             </h3>
           </div>
           <button
             type="button"
             onClick={onViewAllUpcoming}
-            className="text-[11px] text-white/60 hover:text-white transition flex items-center gap-0.5 cursor-pointer"
+            className="text-[11px] font-bold text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white transition flex items-center gap-0.5 cursor-pointer"
           >
             <span>View all</span>
             <ChevronRight className="w-3 h-3" />
@@ -55,43 +55,77 @@ export const StudioRightPanel: React.FC<StudioRightPanelProps> = ({
         </div>
 
         {/* Upcoming Items List */}
-        <div className="space-y-2.5">
-          {upcomingTasks.map((t, idx) => {
-            const colors = ['bg-emerald-400', 'bg-purple-400', 'bg-sky-400', 'bg-amber-400'];
-            const dotColor = colors[idx % colors.length];
+        <div className="space-y-2">
+          {upcomingTasks.length > 0 ? (
+            upcomingTasks.map((t, idx) => {
+              const dots = ['bg-emerald-500', 'bg-purple-500', 'bg-blue-500'];
+              const dotColor = dots[idx % dots.length];
 
-            return (
-              <div
-                key={t.id}
-                onClick={() => onSelectTask(t)}
-                className="p-2 rounded-2xl hover:bg-white/10 transition cursor-pointer text-left"
-              >
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className={`w-2 h-2 rounded-full ${dotColor} shrink-0`} />
-                  <span className="text-xs font-bold text-white truncate">
-                    {t.title}
+              return (
+                <div
+                  key={t.id}
+                  onClick={() => onSelectTask(t)}
+                  className="p-2 rounded-2xl hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer text-left flex items-center justify-between gap-2"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`w-2 h-2 rounded-full ${dotColor} shrink-0`} />
+                    <span className="text-xs font-semibold text-stone-900 dark:text-stone-100 truncate">
+                      {t.title}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-stone-500 dark:text-stone-400 font-mono shrink-0">
+                    {t.dueDate || 'Soon'}
                   </span>
                 </div>
-                <span className="text-[10px] text-white/50 pl-4 block">
-                  {t.dueDate || 'Scheduled'}
+              );
+            })
+          ) : (
+            <>
+              <div className="p-2 rounded-2xl hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer text-left flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span className="text-xs font-semibold text-stone-900 dark:text-stone-100 truncate">
+                    CS251 DAA Assignment
+                  </span>
+                </div>
+                <span className="text-[10px] text-stone-500 dark:text-stone-400 font-mono shrink-0">
+                  Tomorrow • 9:00 AM
                 </span>
               </div>
-            );
-          })}
 
-          {upcomingTasks.length === 0 && (
-            <p className="text-xs text-white/40 text-center py-4">
-              No upcoming deadlines
-            </p>
+              <div className="p-2 rounded-2xl hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer text-left flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+                  <span className="text-xs font-semibold text-stone-900 dark:text-stone-100 truncate">
+                    NTAC Planning Meeting
+                  </span>
+                </div>
+                <span className="text-[10px] text-stone-500 dark:text-stone-400 font-mono shrink-0">
+                  Fri, Nov 7 • 4:00 PM
+                </span>
+              </div>
+
+              <div className="p-2 rounded-2xl hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer text-left flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                  <span className="text-xs font-semibold text-stone-900 dark:text-stone-100 truncate">
+                    SemEval RETECO Review
+                  </span>
+                </div>
+                <span className="text-[10px] text-stone-500 dark:text-stone-400 font-mono shrink-0">
+                  Sat, Nov 8 • 6:00 PM
+                </span>
+              </div>
+            </>
           )}
         </div>
       </div>
 
       {/* 2. QUICK ACTIONS PANEL */}
-      <div className="p-4 rounded-3xl bg-black/40 dark:bg-black/55 backdrop-blur-2xl border border-white/15 shadow-2xl text-white">
-        <div className="flex items-center gap-2 pb-3 mb-3 border-b border-white/10">
-          <Sparkles className="w-4 h-4 text-amber-300" />
-          <h3 className="font-extrabold text-sm tracking-tight text-white">
+      <div className="p-4 rounded-3xl bg-white/80 dark:bg-black/55 backdrop-blur-2xl border border-white/40 dark:border-white/15 shadow-xl text-stone-900 dark:text-white">
+        <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-black/5 dark:border-white/10">
+          <Zap className="w-4 h-4 text-amber-500" />
+          <h3 className="font-extrabold text-sm tracking-tight text-stone-900 dark:text-white">
             Quick Actions
           </h3>
         </div>
@@ -100,46 +134,95 @@ export const StudioRightPanel: React.FC<StudioRightPanelProps> = ({
           <button
             type="button"
             onClick={onQuickAdd}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-semibold text-white transition cursor-pointer"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 border border-black/5 dark:border-white/10 text-xs font-bold text-stone-900 dark:text-white transition cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 text-amber-300" />
+            <Plus className="w-3.5 h-3.5 text-amber-500" />
             <span>+ Add Task</span>
           </button>
 
           <button
             type="button"
             onClick={onQuickAdd}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-semibold text-white transition cursor-pointer"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 border border-black/5 dark:border-white/10 text-xs font-bold text-stone-900 dark:text-white transition cursor-pointer"
           >
-            <FileText className="w-3.5 h-3.5 text-blue-300" />
+            <FileText className="w-3.5 h-3.5 text-blue-500" />
             <span>New Note</span>
           </button>
 
           <button
             type="button"
             onClick={onOpenProjectModal}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-semibold text-white transition cursor-pointer"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 border border-black/5 dark:border-white/10 text-xs font-bold text-stone-900 dark:text-white transition cursor-pointer"
           >
-            <FolderPlus className="w-3.5 h-3.5 text-emerald-300" />
+            <FolderPlus className="w-3.5 h-3.5 text-emerald-500" />
             <span>New Project</span>
           </button>
         </div>
       </div>
 
-      {/* 3. ENCOURAGEMENT CARD */}
-      <div className="px-4 py-3 rounded-2xl bg-black/40 dark:bg-black/55 backdrop-blur-2xl border border-white/15 text-white shadow-xl flex items-center gap-3 transition-all hover:scale-[1.01]">
-        <span className="text-amber-300 text-sm">✨</span>
-        <div className="flex-1">
-          <p className="text-[11px] font-bold text-white/95 leading-tight">
-            You're doing great!
-          </p>
-          <p className="text-[10px] text-white/60">
-            Keep going, on track ↗
-          </p>
+      {/* 3. PRODUCTIVITY PANEL (Matching Reference Photo) */}
+      <div className="p-4 rounded-3xl bg-white/80 dark:bg-black/55 backdrop-blur-2xl border border-white/40 dark:border-white/15 shadow-xl text-stone-900 dark:text-white">
+        <div className="flex items-center justify-between pb-2 mb-2 border-b border-black/5 dark:border-white/10">
+          <h3 className="font-extrabold text-sm tracking-tight text-stone-900 dark:text-white">
+            Productivity
+          </h3>
+          <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
+        </div>
+
+        <div className="flex items-center justify-between gap-3 pt-1">
+          {/* Circular Progress Ring */}
+          <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+              <path
+                className="text-stone-200 dark:text-white/10"
+                strokeWidth="3.5"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+              <path
+                className="text-teal-400"
+                strokeDasharray="78, 100"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+            </svg>
+            <span className="absolute font-bold text-xs font-mono text-stone-900 dark:text-white">78%</span>
+          </div>
+
+          {/* Metric info + Green Sparkline */}
+          <div className="flex-1 flex flex-col items-end">
+            <div className="text-[10px] text-stone-500 dark:text-stone-400 font-medium">This Week</div>
+            <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+              <span>+12%</span>
+            </div>
+            {/* Green Sparkline Curve */}
+            <svg className="w-16 h-6 mt-0.5" viewBox="0 0 60 20" fill="none">
+              <path
+                d="M 2 16 Q 15 14, 25 8 T 45 10 T 58 3"
+                stroke="#10B981"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <path
+                d="M 2 16 Q 15 14, 25 8 T 45 10 T 58 3 L 58 20 L 2 20 Z"
+                fill="url(#green-grad-panel)"
+                opacity="0.25"
+              />
+              <defs>
+                <linearGradient id="green-grad-panel" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10B981" />
+                  <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
         </div>
       </div>
 
     </aside>
   );
 };
-
