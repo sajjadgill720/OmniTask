@@ -1,3 +1,4 @@
+import { safeStorage } from './safeStorage';
 import { AppPermissionsState } from '../types';
 
 let audioCtx: AudioContext | null = null;
@@ -22,6 +23,7 @@ function getAudioContext(): AudioContext | null {
  */
 export function playCompletionSound(): void {
   try {
+    if (safeStorage.getItem('omnisticky_audio_sound') === 'false') return;
     const ctx = getAudioContext();
     if (!ctx) return;
 
@@ -51,6 +53,7 @@ export function playCompletionSound(): void {
  */
 export function playPomodoroChime(): void {
   try {
+    if (safeStorage.getItem('omnisticky_audio_sound') === 'false') return;
     const ctx = getAudioContext();
     if (!ctx) return;
 
@@ -92,7 +95,7 @@ export async function checkPermissions(): Promise<AppPermissionsState> {
   }
 
   const badging = typeof navigator !== 'undefined' && 'setAppBadge' in navigator;
-  const audioStored = localStorage.getItem('omnisticky_audio_sound') !== 'false';
+  const audioStored = safeStorage.getItem('omnisticky_audio_sound') !== 'false';
 
   return {
     notifications: notif,
@@ -111,7 +114,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       sendLocalNotification('OmniSticky Alerts Active', {
-        body: 'You will receive reminders for scheduled tasks and focus timers.',
+        body: 'Browser notification access is enabled. Scheduled reminders are not available in this beta.',
       });
     }
     return permission;
@@ -124,21 +127,23 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 /**
  * Send an OS/Browser Notification
  */
-export function sendLocalNotification(title: string, options?: NotificationOptions): void {
-  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+export function sendLocalNotification(title: string, options?: NotificationOptions): boolean {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return false;
   try {
     new Notification(title, {
       icon: '/favicon.svg',
       badge: '/favicon.svg',
       ...options,
     });
+    return true;
   } catch (err) {
     console.warn('Failed to fire notification:', err);
+    return false;
   }
 }
 
 /**
- * Request Browser Storage Persistence (guarantees offline cache won't be purged)
+ * Request Browser Storage Persistence (reduces automatic eviction when granted)
  */
 export async function requestPersistentStorage(): Promise<boolean> {
   if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
@@ -158,9 +163,9 @@ export function updateAppBadge(pendingCount: number): void {
   if (typeof navigator === 'undefined' || !('setAppBadge' in navigator)) return;
   try {
     if (pendingCount > 0) {
-      (navigator as any).setAppBadge(pendingCount);
+      Promise.resolve((navigator as any).setAppBadge(pendingCount)).catch(() => {});
     } else {
-      (navigator as any).clearAppBadge();
+      Promise.resolve((navigator as any).clearAppBadge()).catch(() => {});
     }
   } catch (e) {
     console.debug('App badge not supported or restricted:', e);

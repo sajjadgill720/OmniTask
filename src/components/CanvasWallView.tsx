@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { Task, Project, CanvasElement, CanvasConnection, NoteShape, LineStyle, PinStyle } from '../types';
 import { RedPushPin } from './RedPushPin';
-import { saveImageToStorage, validateImageFile } from '../utils/imageStorage';
+import { saveImageToStorage, validateImageFile, getImageFromStorage } from '../utils/imageStorage';
 import { useToast } from './ToastNotification';
 
 interface CanvasWallViewProps {
@@ -111,6 +111,15 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
   onQuickAdd,
 }) => {
   const { toast } = useToast();
+  const [resolvedPhotos, setResolvedPhotos] = useState<Record<string, string>>({});
+  const photoIds = elements.map(el => el.imageStorageId).filter(Boolean).join('|');
+  useEffect(() => {
+    let active = true;
+    Promise.all(elements.filter(el => el.imageStorageId).map(async el => [el.imageStorageId!, await getImageFromStorage(el.imageStorageId!)] as const)).then(photos => {
+      if (active) setResolvedPhotos(Object.fromEntries(photos.filter(([, url]) => url)) as Record<string, string>);
+    });
+    return () => { active = false; };
+  }, [photoIds]);
 
   // Viewport Zoom & Pan
   const [zoomLevel, setZoomLevel] = useState<number>(100);
@@ -189,6 +198,7 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
   // Keyboard Shortcuts: Undo, Redo, Copy, Paste, Delete, Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement)?.closest('[role="dialog"], [contenteditable="true"]')) return;
       // Ignore if typing inside input or textarea
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
         if (e.key === 'Escape') {
@@ -1268,7 +1278,7 @@ export const CanvasWallView: React.FC<CanvasWallViewProps> = ({
                   {/* Image Surface */}
                   <div className="w-full flex-1 rounded-sm overflow-hidden bg-stone-100 mb-2 flex items-center justify-center relative">
                     <img
-                      src={node.imageUrl || node.thumbnailUrl}
+                      src={(node.imageStorageId && resolvedPhotos[node.imageStorageId]) || node.imageUrl || node.thumbnailUrl}
                       alt={node.caption || node.title}
                       loading="lazy"
                       className="w-full h-full object-cover pointer-events-none"

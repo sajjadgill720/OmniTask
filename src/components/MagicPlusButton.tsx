@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useDialog } from '../utils/useDialog';
 import { Plus, Sparkles, Moon, Calendar, Tag, Palette } from 'lucide-react';
 import { parseNaturalLanguageTask } from '../utils/nlpParser';
 import { Priority, ThingsSection } from '../types';
@@ -24,6 +25,7 @@ export const MagicPlusButton: React.FC<MagicPlusButtonProps> = ({
   desktopQuickAddSignal = 0,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const dialogRef = useDialog(() => setIsOpen(false), isOpen);
   const [inputVal, setInputVal] = useState('');
   const [selectedColor, setSelectedColor] = useState<string>(STICKY_COLORS[0].colorHex);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -31,6 +33,16 @@ export const MagicPlusButton: React.FC<MagicPlusButtonProps> = ({
   useEffect(() => {
     if (desktopQuickAddSignal > 0) setIsOpen(true);
   }, [desktopQuickAddSignal]);
+
+  useEffect(() => {
+    const key = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (event.key === 'Escape' && isOpen) { event.preventDefault(); setIsOpen(false); return; }
+      if (event.key.toLowerCase() === 'n' && !event.ctrlKey && !event.metaKey && !event.altKey && !target.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) { event.preventDefault(); setIsOpen(true); }
+    };
+    window.addEventListener('keydown', key);
+    return () => window.removeEventListener('keydown', key);
+  }, [isOpen]);
 
   // Automatically focus on open
   useEffect(() => {
@@ -74,6 +86,7 @@ export const MagicPlusButton: React.FC<MagicPlusButtonProps> = ({
       {/* Floating Popover / Smart Quick Add Modal */}
       {isOpen && (
         <div 
+          ref={dialogRef} role="dialog" aria-modal="true" aria-label="Quick capture" tabIndex={-1}
           onClick={() => setIsOpen(false)}
           className="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-4 bg-slate-950/45 backdrop-blur-xs animate-fade-in"
         >
@@ -95,6 +108,7 @@ export const MagicPlusButton: React.FC<MagicPlusButtonProps> = ({
             {/* Input field */}
             <form onSubmit={handleSubmit}>
               <input
+                aria-label="New note"
                 ref={inputRef}
                 type="text"
                 value={inputVal}
@@ -102,7 +116,7 @@ export const MagicPlusButton: React.FC<MagicPlusButtonProps> = ({
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') setIsOpen(false);
                 }}
-                placeholder="e.g. Call designer tomorrow 3pm p1 #Design"
+                placeholder="e.g. Call designer tomorrow p1 #Design"
                 className="w-full text-sm font-semibold bg-transparent border-none text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none mb-3"
               />
 

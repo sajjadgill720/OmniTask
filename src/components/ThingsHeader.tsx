@@ -79,23 +79,17 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
         </div>
 
         {/* Search Pill: 🔍 Search tasks... Ctrl K */}
-        <div 
+        <button type="button" aria-label="Search notes and commands"
           onClick={onOpenCommandPalette}
           className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-black/25 hover:bg-black/35 dark:bg-black/50 dark:hover:bg-black/65 backdrop-blur-xl border border-white/15 text-white shadow-sm cursor-pointer transition-all hover:scale-[1.01]"
           title="Search tasks, jump to views, or run actions (Ctrl K)"
         >
           <Search className="w-3.5 h-3.5 text-white/70 shrink-0" />
-          <input
-            type="text"
-            readOnly
-            value={searchQuery}
-            placeholder="Search tasks..."
-            className="bg-transparent border-none text-xs text-white placeholder-white/60 focus:outline-none w-24 sm:w-36 cursor-pointer truncate"
-          />
+<span className="hidden sm:inline text-xs">Search notes…</span>
           <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono font-bold bg-white/15 rounded-md border border-white/20 text-white/80 shrink-0">
             Ctrl K
           </kbd>
-        </div>
+        </button>
 
         {/* Theme Toggle Button */}
         <button
@@ -117,9 +111,7 @@ export const ThingsHeader: React.FC<ThingsHeaderProps> = ({
           >
             <Bell className="w-4 h-4" />
           </button>
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs">
-            2
-          </span>
+
         </div>
 
       </div>

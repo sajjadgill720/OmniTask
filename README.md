@@ -1,93 +1,67 @@
-# OmniSticky — Motion Sticky Notes & Productivity Suite
+# Omni Sticky
 
-> A **sticky note motion graphics interface** combining the strengths of **Google Keep**, **Trello**, **Notezilla**, and **Things 3** — with tactile paper physics, interactive widgets, natural language parsing, and Web/OS permissions.
+A free beta for personal sticky notes, visual planning, projects, and focus. Built with React, TypeScript, Vite, and an optional Electron Windows shell.
 
----
+## Run locally
 
-## 🌟 Competitor Analysis & Synthesis
+Use Node.js 22 or newer and npm.
 
-Based on audits of user reviews across Reddit (`r/productivity`, `r/googlekeep`, `r/trello`, `r/thingsapp`), G2, and Capterra:
-
-| Reference App | What Users Love (Strengths Kept) | What Users Complain About (Weaknesses Fixed) | OmniSticky Synthesis |
-| :--- | :--- | :--- | :--- |
-| **Google Keep** | Visual wall of pastel color-coded sticky notes, instant checklists. | No deadlines, messy drag-and-drop, no workflow stages. | **Sticky Wall View** with pastel palettes, direct in-card checklists, plus calendar deadlines and pinned notes. |
-| **Trello** | Visual workflow stages (To Do, In Progress, Done), cards moved across columns. | Heavyweight, clunky for simple daily notes, slow onboarding. | **Kanban Sticky Board** with 1-click status advancement and zero setup overhead. |
-| **Notezilla** | Digital post-it notes, washi tape aesthetics, pinned notes on desktop. | Outdated 90s Windows look, sync issues. | **Motion Graphics Sticky Notes** with frosted washi tape, organic tilt jitter (-1.5°), peelable dog-ear corner fold, and smooth spring physics. |
-| **Things 3** | Pure typography, "Today" & "This Evening" distinction, circular progress rings. | $80+ price tag, strictly Apple-only. | **Things 3 Clean List Mode**, circular SVG progress rings, and frictionless NLP quick-add. |
-
----
-
-## 🎨 Three Motion Graphics View Modes
-
-Switch instantly between 3 layouts using the header pill bar or sidebar:
-1. 📌 **Sticky Wall (Google Keep + Notezilla):**
-   - Tactile sticky notes with frosted washi tape headers.
-   - Organic rotation jitter (-1.5° to +1.5°) that levels out on hover.
-   - Dog-ear peelable paper corner folds.
-   - Pinned notes shelf at the top.
-   - Inline color palette picker (Canary Yellow, Soft Mint, Warm Peach, Sky Blue, Lavender Mist, Blush Rose, Classic White).
-   - Direct in-card checklist additions and toggles with strikethrough.
-2. 📋 **Kanban Board (Trello):**
-   - Three dynamic columns: *To Do*, *In Progress*, and *Completed*.
-   - 1-click stage advancement right from each sticky note.
-3. 📑 **Clean List (Things 3):**
-   - Minimalist, distraction-free rows with "This Evening" moon indicator and circular progress rings.
-
----
-
-## 🚀 Live Demo & How to Run
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Start dev server
+```powershell
+npm ci
 npm run dev
 ```
 
-Visit: **[http://localhost:5173/](http://localhost:5173/)**
+Open the Local URL printed by Vite. For the Windows development shell, use `npm run dev:desktop`.
 
-## 🖥️ Windows Desktop App
+## Build and check
 
-Omni Sticky can also run as a Windows desktop app with a notification-area tray icon. To create the per-user installer:
+```powershell
+npm run build
+npm test
+npm run test:browser
+```
 
-```bash
-npm install
+The production website is in `dist/`. Browser tests use installed Google Chrome on Windows by default; set `CHROME_PATH` to another compatible Chromium executable when needed. They run against a separate preview on port 4185 using isolated browser profiles.
+
+## What this beta does
+
+- First-run introduction, an empty workspace, or optional sample notes.
+- Personal task board, workflow lists, project groups, and editable projects.
+- Note details, checklists, tags, colors, priorities, local due dates, and task stopwatches.
+- Separate visual canvas with notes, photo upload, connections, and session undo/redo.
+- Focus Room with a 25-minute session, breaks, optional synthesized soundscapes, and recorded focus time.
+- Widgets, a desk clock, local productivity summaries, light/dark appearance, and command search.
+- Complete JSON backup/restore, readable Markdown notes export, and storage/recovery warnings.
+- Installable web manifest and offline app shell after a successful first online visit/cache setup on HTTPS or localhost.
+
+Quick capture recognizes `today`, `tomorrow`, `this evening`, `in 3 days`, `p1`–`p4`, and `#tags`. It does not parse weekday names or clock times. `Ctrl+K` / `⌘K` opens search, `N` opens capture outside text fields, and Escape closes dialogs.
+
+## Data and limitations
+
+Workspace contents are local to one browser profile and origin. There is no cloud sync, account system, collaboration, payment processing, or scheduled reminder service. Browser and Windows app data are separate. Use complete JSON backups to transfer work.
+
+Text and canvas metadata are committed together in `omnisticky_workspace_v1` in localStorage; uploaded photos use IndexedDB. Existing collection keys are read for migration and preserved. Empty collections stay empty. Unreadable stored records are preserved, and saving is blocked rather than replacing them. A change from another tab pauses saving in the current tab; use one tab at a time.
+
+Backups include notes, groups, projects, canvas items, connections, and uploaded photos. Device appearance preferences are not included. Restore validates the file, requires downloading the current backup, prepares photos, then replaces the workspace. Legacy task-array JSON files restore notes only. Import is limited to 100 MB. Recovery files are raw text storage copies and do not contain the separately stored photo blobs.
+
+Clearing site data deletes work. Browser persistence permission reduces automatic eviction; it cannot prevent manual deletion. Data and exported files are not encrypted by the app. Task stopwatches pause on reload. Focus Room timers end when that view is left; widget timers pause when closed. The app is not a guaranteed background alarm. Canvas touch interactions are limited; larger screens are recommended.
+
+## Website deployment
+
+Deploy the **contents of `dist/`** at the root of an HTTPS static website. Do not deploy the source workspace, `node_modules`, or desktop installer folders. Use a permanent domain before inviting users because changing the origin creates a separate local workspace.
+
+`public/_headers` supplies security headers for static hosts supporting that convention. On other hosts, configure equivalent headers. HTML and `sw.js` must be revalidated rather than cached indefinitely. Keep the manifest, icons, help/privacy pages, JavaScript chunks, and service worker together. Offline updates activate after existing app tabs close.
+
+The help page includes a local feedback draft and directs testers back to the place where they received the launch link. Configure a real support route before a broad public announcement. No telemetry is included.
+
+See [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md) for the remaining owner actions and release verification.
+
+## Windows installer
+
+```powershell
 npm run package:desktop
 ```
 
-The installer is written to `desktop-release-final/`. It creates Start menu and desktop shortcuts. On the first packaged launch, Omni Sticky enables launch at sign-in and starts hidden on later sign-ins. Closing the window hides it in the tray; use the tray menu to reopen it, create a note, change the sign-in setting, or quit. The app's local browser storage is kept between desktop launches.
+Output: `desktop-release-beta/Omni Sticky Setup 1.0.0-beta.1.exe`.
 
-For development with the desktop shell, run `npm run dev:desktop`.
-
----
-
-## 📱 Key Features
-
-### 1. Motion Graphics & Tactile Physics
-* **Theme Switcher with Ambient White Hue:** 1-click toggle between Light and Dark mode. In Dark Mode, an atmospheric luminous white radial aura illuminates the background, translucent frosted washi tape, and card borders.
-* **Paper Spring Physics:** Smooth lift (`translateY(-4px) scale(1.02)`) and spring bounce on hover.
-* **Washi Tape & Dog-Ear Fold:** Authentic physical post-it feel with responsive corner peel.
-* **Stopwatch Focus Timer:** Track focus time directly on any sticky note with a live ticking timer.
-* **Celebratory Audio & Confetti:** Web Audio API chime sound + canvas confetti explosion on task completion.
-
-### 2. "Magic Plus" Floating Action Button & NLP
-* Tap the floating action button in the bottom right corner (or press `N`).
-* Type naturally: `Buy supplies tomorrow at 3pm p1 #Office` — automatically detects dates, priorities, and tags.
-* Pick note colors directly during quick capture.
-
-### 3. Interactive Widgets Hub
-* **Today Focus Widget:** Compact desk widget to check off daily notes with sound.
-* **Standby Desk Clock:** Fullscreen desk clock overlay with live focus tracking.
-
-### 4. Web & OS Permissions Hub
-* 🔔 **Browser Notifications:** Reminders for overdue notes and completed focus sessions.
-* 🏷️ **PWA Icon Badge:** Badges pending notes on phone home screens and desktop docks.
-* 🔊 **Synthesized Web Audio:** Pure browser chime without heavy audio files.
-* 💾 **Persistent Storage:** Protects notes from browser cache cleanup.
-
----
-
-## 🔒 100% Private & Open Data
-* Fully offline-first with instant `localStorage` synchronization.
-* 1-click **Export to Markdown (`.md`)** and **Export to JSON** backup with zero lock-in.
+The tray menu offers Open, New note, Launch at sign-in, and Quit. Launch at sign-in defaults to **off** for new installs. Closing the main window hides it in the tray. Paid features and automatic updates are not included. The installer requires a clean-machine installation check and signing/reputation work before broad Windows distribution; see [DESKTOP_APP_AND_FEATURES.md](DESKTOP_APP_AND_FEATURES.md).

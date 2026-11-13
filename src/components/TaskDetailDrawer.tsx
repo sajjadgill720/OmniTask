@@ -1,16 +1,17 @@
+import { useDialog } from '../utils/useDialog';
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  X, 
-  Trash2, 
-  Calendar, 
-  Moon, 
-  Tag as TagIcon, 
-  Folder, 
-  CheckSquare, 
-  Square, 
-  Plus, 
-  Clock, 
-  Play, 
+import {
+  X,
+  Trash2,
+  Calendar,
+  Moon,
+  Tag as TagIcon,
+  Folder,
+  CheckSquare,
+  Square,
+  Plus,
+  Clock,
+  Play,
   Pause,
   Pin,
   Palette,
@@ -55,7 +56,7 @@ const RULING_OPTIONS: { id: LineStyle; label: string; icon: string }[] = [
   { id: 'dots', label: 'Dot Grid', icon: '🔘' },
 ];
 
-export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
+const TaskDetailDrawerBody: React.FC<TaskDetailDrawerProps> = ({
   task,
   projects,
   areas,
@@ -65,7 +66,7 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
   onDelete,
   onToggleTimer,
 }) => {
-  if (!isOpen || !task) return null;
+  const dialogRef = useDialog(onClose);
 
   const [formData, setFormData] = useState<Task>({ ...task });
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -82,8 +83,8 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
 
   useEffect(() => {
     setFormData({ ...task });
-    setTitleInput(task.title);
-    setNotesInput(task.notes || '');
+    if (!isEditingTitle) setTitleInput(task.title);
+    if (!isEditingNotes) setNotesInput(task.notes || '');
   }, [task]);
 
   // Handle escape key to close
@@ -117,7 +118,7 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
   const dueInfo = checkDueDate(formData.dueDate);
 
   // CSS Ruling Pattern
-  const rulingClass = 
+  const rulingClass =
     lineStyle === 'blank' ? 'paper-ruling-blank' :
     lineStyle === 'lines' ? (paperStyle.isDarkNote ? 'paper-ruling-lines-dark' : 'paper-ruling-lines') :
     lineStyle === 'grid' ? (paperStyle.isDarkNote ? 'paper-ruling-grid-dark' : 'paper-ruling-grid') :
@@ -150,7 +151,7 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
   const handleToggleChecklist = (id: string) => {
     const updated = {
       ...formData,
-      checklists: formData.checklists.map(c => 
+      checklists: formData.checklists.map(c =>
         c.id === id ? { ...c, completed: !c.completed } : c
       ),
     };
@@ -218,9 +219,9 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
       done: 'todo',
     };
     const nextStatus = nextStatusMap[formData.status];
-    updateField('status', nextStatus);
+    const updated = { ...formData, status: nextStatus, isTimerRunning: nextStatus === 'done' ? false : formData.isTimerRunning, completedAt: nextStatus === 'done' ? new Date().toISOString() : undefined };
+    setFormData(updated); onSave(updated);
     if (nextStatus === 'done') {
-      updateField('completedAt', new Date().toISOString());
       confetti({
         particleCount: 35,
         spread: 60,
@@ -232,17 +233,17 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
 
   return (
     /* Ambient Blur Backdrop with Centered Hyperrealistic Sticky Note */
-    <div 
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="TaskDetail" tabIndex={-1}
       onClick={onClose}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-md animate-fade-in"
     >
-      {/* 
+      {/*
         HYPERREALISTIC FULL STICKY NOTE MODAL
         - Real paper gradients, specular light sheen, top adhesive band, paper curl
         - Fastener: 3D Red Pushpin or Masking Tape
         - Pure handwriting ink, ruled lines, interactive hand-drawn checkboxes
       */}
-      <div 
+      <div
         onClick={(e) => e.stopPropagation()}
         style={{
           backgroundColor: paperStyle.baseRgb,
@@ -264,7 +265,7 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
 
         {/* Fastener: 3D Red Pushpin OR Semi-translucent Masking Tape */}
         {effectivePinStyle === 'pin' ? (
-          <div 
+          <div
             onClick={() => updateField('pinStyle', 'tape')}
             className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 cursor-pointer drop-shadow-md hover:scale-110 transition-transform"
             title="📌 3D Red Pushpin (Click to switch to masking tape)"
@@ -272,7 +273,7 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
             <RedPushPin size={38} />
           </div>
         ) : (
-          <div 
+          <div
             onClick={() => updateField('pinStyle', 'pin')}
             className="washi-tape cursor-pointer hover:brightness-105"
             title="🏷️ Masking Tape Fastener (Click to switch to 3D pushpin)"
@@ -288,7 +289,7 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
 
         {/* FLOATING TOP GLASS CONTROLS BAR */}
         <div className="flex items-center justify-between pb-3 mb-2 border-b border-black/10 dark:border-white/10 relative z-20">
-          
+
           {/* Left: Stage Pill & Focus Stopwatch Timer */}
           <div className="flex items-center gap-2">
             {/* Stage Advancement Button */}
@@ -333,7 +334,7 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
 
               {/* Style Customizer Popover */}
               {showColorPicker && (
-                <div 
+                <div
                   onClick={(e) => e.stopPropagation()}
                   className="absolute right-0 top-8 z-50 p-3 bg-white dark:bg-[#1C1917] text-slate-900 dark:text-slate-100 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/15 w-64 animate-pop-in text-xs font-sans"
                 >
@@ -384,8 +385,8 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                             }}
                             style={{ backgroundColor: c.hex }}
                             className={`w-6 h-6 rounded-lg border transition-all cursor-pointer ${
-                              effectiveColor.toLowerCase() === c.hex.toLowerCase() 
-                                ? 'ring-2 ring-stone-900 scale-110 shadow-xs' 
+                              effectiveColor.toLowerCase() === c.hex.toLowerCase()
+                                ? 'ring-2 ring-stone-900 scale-110 shadow-xs'
                                 : 'border-black/20 hover:scale-105'
                             }`}
                             title={c.name}
@@ -472,7 +473,6 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
               type="button"
               onClick={() => {
                 onDelete(formData.id);
-                onClose();
               }}
               className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/15 transition cursor-pointer opacity-75 hover:opacity-100"
               title="Discard sticky note"
@@ -483,7 +483,7 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
             {/* Close modal */}
             <button
               type="button"
-              onClick={onClose}
+              onClick={onClose} aria-label="Close TaskDetailDrawer "
               className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer opacity-75 hover:opacity-100 ml-1"
               title="Close detailed sticky note"
             >
@@ -494,12 +494,13 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
 
         {/* SCROLLABLE INK NOTE FACE (Ruled Paper lines, Checklists, Notes) */}
         <div className="flex-1 overflow-y-auto pr-2 column-scrollbar space-y-3 relative z-10">
-          
+
           {/* Note Title (Handwritten in Ink) */}
           {isEditingTitle ? (
             <form onSubmit={(e) => { e.preventDefault(); handleSaveTitle(); }} className="mb-2">
               <input
                 ref={titleInputRef}
+                aria-label="Note title"
                 type="text"
                 value={titleInput}
                 onChange={(e) => setTitleInput(e.target.value)}
@@ -509,8 +510,11 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
               />
             </form>
           ) : (
-            <h3 
+            <h3
               onClick={() => setIsEditingTitle(true)}
+              tabIndex={0}
+              role="button"
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditingTitle(true); } }}
               className={`text-2xl sm:text-3xl font-bold leading-tight break-words cursor-text transition rounded px-0.5 tracking-wide ${
                 'font-handwriting'
               } ${lineStyle === 'ruled' || lineStyle === 'lines' ? 'leading-[32px]' : ''} ${isDone ? 'marker-strike opacity-60' : ''}`}
@@ -526,6 +530,7 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
             <div className="mt-1">
               <textarea
                 ref={notesTextareaRef}
+                aria-label="Note details"
                 rows={4}
                 value={notesInput}
                 onChange={(e) => setNotesInput(e.target.value)}
@@ -538,8 +543,11 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
               />
             </div>
           ) : (
-            <p 
+            <p
               onClick={() => setIsEditingNotes(true)}
+              tabIndex={0}
+              role="button"
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditingNotes(true); } }}
               className={`text-lg sm:text-xl mt-1 leading-snug break-words font-medium cursor-text opacity-90 transition rounded px-0.5 ${
                 'font-handwriting'
               } ${lineStyle === 'ruled' || lineStyle === 'lines' ? 'leading-[30px]' : ''}`}
@@ -558,21 +566,21 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
               </div>
 
               {formData.checklists.map(c => (
-                <div 
-                  key={c.id} 
+                <div
+                  key={c.id}
                   className="flex items-center justify-between group/chk p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition"
                 >
-                  <div 
+                  <div
                     onClick={() => handleToggleChecklist(c.id)}
                     className="flex items-center gap-2 cursor-pointer flex-1"
                   >
-                    <div 
+                    <div
                       className="w-4 h-4 rounded-xs border flex items-center justify-center transition-colors shrink-0 bg-white/40"
                       style={{ borderColor: paperStyle.inkColor }}
                     >
                       {c.completed && <Check className="w-3 h-3 stroke-[3]" />}
                     </div>
-                    <span 
+                    <span
                       className={`text-lg leading-tight ${
                         'font-handwriting'
                       } ${c.completed ? 'line-through opacity-55' : ''}`}
@@ -710,7 +718,7 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={onClose} aria-label="Close TaskDetailDrawer "
             className="px-6 py-2 rounded-xl font-bold text-xs shadow-md transition hover:scale-102 cursor-pointer bg-stone-900 text-white dark:bg-white dark:text-stone-900"
           >
             Done
@@ -721,3 +729,5 @@ export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
     </div>
   );
 };
+
+export const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = (props) => props.isOpen && props.task ? <TaskDetailDrawerBody key={props.task.id} {...props} /> : null;

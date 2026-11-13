@@ -1,359 +1,66 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  Settings, 
-  Sun, 
-  Moon, 
-  Bell, 
-  Volume2, 
-  HardDrive, 
-  Download, 
-  Upload, 
-  Crown, 
-  Bug, 
-  Check, 
-  ShieldCheck,
-  Sparkles
-} from 'lucide-react';
-import { AppPermissionsState, ThemeMode, Task, Area, Project } from '../types';
-import { exportTasksJSON, exportTasksMarkdown } from '../utils/storage';
-import { 
-  requestNotificationPermission, 
-  requestPersistentStorage,
-  sendLocalNotification, 
-  playCompletionSound 
-} from '../utils/permissions';
+import { X, Download } from 'lucide-react';
+import type { AppPermissionsState, ThemeMode } from '../types';
+import { exportTasksMarkdown } from '../utils/storage';
+import { createBackup, downloadFile, downloadRecoveryData, parseBackup, prepareRestore, type Workspace } from '../utils/backup';
+import { safeStorage, getStorageError } from '../utils/safeStorage';
+import { requestPersistentStorage, playCompletionSound } from '../utils/permissions';
+import { useDialog } from '../utils/useDialog';
 
-interface SettingsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  theme: ThemeMode;
-  onToggleTheme: () => void;
-  permissions: AppPermissionsState;
-  onUpdatePermissions: () => void;
-  isProUser: boolean;
-  onOpenSubscription: () => void;
-  tasks: Task[];
-  areas: Area[];
-  projects: Project[];
-  debugMode: boolean;
-  onToggleDebugMode: () => void;
+interface SettingsModalProps extends Workspace {
+  isOpen: boolean; onClose: () => void; theme: ThemeMode; onToggleTheme: () => void;
+  permissions: AppPermissionsState; onUpdatePermissions: () => void; onRestore: (workspace: Workspace) => void;
 }
-
-type SettingsTab = 'general' | 'notifications' | 'data' | 'subscription';
-
-export const SettingsModal: React.FC<SettingsModalProps> = ({
-  isOpen,
-  onClose,
-  theme,
-  onToggleTheme,
-  permissions,
-  onUpdatePermissions,
-  isProUser,
-  onOpenSubscription,
-  tasks,
-  areas,
-  projects,
-  debugMode,
-  onToggleDebugMode,
-}) => {
-  if (!isOpen) return null;
-
-  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
-  const [notificationTestSent, setNotificationTestSent] = useState(false);
-
-  const handleRequestNotifications = async () => {
-    await requestNotificationPermission();
-    onUpdatePermissions();
+function SettingsBody(props: SettingsModalProps) {
+  const { onClose, theme, onToggleTheme, permissions, onUpdatePermissions, onRestore } = props;
+  const ref = useDialog(onClose);
+  const [tab, setTab] = useState<'general' | 'data' | 'about'>('general');
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<Workspace | null>(null);
+  const [backedUp, setBackedUp] = useState(false);
+  const backup = async () => {
+    setBusy(true); setMessage('');
+    try {
+      downloadFile(JSON.stringify(await createBackup(props), null, 2), `omnisticky-backup-${new Date().toISOString().slice(0, 10)}.json`);
+      setBackedUp(true); setMessage('Backup download started. Keep the file somewhere safe.');
+    } catch (error) { setMessage((error as Error).message); }
+    finally { setBusy(false); }
   };
-
-  const handleRequestStorage = async () => {
-    await requestPersistentStorage();
-    onUpdatePermissions();
-  };
-
-  const handleTestNotification = () => {
-    sendLocalNotification(
-      'Omni Sticky Focus Reminder',
-      { body: 'This is a sample notification to keep your daily focus on track.' }
-    );
-    setNotificationTestSent(true);
-    setTimeout(() => setNotificationTestSent(false), 3000);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div 
-        onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-xl bg-white dark:bg-[#14161f] rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-white/10">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-700 dark:text-slate-200">
-              <Settings className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                Settings & Preferences
-              </h3>
-              <p className="text-[11px] text-slate-400">
-                Manage your environment, notifications, backups, and display.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+  return <div ref={ref} role="dialog" aria-modal="true" aria-label="Settings" tabIndex={-1} className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-stone-950/65 backdrop-blur-sm">
+    <section className="w-full max-w-xl max-h-[90dvh] overflow-y-auto rounded-3xl bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 shadow-2xl p-5 sm:p-7">
+      <header className="flex justify-between items-center mb-5"><h2 className="text-xl font-bold">Settings</h2><button onClick={onClose} aria-label="Close settings" className="p-2"><X /></button></header>
+      <nav className="flex flex-wrap gap-2 mb-5" aria-label="Settings sections">{(['general', 'data', 'about'] as const).map(value => <button key={value} aria-pressed={tab === value} onClick={() => setTab(value)} className={`rounded-xl px-4 py-2 text-sm font-semibold ${tab === value ? 'bg-amber-300 text-stone-950' : 'bg-stone-100 dark:bg-white/10'}`}>{value === 'data' ? 'Data & backups' : value === 'about' ? 'About & help' : 'General'}</button>)}</nav>
+      {tab === 'general' && <div className="space-y-5 text-sm">
+        <div className="flex justify-between items-center gap-3"><span>Appearance</span><button className="launch-button" onClick={onToggleTheme}>{theme === 'dark' ? 'Dark' : 'Light'}</button></div>
+        <div className="flex justify-between items-center gap-3"><span>Completion sound</span><button className="launch-button" onClick={() => { safeStorage.setItem('omnisticky_audio_sound', String(!permissions.audioEnabled)); onUpdatePermissions(); if (!permissions.audioEnabled) playCompletionSound(); }}>{permissions.audioEnabled ? 'Enabled' : 'Muted'}</button></div>
+        <p className="text-stone-500 dark:text-stone-400">Use the bell in the header to manage browser notification permission. Scheduled reminders are not available in this beta.</p>
+        {window.omniStickyDesktop && <p>Closing the window keeps Omni Sticky in the system tray. Use the tray menu to enable launch at sign-in or quit the app.</p>}
+      </div>}
+      {tab === 'data' && <div className="space-y-5 text-sm">
+        <p>Work is saved on this device in this browser profile. There is no cloud backup or automatic sync. Clearing site data or using a private browsing session can remove your work.</p>
+        <div className="flex flex-wrap gap-2"><button disabled={busy} onClick={backup} className="launch-button"><Download size={16} />{busy ? 'Working…' : 'Download complete backup'}</button><button disabled={busy} className="launch-button" onClick={() => exportTasksMarkdown(props.tasks, props.areas, props.projects)}>Export notes as Markdown</button></div>
+        <p className="text-xs text-stone-500 dark:text-stone-400">JSON includes notes, projects, groups, canvas items, connections, and uploaded photos. Markdown is a readable notes export. Appearance preferences are device-specific.</p>
+        {getStorageError() && <div className="rounded-xl border border-amber-400 p-3"><p className="mb-2">Keep a copy of the original saved text before troubleshooting. Recovery files contain raw storage, including unreadable records and photo references; uploaded photo files are not included.</p><button className="launch-button" onClick={() => { try { downloadRecoveryData(); } catch { setMessage('Browser storage could not be read. Download a complete backup of the current session instead.'); } }}>Download raw recovery data</button></div>}
+        <div className="border-t border-stone-200 dark:border-white/10 pt-4 space-y-3"><h3 className="font-bold">Restore a JSON backup</h3><p>Restoring replaces this workspace. Download your current backup first. Older task-only backups restore notes without projects or canvas items.</p>
+          <input aria-label="Choose JSON backup" type="file" accept=".json,application/json" disabled={busy} onChange={async e => {
+            const file = e.target.files?.[0]; e.target.value = ''; setPending(null); setMessage('');
+            if (!file) return;
+            if (file.size > 100 * 1024 * 1024) { setMessage('This backup exceeds the 100 MB import limit.'); return; }
+            try { setPending(parseBackup(await file.text())); } catch (error) { setMessage((error as Error).message); }
+          }} />
+          {pending && <div className="rounded-2xl border border-amber-400 p-4 space-y-3"><p className="font-semibold">Replace with {pending.tasks.length} notes, {pending.projects.length} projects and {pending.canvasElements.length} canvas items?</p><p className="text-xs">This cannot be undone without your current backup.</p><div className="flex flex-wrap gap-2"><button disabled={busy || !backedUp} className="launch-button" onClick={async () => {
+            setBusy(true);
+            try { const restored = await prepareRestore(pending); onRestore(restored); setPending(null); setMessage('Workspace restored.'); }
+            catch (error) { setMessage(`Restore failed: ${(error as Error).message}`); }
+            finally { setBusy(false); }
+          }}>Replace workspace</button><button className="launch-button" onClick={() => setPending(null)}>Cancel</button></div>{!backedUp && <p className="text-xs">Download a complete backup above to enable replacement.</p>}</div>}
         </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-1 px-5 pt-3 border-b border-slate-100 dark:border-white/10 overflow-x-auto text-xs font-bold">
-          <button
-            onClick={() => setActiveTab('general')}
-            className={`pb-2.5 px-3 transition border-b-2 cursor-pointer ${
-              activeTab === 'general'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
-            }`}
-          >
-            General
-          </button>
-          <button
-            onClick={() => setActiveTab('notifications')}
-            className={`pb-2.5 px-3 transition border-b-2 cursor-pointer ${
-              activeTab === 'notifications'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
-            }`}
-          >
-            Notifications
-          </button>
-          <button
-            onClick={() => setActiveTab('data')}
-            className={`pb-2.5 px-3 transition border-b-2 cursor-pointer ${
-              activeTab === 'data'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
-            }`}
-          >
-            Data & Backups
-          </button>
-          <button
-            onClick={() => setActiveTab('subscription')}
-            className={`pb-2.5 px-3 transition border-b-2 cursor-pointer flex items-center gap-1 ${
-              activeTab === 'subscription'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
-            }`}
-          >
-            <Crown className="w-3 h-3 text-amber-500" />
-            <span>Subscription</span>
-          </button>
-        </div>
-
-        {/* Tab Content Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
-          
-          {/* TAB: GENERAL */}
-          {activeTab === 'general' && (
-            <div className="space-y-4">
-              
-              {/* Appearance / Theme */}
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/5">
-                <div className="flex items-center gap-3">
-                  {theme === 'dark' ? <Moon className="w-4 h-4 text-amber-300" /> : <Sun className="w-4 h-4 text-amber-500" />}
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">Appearance</h4>
-                    <p className="text-[11px] text-slate-400">Toggle between Light and Dark mode.</p>
-                  </div>
-                </div>
-                <button
-                  onClick={onToggleTheme}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-white/10 hover:bg-slate-100 transition cursor-pointer shadow-xs"
-                >
-                  {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-                </button>
-              </div>
-
-              {/* Sound Effects */}
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/5">
-                <div className="flex items-center gap-3">
-                  <Volume2 className="w-4 h-4 text-emerald-500" />
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">Completion Sound</h4>
-                    <p className="text-[11px] text-slate-400">Play an acoustic chime when checking off tasks.</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    const next = !permissions.audioEnabled;
-                    localStorage.setItem('omnisticky_audio_sound', next ? 'true' : 'false');
-                    onUpdatePermissions();
-                    if (next) playCompletionSound();
-                  }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
-                    permissions.audioEnabled
-                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                      : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-white/10'
-                  }`}
-                >
-                  {permissions.audioEnabled ? 'Enabled' : 'Muted'}
-                </button>
-              </div>
-
-              {/* Developer / 3D Debug Readouts */}
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/5">
-                <div className="flex items-center gap-3">
-                  <Bug className="w-4 h-4 text-indigo-500" />
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">3D Debug Metrics</h4>
-                    <p className="text-[11px] text-slate-400">Show camera pitch, yaw, and scale overlay on 3D Canvas.</p>
-                  </div>
-                </div>
-                <button
-                  onClick={onToggleDebugMode}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
-                    debugMode
-                      ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
-                      : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-white/10'
-                  }`}
-                >
-                  {debugMode ? 'Visible' : 'Hidden'}
-                </button>
-              </div>
-
-            </div>
-          )}
-
-          {/* TAB: NOTIFICATIONS */}
-          {activeTab === 'notifications' && (
-            <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200/70 dark:border-blue-900/40 text-xs">
-                <div className="flex items-center gap-2 font-bold text-blue-900 dark:text-blue-300 mb-1">
-                  <Bell className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  <span>Desktop & Browser Alerts</span>
-                </div>
-                <p className="text-blue-700 dark:text-blue-400/90 leading-relaxed text-[11px]">
-                  Get gentle reminders for scheduled tasks, due date alerts, and focus sessions even when working in another tab.
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/5">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">System Notification Access</h4>
-                  <p className="text-[11px] text-slate-400">
-                    Status: <span className="font-semibold uppercase">{permissions.notifications}</span>
-                  </p>
-                </div>
-                {permissions.notifications === 'granted' ? (
-                  <button
-                    onClick={handleTestNotification}
-                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-white/10 hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    {notificationTestSent ? 'Sent!' : 'Send Test Alert'}
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleRequestNotifications}
-                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition cursor-pointer shadow-xs"
-                  >
-                    Enable Notifications
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB: DATA & BACKUPS */}
-          {activeTab === 'data' && (
-            <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10">
-                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-                  Zero Lock-in Export
-                </h4>
-                <p className="text-[11px] text-slate-400 mb-4 leading-relaxed">
-                  Your notes belong to you. Download a portable copy of your entire workspace at any time.
-                </p>
-                <div className="flex flex-wrap gap-2.5">
-                  <button
-                    onClick={() => exportTasksJSON(tasks)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-white/10 hover:bg-slate-100 transition cursor-pointer shadow-2xs"
-                  >
-                    <Download className="w-3.5 h-3.5 text-blue-500" />
-                    <span>Export JSON Backup</span>
-                  </button>
-
-                  <button
-                    onClick={() => exportTasksMarkdown(tasks, areas, projects)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-white/10 hover:bg-slate-100 transition cursor-pointer shadow-2xs"
-                  >
-                    <Download className="w-3.5 h-3.5 text-indigo-500" />
-                    <span>Export Markdown (.md)</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Local Storage Persistence */}
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/5">
-                <div className="flex items-center gap-3">
-                  <HardDrive className="w-4 h-4 text-amber-500" />
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">Persistent Offline Storage</h4>
-                    <p className="text-[11px] text-slate-400">
-                      {permissions.persistentStorage 
-                        ? 'Protected against browser eviction' 
-                        : 'Browser may evict storage under low disk conditions'}
-                    </p>
-                  </div>
-                </div>
-                {!permissions.persistentStorage && (
-                  <button
-                    onClick={handleRequestStorage}
-                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition cursor-pointer"
-                  >
-                    Protect Storage
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB: SUBSCRIPTION */}
-          {activeTab === 'subscription' && (
-            <div className="space-y-4">
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-indigo-500/10 to-blue-500/10 border border-amber-500/30 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-amber-500 to-indigo-600 text-white flex items-center justify-center mx-auto mb-3 shadow-md">
-                  <Crown className="w-6 h-6 fill-white" />
-                </div>
-                <h4 className="text-sm font-black text-slate-900 dark:text-white mb-0.5">
-                  {isProUser ? 'OmniSticky Pro (Active)' : 'OmniSticky Free Tier'}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-4">
-                  {isProUser 
-                    ? 'All pro features unlocked: unlimited projects, 3D spatial canvas, widget suites, and zero lock-in sync.'
-                    : 'Upgrade to OmniSticky Pro for full multi-experience views, widgets hub, and unrestricted categories.'}
-                </p>
-                {!isProUser && (
-                  <button
-                    onClick={() => {
-                      onClose();
-                      onOpenSubscription();
-                    }}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-white text-xs font-black shadow-lg shadow-indigo-500/25 transition active:scale-95 cursor-pointer"
-                  >
-                    View Pro Plans
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-        </div>
-      </div>
-    </div>
-  );
-};
+        <div className="border-t border-stone-200 dark:border-white/10 pt-4"><p className="mb-2">Storage protection: {permissions.persistentStorage ? 'granted by this browser' : 'not granted'}. Even protected data can be manually cleared.</p>{!permissions.persistentStorage && <button className="launch-button" onClick={async () => { const granted = await requestPersistentStorage(); onUpdatePermissions(); setMessage(granted ? 'Storage protection granted. Keep backups too.' : 'This browser did not grant protection. Keep regular backups.'); }}>Request storage protection</button>}</div>
+      </div>}
+      {tab === 'about' && <div className="space-y-4 text-sm"><h3 className="font-bold">Omni Sticky · Free beta</h3><p>A personal workspace for visual planning, notes, and focus. All currently available features are free. Payments, cloud sync, shared projects, and scheduled reminders are not available.</p><p><a className="underline" href="/help.html" target="_blank" rel="noreferrer">Getting started, keyboard shortcuts & feedback</a></p><p><a className="underline" href="/privacy.html" target="_blank" rel="noreferrer">Privacy, storage & limitations</a></p><p className="text-stone-500 dark:text-stone-400">Works best on a larger screen. The web and Windows versions have separate local workspaces; transfer work with a complete backup.</p></div>}
+      {message && <p role="status" className="mt-4 rounded-xl bg-amber-100 text-amber-950 p-3 text-sm">{message}</p>}
+    </section>
+  </div>;
+}
+export const SettingsModal: React.FC<SettingsModalProps> = props => props.isOpen ? <SettingsBody {...props} /> : null;

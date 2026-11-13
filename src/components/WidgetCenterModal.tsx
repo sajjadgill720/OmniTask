@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useDialog } from '../utils/useDialog';
 import { 
   X, 
   Layout, 
@@ -30,6 +31,7 @@ interface WidgetCenterModalProps {
   onToggleTimer: (id: string) => void;
   onAddTask?: (title: string, section?: string, colorHex?: string) => void;
   audioEnabled: boolean;
+  onRecordFocus?: (id: string, seconds: number) => void;
   onToggleFloatingWidget?: (type: 'sticky' | 'pomodoro' | null) => void;
   floatingWidgetType?: 'sticky' | 'pomodoro' | null;
 }
@@ -42,9 +44,11 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
   onToggleTimer,
   onAddTask,
   audioEnabled,
+  onRecordFocus,
   onToggleFloatingWidget,
   floatingWidgetType,
 }) => {
+  const dialogRef = useDialog(onClose, isOpen);
   const [activeWidget, setActiveWidget] = useState<WidgetType>('today_focus');
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -58,30 +62,36 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
 
   // Pomodoro Timer States (25 minutes = 1500 seconds)
   const [pomoSeconds, setPomoSeconds] = useState(25 * 60);
+  const [pomoDuration, setPomoDuration] = useState(25 * 60);
+  const pomoDeadline = useRef<number | null>(null);
   const [pomoActive, setPomoActive] = useState(false);
-  const [pomoSessions, setPomoSessions] = useState(2);
+  const [pomoSessions, setPomoSessions] = useState(0);
   const [selectedPomoTaskId, setSelectedPomoTaskId] = useState<string>('');
 
   // Quick Sticky Pad States
-  const [stickyNoteText, setStickyNoteText] = useState('Refine corporate presentation & finalize deliverables.');
+  const [stickyNoteText, setStickyNoteText] = useState('');
   const [stickyColor, setStickyColor] = useState('#fef08a');
 
   // Clock tick
   useEffect(() => {
+    if (!isOpen) return;
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [isOpen]);
 
   // Pomodoro countdown effect
   useEffect(() => {
+    if (!isOpen) { pomoDeadline.current = null; setPomoActive(false); return; }
     let interval: NodeJS.Timeout | null = null;
     if (pomoActive && pomoSeconds > 0) {
+      if (pomoDeadline.current === null) pomoDeadline.current = Date.now() + pomoSeconds * 1000;
       interval = setInterval(() => {
-        setPomoSeconds(prev => prev - 1);
-      }, 1000);
+        setPomoSeconds(Math.max(0, Math.ceil((pomoDeadline.current! - Date.now()) / 1000)));
+      }, 250);
     } else if (pomoSeconds === 0 && pomoActive) {
       setPomoActive(false);
       setPomoSessions(s => s + 1);
+      if (selectedPomoTaskId) onRecordFocus?.(selectedPomoTaskId, pomoDuration);
       if (audioEnabled) playPomodoroChime();
       confetti({
         particleCount: 50,
@@ -90,10 +100,11 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
         colors: ['#ef4444', '#f59e0b', '#3b82f6'],
       });
     }
+    if (!pomoActive || pomoSeconds === 0) pomoDeadline.current = null;
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [pomoActive, pomoSeconds, audioEnabled]);
+  }, [pomoActive, pomoSeconds, audioEnabled, isOpen, selectedPomoTaskId, pomoDuration, onRecordFocus]);
 
   const todayTasks = tasks.filter(t => t.section === 'today');
   const pendingToday = todayTasks.filter(t => t.status !== 'done');
@@ -124,6 +135,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
     const trimmed = stickyNoteText.trim();
     if (!trimmed || !onAddTask) return;
     onAddTask(trimmed, 'today', stickyColor);
+    setStickyNoteText('');
     if (audioEnabled) playCompletionSound();
     confetti({
       particleCount: 25,
@@ -134,7 +146,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
   };
 
   // Pomodoro Progress Ring calculation
-  const pomoTotal = 25 * 60;
+  const pomoTotal = pomoDuration;
   const pomoProgress = (pomoTotal - pomoSeconds) / pomoTotal;
   const pomoRadius = 45;
   const pomoCircumference = 2 * Math.PI * pomoRadius;
@@ -147,7 +159,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#291b12]/75 backdrop-blur-md animate-in fade-in duration-150 ${isFullscreen ? 'p-0' : ''}`}>
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Widgets" tabIndex={-1} className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#291b12]/75 backdrop-blur-md animate-in fade-in duration-150 ${isFullscreen ? 'p-0' : ''}`}>
       
       <div className={`relative w-full ${isFullscreen ? 'h-[100dvh] max-w-none rounded-none' : 'max-h-[94dvh] max-w-5xl rounded-[26px]'} bg-[#f5ead5] dark:bg-[#252018] border border-[#c3925d]/70 dark:border-[#70583d] shadow-[0_30px_90px_rgba(30,18,9,.52),inset_0_1px_rgba(255,255,255,.75)] p-4 sm:p-6 overflow-y-auto flex flex-col transition-all`}>
         
@@ -182,7 +194,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
             </button>
 
             <button
-              onClick={onClose}
+              onClick={onClose} aria-label="Close widgets"
               className="p-2 rounded-lg text-stone-500 hover:text-stone-900 dark:text-stone-300 dark:hover:text-white hover:bg-stone-900/5 dark:hover:bg-white/10 transition cursor-pointer"
             >
               <X className="w-5 h-5" />
@@ -436,7 +448,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
               {/* Controls */}
               <div className="flex items-center justify-center gap-2">
                 <button
-                  onClick={() => setPomoActive(!pomoActive)}
+                  onClick={() => { if (pomoSeconds === 0) { setPomoSeconds(25 * 60); setPomoDuration(25 * 60); } setPomoActive(!pomoActive); }}
                   className={`px-6 py-2.5 rounded-2xl font-black text-xs transition flex items-center gap-2 cursor-pointer shadow-md ${
                     pomoActive
                       ? 'bg-amber-500 hover:bg-amber-600 text-stone-950 shadow-amber-900/20'
@@ -451,6 +463,8 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
                   onClick={() => {
                     setPomoActive(false);
                     setPomoSeconds(25 * 60);
+                    setPomoDuration(25 * 60);
+                    pomoDeadline.current = null;
                   }}
                   className="p-2.5 rounded-xl bg-white/60 hover:bg-white text-stone-700 transition cursor-pointer"
                   title="Reset Timer"
@@ -459,7 +473,7 @@ export const WidgetCenterModal: React.FC<WidgetCenterModalProps> = ({
                 </button>
 
                 <button
-                  onClick={() => setPomoSeconds(s => s + 5 * 60)}
+                  onClick={() => { pomoDeadline.current = null; setPomoSeconds(s => s + 5 * 60); setPomoDuration(s => s + 5 * 60); }}
                   className="px-3 py-2.5 rounded-xl bg-white/60 hover:bg-white text-stone-800 font-bold text-xs transition cursor-pointer"
                   title="Add 5 Minutes"
                 >

@@ -1,3 +1,5 @@
+import { useDialog } from '../utils/useDialog';
+import { safeStorage } from '../utils/safeStorage';
 import React, { useState } from 'react';
 import { 
   X, 
@@ -25,29 +27,32 @@ interface PermissionsModalProps {
   onUpdatePermissions: () => void;
 }
 
-export const PermissionsModal: React.FC<PermissionsModalProps> = ({
+const PermissionsModalBody: React.FC<PermissionsModalProps> = ({
   isOpen,
   onClose,
   permissions,
   onUpdatePermissions,
 }) => {
-  if (!isOpen) return null;
+  const dialogRef = useDialog(onClose);
 
   const [testSent, setTestSent] = useState(false);
+  const [notice, setNotice] = useState('');
 
   const handleRequestNotifications = async () => {
-    await requestNotificationPermission();
+    const result = await requestNotificationPermission();
+    setNotice(result === 'granted' ? 'Permission granted. You can send a test notification.' : 'Notifications are unavailable or blocked. Check this site’s notification settings in your browser.');
     onUpdatePermissions();
   };
 
   const handleRequestStorage = async () => {
-    await requestPersistentStorage();
+    const granted = await requestPersistentStorage();
+    setNotice(granted ? 'Storage protection granted. Keep backups too.' : 'This browser did not grant storage protection. Keep regular backups.');
     onUpdatePermissions();
   };
 
   const handleToggleAudio = () => {
     const nextVal = !permissions.audioEnabled;
-    localStorage.setItem('omnisticky_audio_sound', nextVal ? 'true' : 'false');
+    safeStorage.setItem('omnisticky_audio_sound', nextVal ? 'true' : 'false');
     if (nextVal) {
       playCompletionSound();
     }
@@ -55,17 +60,19 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
   };
 
   const handleSendTestNotification = () => {
-    sendLocalNotification('Omni Sticky Focus Reminder', {
-      body: 'Your daily focus timer and due task notifications are working perfectly!',
+    const sent = sendLocalNotification('Omni Sticky · Test notification', {
+      body: 'This is a test of browser notification access. Scheduled reminders are not available in this beta.',
     });
-    setTestSent(true);
+    setTestSent(sent);
+    setNotice(sent ? 'Test notification requested. Display depends on your system notification settings.' : 'This browser could not display a notification.');
     setTimeout(() => setTestSent(false), 3000);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-150">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Permissions" tabIndex={-1} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-150">
       
-      <div className="relative w-full max-w-lg bg-white dark:bg-[#181a20] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 overflow-hidden">
+      <div className="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto bg-white dark:bg-[#181a20] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6">
+        {notice && <p role="status" className="mb-3 text-sm text-amber-800 dark:text-amber-200">{notice}</p>}
         
         {/* Header */}
         <div className="flex items-center justify-between pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
@@ -84,7 +91,7 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
           </div>
 
           <button
-            onClick={onClose}
+            onClick={onClose} aria-label="Close Permissions "
             className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -110,7 +117,7 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
                   )}
                 </h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
-                  Sends scheduled task reminders and focus timer alerts.
+                  Test browser notification access. Scheduled reminders are not available in this beta.
                 </p>
               </div>
             </div>
@@ -142,7 +149,7 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
               </div>
               <div>
                 <h4 className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <span>Things 3 Tactile Audio Chime</span>
+                  <span>Completion Chime</span>
                   {permissions.audioEnabled ? (
                     <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.2 rounded">Active</span>
                   ) : (
@@ -175,7 +182,7 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
               </div>
               <div>
                 <h4 className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <span>Guaranteed Offline Storage</span>
+                  <span>Local Storage Protection</span>
                   {permissions.persistentStorage ? (
                     <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.2 rounded">Persistent</span>
                   ) : (
@@ -183,7 +190,7 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
                   )}
                 </h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
-                  Ensures browser cache cleaners never delete your tasks.
+                  Requests protection from automatic browser eviction. Clearing site data still deletes your workspace; keep backups.
                 </p>
               </div>
             </div>
@@ -210,10 +217,10 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
               <div>
                 <h4 className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
                   <span>App Icon Badge Count</span>
-                  <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.2 rounded">Active</span>
+                  <span className="text-[10px]">{permissions.badgingSupported ? 'Supported' : 'Unavailable'}</span>
                 </h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
-                  Shows pending tasks count directly on your PWA icon or dock.
+                  On supported installed web apps, shows pending tasks count directly on your PWA icon or dock.
                 </p>
               </div>
             </div>
@@ -224,7 +231,7 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
         {/* Footer */}
         <div className="flex items-center justify-end">
           <button
-            onClick={onClose}
+            onClick={onClose} aria-label="Close Permissions "
             className="px-5 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs rounded-xl cursor-pointer"
           >
             Done
@@ -237,3 +244,5 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
   );
 };
 
+
+export const PermissionsModal: React.FC<PermissionsModalProps> = (props) => props.isOpen ? <PermissionsModalBody {...props} /> : null;

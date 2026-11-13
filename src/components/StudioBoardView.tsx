@@ -1,3 +1,4 @@
+import { safeStorage } from '../utils/safeStorage';
 import React, { useState } from 'react';
 import { 
   Circle, 
@@ -64,7 +65,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
 
   // Full handwritten task cards are the default desk view; preserve an explicit saved choice.
   const [density, setDensity] = useState<'normal' | 'compact' | 'full'>(() => {
-    const saved = localStorage.getItem('omnisticky_board_density_v2');
+    const saved = safeStorage.getItem('omnisticky_board_density_v2');
     return saved === 'normal' || saved === 'compact' || saved === 'full' ? saved : 'full';
   });
   // The executive review always uses detailed cards; desk view keeps its own density choice.
@@ -72,7 +73,7 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
 
   const handleToggleDensity = (mode: 'normal' | 'compact' | 'full') => {
     setDensity(mode);
-    localStorage.setItem('omnisticky_board_density_v2', mode);
+    safeStorage.setItem('omnisticky_board_density_v2', mode);
   };
 
   const todoTasks = tasks.filter(t => t.status === 'todo');
@@ -713,106 +714,10 @@ export const StudioBoardView: React.FC<StudioBoardViewProps> = ({
         <span>To Do · In Progress · Done</span>
       </p>
 
-      {/* =======================================================================
-          BOTTOM WOODEN DESK DASHBOARD CARDS (Directly resting on Desk above fold)
-          1. Productivity Overview
-          2. Today's Momentum
-          3. Focus Streak
-          ======================================================================= */}
-      <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-        
-        {/* Card 1: Productivity Overview */}
-        <div className="p-3.5 rounded-2xl bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/15 shadow-xl text-white flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="font-extrabold text-xs tracking-tight text-white/90">Productivity Overview</span>
-            </div>
-            <div className="flex items-center gap-1 text-[9px] font-bold text-white/60 bg-white/10 px-2 py-0.5 rounded-lg cursor-pointer">
-              <span>This Week</span>
-              <ChevronDown className="w-2.5 h-2.5" />
-            </div>
-          </div>
-
-          <div className="my-1">
-            <div className="flex items-baseline gap-2">
-              <span className="text-xl font-black text-white font-mono">78%</span>
-              <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-0.5">
-                <span>↑</span>
-                <span>12%</span>
-              </span>
-            </div>
-            <span className="text-[9px] text-white/60 block">Completion Rate</span>
-          </div>
-
-          <div className="w-full h-9 pt-0.5">
-            <svg viewBox="0 0 200 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full overflow-visible">
-              <path
-                d="M 5 30 Q 30 15 60 25 T 110 18 T 150 12 T 195 8"
-                stroke="#34d399"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                className="drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]"
-              />
-              <circle cx="195" cy="8" r="3.5" fill="#34d399" className="drop-shadow-[0_0_6px_#34d399]" />
-            </svg>
-          </div>
-        </div>
-
-        {/* Card 2: Today's Momentum */}
-        <div 
-          onClick={onNavigateToAnalytics}
-          className="p-3.5 rounded-2xl bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/15 shadow-xl text-white flex flex-col justify-between cursor-pointer hover:bg-black/55 transition group"
-        >
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-300" />
-              <span className="font-extrabold text-xs tracking-tight text-white/90">Today's Momentum</span>
-            </div>
-            <span className="text-[9px] font-bold text-white/60 group-hover:text-white flex items-center gap-0.5 transition">
-              <span>Open insights</span>
-              <ArrowRight className="w-3 h-3" />
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-3 pt-2">
-            <div>
-              <strong className="text-2xl font-black text-emerald-300">{completedToday}</strong>
-              <p className="text-[9px] text-white/60">notes completed today</p>
-            </div>
-            <div className="flex h-10 items-end gap-1" aria-hidden="true">
-              {[3, 5, 2, 7, 4, Math.max(2, completedToday)].map((height, index) => (
-                <span key={index} className="w-2 rounded-t bg-gradient-to-t from-emerald-600 to-teal-300" style={{ height: `${Math.min(100, height * 12)}%` }} />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3: Focus Streak with 3D Golden Trophy */}
-        <div className="p-3.5 rounded-2xl bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/15 shadow-xl text-white flex items-center justify-between">
-          <div className="flex-1 pr-2">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-              <span className="font-extrabold text-xs tracking-tight text-white/90">Focus Streak</span>
-            </div>
-            
-            <div className="text-xl font-black text-white font-mono leading-none mb-1">
-              12 Days
-            </div>
-            <span className="text-[9px] text-white/60 block mb-1.5">Keep going!</span>
-
-            <div className="w-full h-1.5 rounded-full bg-white/15 overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-amber-400 to-yellow-300 rounded-full w-3/4" />
-            </div>
-          </div>
-
-          <div className="w-14 h-14 shrink-0 relative flex items-center justify-center">
-            <div className="absolute inset-0 rounded-full bg-amber-400/20 blur-md pointer-events-none" />
-            <span className="text-3xl filter drop-shadow-[0_4px_10px_rgba(251,191,36,0.6)]">
-              🏆
-            </span>
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-white">
+        <div className="rounded-2xl bg-black/50 p-4"><h3 className="text-xs text-white/70">Completion · all notes</h3><p className="text-2xl font-bold mt-2">{tasks.length ? Math.round(doneTasks.length / tasks.length * 100) : 0}%</p><p className="text-xs text-white/60">{doneTasks.length} of {tasks.length} notes</p></div>
+        <button onClick={onNavigateToAnalytics} className="rounded-2xl bg-black/50 p-4 text-left"><h3 className="text-xs text-white/70">Completed today</h3><p className="text-2xl font-bold mt-2">{completedToday}</p><p className="text-xs text-white/60">Open insights →</p></button>
+        <div className="rounded-2xl bg-black/50 p-4"><h3 className="text-xs text-white/70">Recorded focus time</h3><p className="text-2xl font-bold mt-2">{Math.floor(tasks.reduce((sum, t) => sum + (t.timeSpentSeconds || 0), 0) / 60)} min</p><p className="text-xs text-white/60">Across all notes</p></div>
       </div>
 
     </div>

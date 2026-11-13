@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Play, 
   Pause, 
@@ -33,7 +33,7 @@ interface FocusRoomViewProps {
  * - Center: Large Circular Focus Timer (25:00 + Focus Session + Glowing Yellow Ring + Play Button)
  * - Right: Session Progress (2/4 + Gold Bar) & Break in (5:00 + Coffee Cup)
  * - Below Timer: Authentic Handwritten Inscription:
- *   "Discipline is choosing between what you want now and what you want most." — Abraham Lincoln
+ *   "Choose one small task. Give it your full attention." — Omni Sticky
  * - Bottom Floating Pill Toolbar: Focus Mode | Ambient Sounds | Fullscreen
  */
 export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
@@ -51,7 +51,8 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
   const [totalSeconds, setTotalSeconds] = useState<number>(25 * 60); // 25 mins
   const [secondsRemaining, setSecondsRemaining] = useState<number>(25 * 60);
   const [isActive, setIsActive] = useState<boolean>(false);
-  const [completedSessions, setCompletedSessions] = useState<number>(2);
+  const deadline = useRef<number | null>(null);
+  const [completedSessions, setCompletedSessions] = useState<number>(0);
   const targetSessions = 4;
 
   // Distraction-free mode
@@ -67,7 +68,7 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
   });
 
   const currentTask = useMemo(() => {
-    return tasks.find(t => t.id === selectedTaskId) || activeTasks[0] || null;
+    return activeTasks.find(t => t.id === selectedTaskId) || activeTasks[0] || null;
   }, [tasks, selectedTaskId, activeTasks]);
 
   const currentProject = useMemo(() => {
@@ -79,9 +80,10 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (isActive && secondsRemaining > 0) {
+      if (deadline.current === null) deadline.current = Date.now() + secondsRemaining * 1000;
       interval = setInterval(() => {
-        setSecondsRemaining(prev => prev - 1);
-      }, 1000);
+        setSecondsRemaining(Math.max(0, Math.ceil((deadline.current! - Date.now()) / 1000)));
+      }, 250);
     } else if (isActive && secondsRemaining === 0) {
       if (sessionType === 'focus') {
         if (audioEnabled) playCompletionSound();
@@ -107,6 +109,7 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
       }
       setIsActive(false);
     }
+    if (!isActive || secondsRemaining === 0) deadline.current = null;
 
     return () => {
       if (interval) clearInterval(interval);
@@ -129,6 +132,7 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
   };
 
   const resetTimer = () => {
+    deadline.current = null;
     setIsActive(false);
     const initial = sessionType === 'focus' ? 25 * 60 : 5 * 60;
     setTotalSeconds(initial);
@@ -173,7 +177,7 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
 
             <div className="space-y-2">
               <h3 className="text-lg sm:text-xl font-bold font-sans text-white leading-snug break-words">
-                {currentTask?.title || 'Finish RETECO paper summary'}
+                {currentTask?.title || 'Ready when you are'}
               </h3>
               {currentProject && (
                 <span className="text-xs font-medium text-amber-300/80 block">
@@ -285,10 +289,10 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
                 textShadow: '0 1px 2px rgba(0,0,0,0.15)',
               }}
             >
-              “Discipline is choosing between what you want now and what you want most.”
+              “Choose one small task. Give it your full attention.”
             </p>
             <p className="text-xs text-stone-700/80 dark:text-amber-200/70 font-serif italic mt-1">
-              — Abraham Lincoln
+              — Omni Sticky
             </p>
           </div>
 
@@ -311,7 +315,7 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
             <div className="w-full h-2 rounded-full bg-white/15 overflow-hidden">
               <div 
                 className="h-full bg-gradient-to-r from-amber-400 to-yellow-300 rounded-full transition-all duration-300"
-                style={{ width: `${(completedSessions / targetSessions) * 100}%` }}
+                style={{ width: `${Math.min(100, completedSessions / targetSessions * 100)}%` }}
               />
             </div>
           </div>
@@ -319,6 +323,7 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
           {/* Bottom Card: Break in 5:00 */}
           <div 
             onClick={() => {
+              deadline.current = Date.now() + 5 * 60 * 1000;
               setSessionType('break');
               setTotalSeconds(5 * 60);
               setSecondsRemaining(5 * 60);
@@ -329,7 +334,7 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
             <div className="flex items-center gap-3">
               <Coffee className="w-6 h-6 text-amber-200" />
               <div>
-                <span className="text-xs font-semibold text-white/70 block">Break in</span>
+                <span className="text-xs font-semibold text-white/70 block">Start a break</span>
                 <span className="text-xl font-bold font-mono text-white">5:00</span>
               </div>
             </div>
@@ -383,9 +388,9 @@ export const FocusRoomView: React.FC<FocusRoomViewProps> = ({
           type="button"
           onClick={() => {
             if (!document.fullscreenElement) {
-              document.documentElement.requestFullscreen().catch(() => {});
+              document.documentElement.requestFullscreen?.().catch(() => {});
             } else {
-              document.exitFullscreen().catch(() => {});
+              document.exitFullscreen?.().catch(() => {});
             }
           }}
           className="flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold bg-black/45 text-white/80 border border-white/15 hover:text-white hover:bg-black/60 backdrop-blur-xl transition cursor-pointer"

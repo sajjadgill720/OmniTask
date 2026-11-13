@@ -1,20 +1,21 @@
+import { useDialog } from '../utils/useDialog';
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Search, 
-  Target, 
-  Columns3, 
-  LayoutGrid, 
-  Network, 
-  Plus, 
-  Sun, 
-  Moon, 
-  Settings, 
-  CheckCircle2, 
-  Folder, 
-  Star, 
-  Inbox, 
-  Calendar, 
-  Compass, 
+import {
+  Search,
+  Target,
+  Columns3,
+  LayoutGrid,
+  Network,
+  Plus,
+  Sun,
+  Moon,
+  Settings,
+  CheckCircle2,
+  Folder,
+  Star,
+  Inbox,
+  Calendar,
+  Compass,
   Archive,
   Flame,
   ArrowRight,
@@ -46,7 +47,7 @@ interface CommandItem {
   action: () => void;
 }
 
-export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
+const CommandPaletteModalBody: React.FC<CommandPaletteModalProps> = ({
   isOpen,
   onClose,
   tasks,
@@ -60,7 +61,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onToggleTheme,
   theme,
 }) => {
-  if (!isOpen) return null;
+  const dialogRef = useDialog(onClose);
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -223,7 +224,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   if (query.trim()) {
     const q = query.toLowerCase();
     tasks
-      .filter(t => t.title.toLowerCase().includes(q) || (t.notes && t.notes.toLowerCase().includes(q)))
+      .filter(t => t.title.toLowerCase().includes(q) || (t.notes && t.notes.toLowerCase().includes(q)) || t.tags.some(tag => tag.toLowerCase().includes(q)))
       .slice(0, 8)
       .forEach(t => {
         items.push({
@@ -245,7 +246,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
     ? items.filter(
         i =>
           i.title.toLowerCase().includes(query.toLowerCase()) ||
-          (i.detail && i.detail.toLowerCase().includes(query.toLowerCase()))
+          (i.detail && i.detail.toLowerCase().includes(query.toLowerCase())) || i.category === 'tasks'
       )
     : items;
 
@@ -268,11 +269,11 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   };
 
   return (
-    <div 
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="CommandPalette" tabIndex={-1}
       onClick={onClose}
       className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-100"
     >
-      <div 
+      <div
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-xl bg-white dark:bg-[#14161f] rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col"
       >
@@ -342,3 +343,5 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   );
 };
 
+
+export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = (props) => props.isOpen ? <CommandPaletteModalBody {...props} /> : null;

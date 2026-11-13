@@ -1,3 +1,4 @@
+import { useDialog } from '../utils/useDialog';
 import React, { useState } from 'react';
 import { X, Tag, Plus, Check } from 'lucide-react';
 import { Area } from '../types';
@@ -12,12 +13,12 @@ interface CategoryModalProps {
 const EMOJI_PRESETS = ['💼', '🌱', '📚', '🎨', '💰', '🚀', '✈️', '⚡', '🧘', '🎯', '🔬', '💡', '🏠', '❤️', '🏆', '🛠️'];
 const COLOR_OPTIONS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f43f5e', '#64748b'];
 
-export const CategoryModal: React.FC<CategoryModalProps> = ({
+const CategoryModalBody: React.FC<CategoryModalProps> = ({
   isOpen,
   onClose,
   onAddCategory,
 }) => {
-  if (!isOpen) return null;
+  const dialogRef = useDialog(onClose);
 
   const [name, setName] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState(EMOJI_PRESETS[0]);
@@ -40,7 +41,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Category" tabIndex={-1} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
       
       <div className="relative w-full max-w-md bg-white dark:bg-[#15171e] rounded-3xl border border-slate-200 dark:border-white/10 shadow-2xl p-6 select-none">
         
@@ -58,7 +59,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={onClose} aria-label="Close Category "
             className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -132,7 +133,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
             <button
               type="button"
-              onClick={onClose}
+              onClick={onClose} aria-label="Close Category "
               className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition cursor-pointer"
             >
               Cancel
@@ -155,3 +156,5 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   );
 };
 
+
+export const CategoryModal: React.FC<CategoryModalProps> = (props) => props.isOpen ? <CategoryModalBody {...props} /> : null;

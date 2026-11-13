@@ -1,17 +1,25 @@
 {
-  "short_name": "OmniSticky",
-  "name": "OmniSticky — Sticky Speed Meets Kanban Flow",
+  "id": "/",
+  "short_name": "Omni Sticky",
+  "name": "Omni Sticky \u2014 Notes & Focus",
+  "description": "A personal space for sticky notes, visual planning, and focus.",
   "icons": [
     {
-      "src": "/favicon.svg",
-      "type": "image/svg+xml",
-      "sizes": "512x512"
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
     }
   ],
   "start_url": "/",
-  "background_color": "#ffffff",
+  "scope": "/",
+  "background_color": "#faf6ee",
   "theme_color": "#f59e0b",
-  "display": "standalone",
-  "orientation": "portrait"
+  "display": "standalone"
 }
-

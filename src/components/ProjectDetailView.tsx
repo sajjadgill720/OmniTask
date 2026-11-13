@@ -36,24 +36,6 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({
   const [activeTab, setActiveTab] = useState<'tasks' | 'milestones' | 'activity'>('tasks');
   const [quickTitle, setQuickTitle] = useState('');
 
-  const [milestones, setMilestones] = useState([
-    { id: 'm1', title: 'Phase 1: Architecture & Data Schema', status: 'completed', date: 'Oct 24, 2026' },
-    { id: 'm2', title: 'Phase 2: Visual Studio Workspace UI/UX', status: 'active', date: 'Nov 8, 2026' },
-    { id: 'm3', title: 'Phase 3: Production Rollout & Polishing', status: 'pending', date: 'Nov 15, 2026' },
-  ]);
-
-  const handleToggleMilestone = (id: string) => {
-    setMilestones(prev => prev.map(m => {
-      if (m.id !== id) return m;
-      const nextStatus = m.status === 'completed' ? 'active' : 'completed';
-      if (nextStatus === 'completed') {
-        playCompletionSound();
-        confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
-      }
-      return { ...m, status: nextStatus };
-    }));
-  };
-
   const projTasks = tasks.filter(t => t.projectId === project.id);
   const doneTasks = projTasks.filter(t => t.status === 'done');
   const totalCount = projTasks.length || 1;
@@ -108,7 +90,7 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({
               </h1>
             </div>
             <p className="text-xs text-stone-600 dark:text-white/60 pl-6.5 max-w-xl">
-              {project.description || 'Build, ship and grow. Focus on delivering measurable impact.'}
+              {project.description || 'Keep the next steps for this project together.'}
             </p>
           </div>
 
@@ -116,12 +98,10 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({
           <div className="flex items-center gap-2 pl-6 sm:pl-0">
             <span className="px-3 py-1 rounded-xl bg-white/10 text-xs font-mono text-white/80 border border-white/15 flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-amber-300" />
-              <span>{project.dueDate || 'Nov 15, 2026'}</span>
+              <span>{project.dueDate || 'No deadline'}</span>
             </span>
 
-            <span className="px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold">
-              High
-            </span>
+
           </div>
         </div>
 
@@ -142,39 +122,6 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({
           </div>
         </div>
 
-      </div>
-
-      {/* Tabs Switcher: Tasks (12) | Milestones (3) | Activity */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-        <button
-          type="button"
-          onClick={() => setActiveTab('tasks')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-            activeTab === 'tasks' ? 'bg-amber-400 text-stone-950 shadow-md' : 'text-white/70 hover:text-white'
-          }`}
-        >
-          Tasks ({projTasks.length})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('milestones')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-            activeTab === 'milestones' ? 'bg-amber-400 text-stone-950 shadow-md' : 'text-white/70 hover:text-white'
-          }`}
-        >
-          Milestones (3)
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('activity')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-            activeTab === 'activity' ? 'bg-amber-400 text-stone-950 shadow-md' : 'text-white/70 hover:text-white'
-          }`}
-        >
-          Activity
-        </button>
       </div>
 
       {/* Tab Content: Tasks List */}
@@ -281,71 +228,6 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({
         </div>
       )}
 
-      {/* Milestones Tab */}
-      {activeTab === 'milestones' && (
-        <div className="space-y-3">
-          {milestones.map((milestone) => {
-            const isCompleted = milestone.status === 'completed';
-            return (
-              <div 
-                key={milestone.id} 
-                onClick={() => handleToggleMilestone(milestone.id)}
-                className="p-4 rounded-2xl bg-black/45 hover:bg-black/55 backdrop-blur-xl border border-white/15 flex items-center justify-between text-xs text-white transition cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleMilestone(milestone.id);
-                    }}
-                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition shrink-0 ${
-                      isCompleted ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-white/40 hover:border-amber-400'
-                    }`}
-                  >
-                    {isCompleted && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                  </button>
-                  <span className={`font-bold ${isCompleted ? 'line-through text-white/60' : 'text-white'}`}>
-                    {milestone.title}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                    isCompleted ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300 animate-pulse'
-                  }`}>
-                    {isCompleted ? 'Done' : 'Active'}
-                  </span>
-                  <span className="text-white/50 font-mono text-[11px]">{milestone.date}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Activity Tab */}
-      {activeTab === 'activity' && (
-        <div className="p-4 rounded-2xl bg-black/45 backdrop-blur-xl border border-white/15 space-y-2.5 text-xs text-white">
-          <div className="flex items-center gap-2 text-white/90">
-            <span className="w-2 h-2 rounded-full bg-blue-400" />
-            <span>Project created with {projTasks.length} planned items</span>
-          </div>
-          <div className="flex items-center gap-2 text-white/90">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span>{doneTasks.length} tasks marked as completed ({progressPercent}% overall)</span>
-          </div>
-          {doneTasks.slice(0, 3).map(dt => (
-            <div key={dt.id} className="pl-4 text-white/60 text-[11px] flex items-center gap-1.5">
-              <span>✓ Completed:</span>
-              <span className="font-medium text-white/80">{dt.title}</span>
-            </div>
-          ))}
-          <div className="flex items-center gap-2 text-white/90 pt-1 border-t border-white/10">
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
-            <span>Milestone progress: {milestones.filter(m => m.status === 'completed').length} / {milestones.length} phases achieved</span>
-          </div>
-        </div>
-      )}
 
     </div>
   );

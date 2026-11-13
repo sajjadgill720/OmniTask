@@ -1,3 +1,4 @@
+import { localDateString } from '../utils/dates';
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Calendar, 
@@ -42,13 +43,13 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
   const sectionTasks = useMemo(() => {
     if (section === 'upcoming') {
       return tasks
-        .filter(t => t.section === 'upcoming' || Boolean(t.dueDate))
+        .filter(t => t.status !== 'done' && (t.section === 'upcoming' || Boolean(t.dueDate)))
         .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
     }
     if (section === 'logbook') {
       return tasks.filter(t => t.status === 'done');
     }
-    return tasks.filter(t => t.section === section);
+    return tasks.filter(t => t.section === section || (section === 'today' && t.status !== 'done' && t.dueDate && t.dueDate <= localDateString()));
   }, [tasks, section]);
 
   const tagOf = (task: Task) => task.tags?.[0] || 'Personal';
@@ -167,7 +168,7 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
           
           <div className="space-y-3 max-w-3xl">
             {/* Quick Capture Inline Input */}
-            <form 
+            {section !== 'logbook' && <form
               onSubmit={handleInlineAdd}
               className="flex items-center gap-2 p-2.5 px-4 rounded-2xl bg-white/75 dark:bg-black/35 backdrop-blur-md border border-amber-900/10 dark:border-white/15 mb-5 shadow-sm focus-within:ring-2 focus-within:ring-amber-400/60 focus-within:border-amber-400/50 transition"
             >
@@ -179,7 +180,7 @@ export const WorkflowStageView: React.FC<WorkflowStageViewProps> = ({
                 placeholder="Add a new task... (Press Enter)"
                 className="flex-1 bg-transparent border-none font-handwriting text-lg text-stone-900 dark:text-white placeholder:font-sans placeholder:text-sm placeholder:text-stone-500 dark:placeholder:text-white/50 focus:outline-none"
               />
-            </form>
+            </form>}
 
             {/* List of Tasks matching Image 5 */}
             {visibleTasks.map((task, index) => {

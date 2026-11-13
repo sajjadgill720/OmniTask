@@ -9,6 +9,7 @@ build/
 release/
 desktop-release/
 desktop-release-final/
+desktop-release-beta/
 
 # TypeScript build info
 *.tsbuildinfo
@@ -33,5 +34,11 @@ Thumbs.db
 
 # Local developer docs (DO NOT push to github)
 detail.md
+
+# Browser QA artifacts
+test-results/
+playwright-report/
+launch-desktop.png
+launch-beta.zip
 
 

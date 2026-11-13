@@ -1,5 +1,5 @@
 /**
- * KNOVERA SECURE INDEXEDDB IMAGE STORAGE ENGINE
+ * Local IndexedDB image storage
  * Efficient, asynchronous binary Blob storage for multiple photos on the Canvas Wall.
  * Prevents localStorage QuotaExceededError while supporting multi-photo moodboards.
  */
@@ -96,6 +96,10 @@ export async function processAndCompressImage(file: File): Promise<{
       URL.revokeObjectURL(objectUrl);
       const originalWidth = img.naturalWidth || img.width;
       const originalHeight = img.naturalHeight || img.height;
+      if (!originalWidth || !originalHeight || originalWidth * originalHeight > 40_000_000) {
+        reject(new Error('This image is too large to process safely. Use an image of at most 40 megapixels.'));
+        return;
+      }
 
       // 1. Calculate dimensions for full-size canvas (max 2048px on longest side for optimal performance)
       const maxDimension = 2048;
@@ -126,7 +130,7 @@ export async function processAndCompressImage(file: File): Promise<{
       ctx.drawImage(img, 0, 0, targetW, targetH);
 
       // Determine output format (prefer WebP if supported, fallback to JPEG)
-      const mime = file.type === 'image/png' && hasTransparency(ctx, targetW, targetH) ? 'image/png' : 'image/jpeg';
+      const mime = file.type === 'image/jpeg' ? 'image/jpeg' : 'image/png';
 
       canvas.toBlob(
         (blob) => {
@@ -177,18 +181,6 @@ export async function processAndCompressImage(file: File): Promise<{
   });
 }
 
-function hasTransparency(ctx: CanvasRenderingContext2D, width: number, height: number): boolean {
-  try {
-    const data = ctx.getImageData(0, 0, Math.min(width, 50), Math.min(height, 50)).data;
-    for (let i = 3; i < data.length; i += 4) {
-      if (data[i] < 255) return true;
-    }
-  } catch {
-    return false;
-  }
-  return false;
-}
-
 /**
  * Stores an image in IndexedDB and returns metadata
  */
@@ -218,8 +210,9 @@ export async function saveImageToStorage(file: File, customId?: string): Promise
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
     const req = store.put(record);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error || new Error('Image storage failed')); };
+    tx.onabort = () => { db.close(); reject(tx.error || new Error('Image storage transaction aborted')); };
   });
 
   const objectUrl = URL.createObjectURL(compressedBlob);
@@ -251,6 +244,7 @@ export async function getImageFromStorage(id: string): Promise<string | null> {
       const store = tx.objectStore(STORE_NAME);
       const req = store.get(id);
       req.onsuccess = () => resolve(req.result);
+      tx.oncomplete = () => db.close();
       req.onerror = () => reject(req.error);
     });
 

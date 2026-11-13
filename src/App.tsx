@@ -1,13 +1,17 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { WelcomeScreen } from './components/WelcomeScreen';
+import { getStorageError, protectStorageKey, reportStorageError } from './utils/safeStorage';
+import type { Workspace } from './utils/backup';
+import { safeStorage } from './utils/safeStorage';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ThingsHeader } from './components/ThingsHeader';
 import { StudioBoardView } from './components/StudioBoardView';
 import { StudioWallAtmosphere } from './components/StudioWallAtmosphere';
 import { StudioTopMural } from './components/StudioTopMural';
 import { StudioRightPanel } from './components/StudioRightPanel';
-import { FocusRoomView } from './components/FocusRoomView';
-import { CanvasWallView } from './components/CanvasWallView';
-import { AnalyticsDashboardView } from './components/AnalyticsDashboardView';
+const FocusRoomView = lazy(() => import('./components/FocusRoomView').then(module => ({ default: module.FocusRoomView })));
+const CanvasWallView = lazy(() => import('./components/CanvasWallView').then(module => ({ default: module.CanvasWallView })));
+const AnalyticsDashboardView = lazy(() => import('./components/AnalyticsDashboardView').then(module => ({ default: module.AnalyticsDashboardView })));
 import { WorkflowStageView } from './components/WorkflowStageView';
 import { ProjectsHubView } from './components/ProjectsHubView';
 import { ProjectDetailView } from './components/ProjectDetailView';
@@ -17,7 +21,6 @@ import { WidgetCenterModal } from './components/WidgetCenterModal';
 import { PermissionsModal } from './components/PermissionsModal';
 import { ProjectModal } from './components/ProjectModal';
 import { CategoryModal } from './components/CategoryModal';
-import { SubscriptionModal } from './components/SubscriptionModal';
 import { SettingsModal } from './components/SettingsModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { ToastProvider } from './components/ToastNotification';
@@ -35,6 +38,7 @@ import {
   CanvasConnection
 } from './types';
 import { 
+  saveStoredWorkspace, WORKSPACE_STORAGE_KEY,
   loadStoredTasks, 
   saveStoredTasks, 
   loadStoredAreas, 
@@ -45,6 +49,7 @@ import {
   saveStoredCanvasElements,
   loadStoredCanvasConnections,
   saveStoredCanvasConnections,
+  DEFAULT_TASKS,
   generateId 
 } from './utils/storage';
 import { checkPermissions, updateAppBadge } from './utils/permissions';
@@ -58,9 +63,30 @@ export function App() {
   const [canvasElements, setCanvasElements] = useState<CanvasElement[]>(() => loadStoredCanvasElements());
   const [canvasConnections, setCanvasConnections] = useState<CanvasConnection[]>(() => loadStoredCanvasConnections());
 
+  const [hasStarted, setHasStarted] = useState(() => safeStorage.getItem('omnisticky_started') === 'true' || tasks.length > 0 || projects.length > 0 || canvasElements.length > 0);
+  const [storageError, setStorageError] = useState(getStorageError);
+  const [showGuide, setShowGuide] = useState(false);
+  useEffect(() => {
+    const update = () => setStorageError(getStorageError());
+    window.addEventListener('omnisticky-storage-error', update);
+    update();
+    return () => window.removeEventListener('omnisticky-storage-error', update);
+  }, []);
+  const startWorkspace = (demo = false) => {
+    if (demo) setTasks(DEFAULT_TASKS.map(t => ({ ...t, id: generateId() })));
+    safeStorage.setItem('omnisticky_started', 'true');
+    setHasStarted(true); setShowGuide(true);
+  };
+  const restoreWorkspace = (workspace: Workspace) => {
+    if (!saveStoredWorkspace(workspace)) throw new Error('The workspace could not be saved. Resolve the storage warning before restoring. Your current workspace has not been replaced.');
+    setTasks(workspace.tasks); setAreas(workspace.areas); setProjects(workspace.projects);
+    setCanvasElements(workspace.canvasElements); setCanvasConnections(workspace.canvasConnections);
+    setSelectedTask(null); setSelectedProjectId(null);
+  };
+
   // Theme Mode: 'light' | 'dark' (Dark features ambient luminous white hue)
   const [theme, setTheme] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem('omnisticky_theme') as ThemeMode;
+    const saved = safeStorage.getItem('omnisticky_theme') as ThemeMode;
     if (saved === 'light' || saved === 'dark') return saved;
     return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
       ? 'dark'
@@ -75,7 +101,7 @@ export function App() {
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('omnisticky_theme', theme);
+    safeStorage.setItem('omnisticky_theme', theme);
   }, [theme]);
 
   const handleToggleTheme = () => {
@@ -84,35 +110,35 @@ export function App() {
 
   // View Mode: 'canvas_3d' (Executive Corkboard Studio) | 'board' | 'focus' | 'canvas' | 'analytics' | 'projects'
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    const saved = localStorage.getItem('omnisticky_view_mode');
+    const saved = safeStorage.getItem('omnisticky_view_mode');
     if (saved === 'kanban') return 'board';
     if (saved === 'sticky_wall') return 'canvas';
-    if (saved === 'focus' || saved === 'canvas' || saved === 'canvas_3d' || saved === 'analytics' || saved === 'projects' || saved === 'board') return saved as ViewMode;
-    return 'canvas_3d';
+    if (saved === 'things_list' || saved === 'focus' || saved === 'canvas' || saved === 'canvas_3d' || saved === 'analytics' || saved === 'projects' || saved === 'board') return saved as ViewMode;
+    return window.matchMedia('(max-width: 639px)').matches ? 'things_list' : 'board';
   });
 
   // Density Mode: 'comfortable' | 'compact'
   const [density, setDensity] = useState<DensityMode>(() => {
-    return (localStorage.getItem('omnisticky_density') as DensityMode) || 'comfortable';
+    return (safeStorage.getItem('omnisticky_density') as DensityMode) || 'comfortable';
   });
 
   const handleToggleDensity = () => {
     setDensity(prev => {
       const next = prev === 'comfortable' ? 'compact' : 'comfortable';
-      localStorage.setItem('omnisticky_density', next);
+      safeStorage.setItem('omnisticky_density', next);
       return next;
     });
   };
 
   // 3D Debug Mode: camera pitch/yaw/scale metrics overlay
   const [debugMode, setDebugMode] = useState<boolean>(() => {
-    return localStorage.getItem('omnisticky_debug_mode') === 'true';
+    return safeStorage.getItem('omnisticky_debug_mode') === 'true';
   });
 
   const handleToggleDebugMode = () => {
     setDebugMode(prev => {
       const next = !prev;
-      localStorage.setItem('omnisticky_debug_mode', String(next));
+      safeStorage.setItem('omnisticky_debug_mode', String(next));
       return next;
     });
   };
@@ -129,6 +155,7 @@ export function App() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isWidgetsOpen, setIsWidgetsOpen] = useState(false);
   const [isPermissionsOpen, setIsPermissionsOpen] = useState(false);
+  const [isEditingProject, setIsEditingProject] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -136,10 +163,7 @@ export function App() {
   const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-  const [isProUser, setIsProUser] = useState<boolean>(() => {
-    return localStorage.getItem('omnisticky_pro_user') === 'true';
-  });
-
+  const isProUser = false;
   useEffect(() => {
     return window.omniStickyDesktop?.onQuickAdd(() => setDesktopQuickAddSignal(signal => signal + 1));
   }, []);
@@ -155,11 +179,6 @@ export function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  const handleUpgradeSuccess = () => {
-    setIsProUser(true);
-    localStorage.setItem('omnisticky_pro_user', 'true');
-  };
 
   // Permissions state
   const [permissions, setPermissions] = useState<AppPermissionsState>({
@@ -178,56 +197,60 @@ export function App() {
     checkPermissions().then(setPermissions);
   };
 
-  // Auto-save collections on change
+  // Commit related data together; legacy keys are read only for migration.
   useEffect(() => {
-    saveStoredTasks(tasks);
-    const pendingToday = tasks.filter(t => t.section === 'today' && t.status !== 'done').length;
-    updateAppBadge(pendingToday);
+    if (!hasStarted) return;
+    const save = () => saveStoredWorkspace({ tasks, areas, projects, canvasElements, canvasConnections });
+    const timer = setTimeout(save, 200);
+    window.addEventListener('pagehide', save);
+    return () => { clearTimeout(timer); window.removeEventListener('pagehide', save); };
+  }, [tasks, areas, projects, canvasElements, canvasConnections, hasStarted]);
+  useEffect(() => {
+    updateAppBadge(tasks.filter(t => t.section === 'today' && t.status !== 'done').length);
   }, [tasks]);
-
   useEffect(() => {
-    saveStoredAreas(areas);
-  }, [areas]);
-
-  useEffect(() => {
-    saveStoredProjects(projects);
-  }, [projects]);
-
-  useEffect(() => {
-    saveStoredCanvasElements(canvasElements);
-  }, [canvasElements]);
-
-  useEffect(() => {
-    saveStoredCanvasConnections(canvasConnections);
-  }, [canvasConnections]);
+    const changed = (event: StorageEvent) => {
+      if (event.key === WORKSPACE_STORAGE_KEY || event.key === null) {
+        protectStorageKey(WORKSPACE_STORAGE_KEY);
+        reportStorageError('This workspace changed in another tab. Saving in this tab is paused to avoid overwriting that work. Export any changes you need, then reload. Use one tab at a time.');
+      }
+    };
+    window.addEventListener('storage', changed);
+    return () => window.removeEventListener('storage', changed);
+  }, []);
 
   // Persist view mode preference
   const handleChangeViewMode = (mode: ViewMode) => {
     setViewMode(mode);
-    localStorage.setItem('omnisticky_view_mode', mode);
+    setSelectedProjectId(null);
+    safeStorage.setItem('omnisticky_view_mode', mode);
     if (mode === 'focus') {
+      setTasks(prev => prev.map(t => t.isTimerRunning ? { ...t, isTimerRunning: false } : t));
       setSelectedProjectId(null);
       setCurrentSection('today');
     }
   };
 
   // Stopwatch focus timer ticker engine
+  const hasRunningTimer = tasks.some(t => t.isTimerRunning);
   useEffect(() => {
-    const hasRunningTimer = tasks.some(t => t.isTimerRunning);
     if (!hasRunningTimer) return;
-
+    let lastTick = Date.now();
     const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - lastTick) / 1000);
+      if (elapsed <= 0) return;
+      lastTick += elapsed * 1000;
       setTasks(prev =>
         prev.map(t =>
           t.isTimerRunning
-            ? { ...t, timeSpentSeconds: (t.timeSpentSeconds || 0) + 1 }
+            ? { ...t, timeSpentSeconds: (t.timeSpentSeconds || 0) + elapsed }
             : t
         )
       );
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [tasks]);
+  }, [hasRunningTimer]);
 
   // Filter tasks based on active section or project
   const visibleTasks = useMemo(() => {
@@ -273,6 +296,7 @@ export function App() {
           ...t,
           status: isDone ? 'todo' : 'done',
           completedAt: isDone ? undefined : new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           isTimerRunning: false,
         };
       })
@@ -282,13 +306,14 @@ export function App() {
   const handleToggleTimer = (id: string) => {
     setTasks(prev =>
       prev.map(t => {
-        if (t.id !== id) return t;
-        return { ...t, isTimerRunning: !t.isTimerRunning };
+        if (t.id !== id) return t.isTimerRunning ? { ...t, isTimerRunning: false } : t;
+        return { ...t, isTimerRunning: t.status !== 'done' && !t.isTimerRunning };
       })
     );
   };
 
   const handleSaveTask = (updated: Task) => {
+    updated = { ...updated, updatedAt: new Date().toISOString(), completedAt: updated.status === 'done' ? updated.completedAt || new Date().toISOString() : undefined, isTimerRunning: updated.status === 'done' ? false : updated.isTimerRunning };
     setTasks(prev => {
       const exists = prev.some(t => t.id === updated.id);
       if (exists) {
@@ -302,6 +327,7 @@ export function App() {
   };
 
   const handleDeleteTask = (id: string) => {
+    if (!window.confirm('Delete this note? This cannot be undone.')) return;
     setTasks(prev => prev.filter(t => t.id !== id));
     if (selectedTask?.id === id) {
       setSelectedTask(null);
@@ -331,6 +357,8 @@ export function App() {
         return {
           ...t,
           status: newStatus,
+          isTimerRunning: newStatus === 'done' ? false : t.isTimerRunning,
+          updatedAt: new Date().toISOString(),
           completedAt: newStatus === 'done' ? new Date().toISOString() : undefined,
         };
       })
@@ -338,7 +366,7 @@ export function App() {
   };
 
   const handleAddProject = (project: Project) => {
-    setProjects(prev => [...prev, project]);
+    setProjects(prev => prev.some(p => p.id === project.id) ? prev.map(p => p.id === project.id ? project : p) : [...prev, project]);
     setSelectedProjectId(project.id);
   };
 
@@ -361,7 +389,7 @@ export function App() {
 
     const newTask: Task = {
       id: generateId(),
-      title: parsed.title,
+      title: parsed.title.trim() || 'Untitled note',
       notes: '',
       checklists: [],
       section: parsed.section,
@@ -402,10 +430,14 @@ export function App() {
     return titles[currentSection] || { title: 'Sticky Notes', subtitle: 'All active notes' };
   }, [selectedProject, currentSection]);
 
+  if (!hasStarted) return <><WelcomeScreen onStart={() => startWorkspace()} onDemo={() => startWorkspace(true)} />{storageError && <div role="alert" className="storage-alert">{storageError}</div>}</>;
+
   return (
     <ToastProvider>
       <div className="studio-wall-background relative isolate w-full min-h-screen overflow-x-hidden font-sans select-none text-stone-900 dark:text-stone-100">
 
+      {storageError && <div role="alert" className="storage-alert">{storageError}<button onClick={() => setIsSettingsOpen(true)}>Open backups</button></div>}
+      {showGuide && <div className="first-run-guide" role="status"><strong>Your space is ready.</strong> Use + to capture a note. Select a note to edit it. Your work stays on this device—keep a backup in Settings.<button onClick={() => setShowGuide(false)} aria-label="Dismiss getting started tip">Got it</button></div>}
       <StudioWallAtmosphere />
 
       {/* 2. Top Sleek Frosted Glass Search & Utilities Bar */}
@@ -414,12 +446,7 @@ export function App() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-        onOpenQuickAdd={() => handleMagicAdd({
-          title: 'New note',
-          priority: 'normal',
-          tags: [],
-          section: currentSection,
-        })}
+        onOpenQuickAdd={() => setDesktopQuickAddSignal(signal => signal + 1)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenPermissions={() => setIsPermissionsOpen(true)}
         theme={theme}
@@ -443,11 +470,11 @@ export function App() {
           tasks={tasks}
           viewMode={viewMode}
           onChangeViewMode={handleChangeViewMode}
-          onOpenNewProject={() => setIsProjectModalOpen(true)}
+          onOpenNewProject={() => { setIsEditingProject(false); setIsProjectModalOpen(true); }}
           onOpenNewCategory={() => setIsCategoryModalOpen(true)}
           onOpenWidgets={() => setIsWidgetsOpen(true)}
           onOpenPermissions={() => setIsPermissionsOpen(true)}
-          onOpenSubscription={() => setIsSubscriptionOpen(true)}
+          onOpenSubscription={() => setIsSettingsOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
           isProUser={isProUser}
           permissions={permissions}
@@ -464,13 +491,13 @@ export function App() {
           <StudioTopMural compact={viewMode === 'canvas' || viewMode === 'canvas_3d'} />
 
           {/* Active View Container */}
-          <div className="w-full flex-1">
+          <div className="w-full flex-1"><Suspense fallback={<p role="status" className="p-8 text-center">Opening your workspace…</p>}>
             {selectedProject ? (
               /* Project Details View */
               <ProjectDetailView
                 project={selectedProject}
                 tasks={tasks}
-                onBack={() => setSelectedProjectId(null)}
+                onBack={() => { setSelectedProjectId(null); setViewMode('projects'); }}
                 onSelectTask={setSelectedTask}
                 onToggleComplete={handleToggleComplete}
                 onQuickAdd={(title, priority) => handleMagicAdd({
@@ -480,7 +507,7 @@ export function App() {
                   section: 'today',
                   projectId: selectedProject.id,
                 })}
-                onOpenEditProject={() => setIsProjectModalOpen(true)}
+                onOpenEditProject={() => { setIsEditingProject(true); setIsProjectModalOpen(true); }}
               />
             ) : viewMode === 'projects' ? (
               /* Projects Hub Overview */
@@ -489,7 +516,7 @@ export function App() {
                 tasks={tasks}
                 areas={areas}
                 onSelectProject={(id) => setSelectedProjectId(id)}
-                onOpenNewProject={() => setIsProjectModalOpen(true)}
+                onOpenNewProject={() => { setIsEditingProject(false); setIsProjectModalOpen(true); }}
               />
             ) : viewMode === 'board' || viewMode === 'canvas_3d' ? (
               /* Executive Standup Wall: compact interactive corkboard */
@@ -505,13 +532,7 @@ export function App() {
                 audioEnabled={permissions.audioEnabled}
                 onNavigateToAnalytics={() => handleChangeViewMode('analytics')}
                 onToggleStandupWall={() => handleChangeViewMode(viewMode === 'canvas_3d' ? 'board' : 'canvas_3d')}
-                onQuickAdd={() => handleMagicAdd({
-                  title: 'New note',
-                  priority: 'normal',
-                  tags: ['Study'],
-                  section: 'today',
-                  colorHex: '#F8D979',
-                })}
+                onQuickAdd={() => setDesktopQuickAddSignal(signal => signal + 1)}
               />
             ) : viewMode === 'focus' ? (
               /* Focus Room: Immersive Study Room with Circular Timer, Sounds & Progress */
@@ -533,13 +554,7 @@ export function App() {
                 connections={canvasConnections}
                 onUpdateConnections={setCanvasConnections}
                 onSelectTask={setSelectedTask}
-                onQuickAdd={() => handleMagicAdd({
-                  title: 'New note',
-                  priority: 'normal',
-                  tags: [],
-                  section: currentSection,
-                  colorHex: '#F8D979',
-                })}
+                onQuickAdd={() => setDesktopQuickAddSignal(signal => signal + 1)}
               />
             ) : viewMode === 'analytics' ? (
               /* Productivity analytics and momentum insights */
@@ -564,7 +579,7 @@ export function App() {
                 })}
               />
             )}
-          </div>
+          </Suspense></div>
 
         </main>
 
@@ -572,14 +587,8 @@ export function App() {
         <StudioRightPanel
           tasks={tasks}
           onSelectTask={setSelectedTask}
-          onQuickAdd={() => handleMagicAdd({
-            title: 'New note',
-            priority: 'normal',
-            tags: [],
-            section: currentSection,
-            colorHex: '#FFF380',
-          })}
-          onOpenProjectModal={() => setIsProjectModalOpen(true)}
+          onQuickAdd={() => setDesktopQuickAddSignal(signal => signal + 1)}
+          onOpenProjectModal={() => { setIsEditingProject(false); setIsProjectModalOpen(true); }}
           onViewAllUpcoming={() => {
             setSelectedProjectId(null);
             setCurrentSection('upcoming');
@@ -598,7 +607,7 @@ export function App() {
 
       {/* Slide-over Task Inspector / Detail Drawer */}
       <TaskDetailDrawer
-        task={selectedTask}
+        task={tasks.find(t => t.id === selectedTask?.id) || null}
         projects={projects}
         areas={areas}
         isOpen={Boolean(selectedTask)}
@@ -623,14 +632,7 @@ export function App() {
           colorHex,
         })}
         audioEnabled={permissions.audioEnabled}
-      />
-
-      {/* Commercial Subscription & Pro Tier Modal */}
-      <SubscriptionModal
-        isOpen={isSubscriptionOpen}
-        onClose={() => setIsSubscriptionOpen(false)}
-        isProUser={isProUser}
-        onUpgradeSuccess={handleUpgradeSuccess}
+        onRecordFocus={(id, seconds) => setTasks(prev => prev.map(t => t.id === id ? { ...t, timeSpentSeconds: t.timeSpentSeconds + seconds, updatedAt: new Date().toISOString() } : t))}
       />
 
       {/* Web & OS Permissions Hub Modal */}
@@ -647,6 +649,7 @@ export function App() {
         onClose={() => setIsProjectModalOpen(false)}
         areas={areas}
         onAddProject={handleAddProject}
+        project={isEditingProject ? selectedProject || undefined : undefined}
       />
 
       {/* New Category / Area Modal */}
@@ -664,13 +667,12 @@ export function App() {
         onToggleTheme={handleToggleTheme}
         permissions={permissions}
         onUpdatePermissions={refreshPermissions}
-        isProUser={isProUser}
-        onOpenSubscription={() => setIsSubscriptionOpen(true)}
         tasks={tasks}
         areas={areas}
         projects={projects}
-        debugMode={debugMode}
-        onToggleDebugMode={handleToggleDebugMode}
+        canvasElements={canvasElements}
+        canvasConnections={canvasConnections}
+        onRestore={restoreWorkspace}
       />
 
       {/* ⌘K / Ctrl+K Command Palette Modal */}
@@ -683,17 +685,13 @@ export function App() {
         onNavigateSection={(sec) => {
           setSelectedProjectId(null);
           setCurrentSection(sec);
+          handleChangeViewMode('things_list');
         }}
         onNavigateProject={(projId) => {
           setSelectedProjectId(projId);
         }}
         onChangeViewMode={handleChangeViewMode}
-        onOpenNewNote={() => handleMagicAdd({
-          title: 'New note',
-          priority: 'normal',
-          tags: [],
-          section: currentSection,
-        })}
+        onOpenNewNote={() => setDesktopQuickAddSignal(signal => signal + 1)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onToggleTheme={handleToggleTheme}
         theme={theme}

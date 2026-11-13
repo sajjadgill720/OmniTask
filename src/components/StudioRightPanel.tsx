@@ -32,6 +32,9 @@ export const StudioRightPanel: React.FC<StudioRightPanelProps> = ({
       .slice(0, 3);
   }, [tasks]);
 
+  const completed = tasks.filter(t => t.status === 'done').length;
+  const completionRate = tasks.length ? Math.round(completed / tasks.length * 100) : 0;
+
   return (
     <aside className="w-64 xl:w-72 shrink-0 hidden min-[1280px]:flex flex-col gap-3.5 z-20 select-none">
       
@@ -80,43 +83,7 @@ export const StudioRightPanel: React.FC<StudioRightPanelProps> = ({
               );
             })
           ) : (
-            <>
-              <div className="p-2 rounded-2xl hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer text-left flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                  <span className="text-xs font-semibold text-stone-900 dark:text-stone-100 truncate">
-                    CS251 DAA Assignment
-                  </span>
-                </div>
-                <span className="text-[10px] text-stone-500 dark:text-stone-400 font-mono shrink-0">
-                  Tomorrow • 9:00 AM
-                </span>
-              </div>
-
-              <div className="p-2 rounded-2xl hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer text-left flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
-                  <span className="text-xs font-semibold text-stone-900 dark:text-stone-100 truncate">
-                    NTAC Planning Meeting
-                  </span>
-                </div>
-                <span className="text-[10px] text-stone-500 dark:text-stone-400 font-mono shrink-0">
-                  Fri, Nov 7 • 4:00 PM
-                </span>
-              </div>
-
-              <div className="p-2 rounded-2xl hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer text-left flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                  <span className="text-xs font-semibold text-stone-900 dark:text-stone-100 truncate">
-                    SemEval RETECO Review
-                  </span>
-                </div>
-                <span className="text-[10px] text-stone-500 dark:text-stone-400 font-mono shrink-0">
-                  Sat, Nov 8 • 6:00 PM
-                </span>
-              </div>
-            </>
+            <p className="p-2 text-xs text-stone-500 dark:text-stone-300">No scheduled tasks yet. Add a due date to a note to see it here.</p>
           )}
         </div>
       </div>
@@ -182,7 +149,7 @@ export const StudioRightPanel: React.FC<StudioRightPanelProps> = ({
               />
               <path
                 className="text-teal-400"
-                strokeDasharray="78, 100"
+                strokeDasharray={`${completionRate}, 100`}
                 strokeWidth="3.5"
                 strokeLinecap="round"
                 stroke="currentColor"
@@ -190,35 +157,16 @@ export const StudioRightPanel: React.FC<StudioRightPanelProps> = ({
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
             </svg>
-            <span className="absolute font-bold text-xs font-mono text-stone-900 dark:text-white">78%</span>
+            <span className="absolute font-bold text-xs font-mono text-stone-900 dark:text-white">{completionRate}%</span>
           </div>
 
           {/* Metric info + Green Sparkline */}
           <div className="flex-1 flex flex-col items-end">
-            <div className="text-[10px] text-stone-500 dark:text-stone-400 font-medium">This Week</div>
+            <div className="text-[10px] text-stone-500 dark:text-stone-400 font-medium">All notes completed</div>
             <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
-              <span>+12%</span>
+              <span>{completed} of {tasks.length}</span>
             </div>
-            {/* Green Sparkline Curve */}
-            <svg className="w-16 h-6 mt-0.5" viewBox="0 0 60 20" fill="none">
-              <path
-                d="M 2 16 Q 15 14, 25 8 T 45 10 T 58 3"
-                stroke="#10B981"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <path
-                d="M 2 16 Q 15 14, 25 8 T 45 10 T 58 3 L 58 20 L 2 20 Z"
-                fill="url(#green-grad-panel)"
-                opacity="0.25"
-              />
-              <defs>
-                <linearGradient id="green-grad-panel" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10B981" />
-                  <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-            </svg>
+
           </div>
         </div>
       </div>

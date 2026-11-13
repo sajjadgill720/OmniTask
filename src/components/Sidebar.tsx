@@ -1,3 +1,5 @@
+import { safeStorage } from '../utils/safeStorage';
+import { localDateString } from '../utils/dates';
 import React, { useEffect, useState } from 'react';
 import {
   Archive,
@@ -77,7 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   theme,
   onToggleTheme,
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('omnisticky_sidebar_collapsed') === 'true');
+  const [isCollapsed, setIsCollapsed] = useState(() => safeStorage.getItem('omnisticky_sidebar_collapsed') === 'true');
   const [isWorkflowExpanded, setIsWorkflowExpanded] = useState(true);
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(true);
   const [isToolsExpanded, setIsToolsExpanded] = useState(false);
@@ -96,12 +98,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const toggleCollapsed = () => setIsCollapsed(previous => {
     const next = !previous;
-    localStorage.setItem('omnisticky_sidebar_collapsed', String(next));
+    safeStorage.setItem('omnisticky_sidebar_collapsed', String(next));
     return next;
   });
 
   const inboxCount = tasks.filter(task => task.section === 'inbox' && task.status !== 'done').length;
-  const todayCount = tasks.filter(task => task.section === 'today' && task.status !== 'done').length;
+  const todayCount = tasks.filter(task => task.status !== 'done' && (task.section === 'today' || (task.dueDate && task.dueDate <= localDateString()))).length;
   const upcomingCount = tasks.filter(task => (task.section === 'upcoming' || Boolean(task.dueDate)) && task.status !== 'done').length;
   const anytimeCount = tasks.filter(task => task.section === 'anytime' && task.status !== 'done').length;
   const somedayCount = tasks.filter(task => task.section === 'someday' && task.status !== 'done').length;
@@ -129,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const mainItems = [
-    { label: 'My Board', icon: Columns3, active: ['board', 'canvas_3d'].includes(viewMode) && !selectedProjectId, action: () => { onSelectProject(null); onChangeViewMode('canvas_3d'); } },
+    { label: 'My Board', icon: Columns3, active: ['board', 'canvas_3d'].includes(viewMode) && !selectedProjectId, action: () => { onSelectProject(null); onChangeViewMode('board'); } },
     { label: 'Focus Room', icon: Target, active: viewMode === 'focus' && !selectedProjectId, action: () => { onSelectProject(null); onChangeViewMode('focus'); } },
     { label: 'Canvas Wall', icon: LayoutGrid, active: viewMode === 'canvas' && !selectedProjectId, action: () => { onSelectProject(null); onChangeViewMode('canvas'); } },
     { label: 'Analytics', icon: ChartNoAxesCombined, active: viewMode === 'analytics' && !selectedProjectId, action: () => { onSelectProject(null); onChangeViewMode('analytics'); } },
@@ -281,6 +283,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>}
                 </div>;
               })}
+              {projects.filter(p => !p.areaId || !areas.some(a => a.id === p.areaId)).map(project => <button key={project.id} type="button" onClick={() => handleProjectClick(project.id)} className={`${rowBase} ${rowIdle} min-h-8 px-2 text-xs`}><Folder className="h-4 w-4" /><span className="truncate">{project.title}</span></button>)}
               {areas.length === 0 && <p className="px-3 py-2 text-xs text-stone-400">No project groups yet</p>}
             </div>}
           </section>
@@ -289,7 +292,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button type="button" aria-expanded={isToolsExpanded} onClick={() => {
               if (isCompact) {
                 setIsCollapsed(false);
-                localStorage.setItem('omnisticky_sidebar_collapsed', 'false');
+                safeStorage.setItem('omnisticky_sidebar_collapsed', 'false');
               }
               setIsToolsExpanded(value => !value);
             }} title={isCompact ? 'Tools' : undefined} className={`flex min-h-8 w-full items-center justify-between rounded-lg px-2 text-[10px] font-semibold uppercase tracking-[0.13em] text-stone-300/65 transition hover:bg-white/[0.05] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/80 ${isCompact ? 'justify-center' : ''}`}>
@@ -297,9 +300,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {isToolsExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : isCompact ? <Settings className="h-4 w-4" /> : <ChevronRight className="h-3.5 w-3.5" />}
             </button>
             {isToolsExpanded && <div className="mt-1 space-y-0.5">
-              <button type="button" onClick={onOpenSubscription} title={isProUser ? 'Subscription active' : 'Upgrade to Pro'} className={`${rowBase} ${isCompact ? 'justify-center px-0' : 'justify-between'} ${rowIdle}`}>
-                <span className="flex items-center gap-2.5"><Sparkles className="h-4 w-4 shrink-0 text-amber-200/80" />{!isCompact && <span>{isProUser ? 'Pro plan' : 'Upgrade to Pro'}</span>}</span>
-                {!isCompact && <span className="text-[10px] text-stone-400">{isProUser ? 'Active' : 'View'}</span>}
+              <button type="button" onClick={onOpenSubscription} title={'About Omni Sticky'} className={`${rowBase} ${isCompact ? 'justify-center px-0' : 'justify-between'} ${rowIdle}`}>
+                <span className="flex items-center gap-2.5"><Sparkles className="h-4 w-4 shrink-0 text-amber-200/80" />{!isCompact && <span>{'Free beta & help'}</span>}</span>
+                {!isCompact && <span className="text-[10px] text-stone-400">{'Info'}</span>}
               </button>
               <button type="button" onClick={onOpenWidgets} title="Widgets Suite" className={`${rowBase} ${isCompact ? 'justify-center px-0' : ''} ${rowIdle}`}><Layout className="h-4 w-4 shrink-0 text-stone-300/80" />{!isCompact && <span>Widgets</span>}</button>
               <button type="button" onClick={onToggleTheme} title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'} className={`${rowBase} ${isCompact ? 'justify-center px-0' : 'justify-between'} ${rowIdle}`}>
@@ -315,9 +318,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!isCompact && <button type="button" onClick={() => confetti({ particleCount: 24, spread: 45, origin: { y: 0.9, x: 0.1 } })} className="mb-2 flex min-h-8 w-full items-center gap-2 rounded-lg px-2 text-left text-[11px] text-[var(--sidebar-muted)] transition hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/80">
             <Sparkles className="h-3.5 w-3.5 text-amber-200/80" />Small steps. Big results.
           </button>}
-          <button type="button" onClick={onOpenSettings} title="Profile and settings" className={`flex min-h-10 w-full items-center gap-2.5 rounded-xl px-2 transition hover:bg-[var(--sidebar-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/80 ${isCompact ? 'justify-center' : ''}`}>
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-orange-700 text-[10px] font-bold text-white shadow-sm">SR</span>
-            {!isCompact && <><span className="min-w-0 flex-1 truncate text-left text-xs font-medium text-stone-100/90">Sajjad Ur Rehman</span><Settings className="h-3.5 w-3.5 text-stone-400" /></>}
+          <button type="button" onClick={onOpenSettings} title="Settings and backups" className={`flex min-h-10 w-full items-center gap-2.5 rounded-xl px-2 transition hover:bg-[var(--sidebar-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/80 ${isCompact ? 'justify-center' : ''}`}>
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-orange-700 text-[10px] font-bold text-white shadow-sm">OS</span>
+            {!isCompact && <><span className="min-w-0 flex-1 truncate text-left text-xs font-medium text-stone-100/90">Local workspace</span><Settings className="h-3.5 w-3.5 text-stone-400" /></>}
           </button>
         </div>
       </aside>

@@ -1,3 +1,4 @@
+import { localDateString } from './dates';
 import { Priority, ThingsSection } from '../types';
 
 export interface ParsedTaskInput {
@@ -45,19 +46,20 @@ export function parseNaturalLanguageTask(rawInput: string): ParsedTaskInput {
   if (/\b(this evening|tonight)\b/i.test(text)) {
     isThisEvening = true;
     section = 'today';
-    dueDate = new Date().toISOString().split('T')[0];
+    dueDate = localDateString();
     text = text.replace(/\b(this evening|tonight)\b/gi, '').trim();
   }
 
   // 4. Extract Due Dates (today, tomorrow, monday..sunday, or in X days)
   const today = new Date();
   if (/\btoday\b/i.test(text)) {
-    dueDate = today.toISOString().split('T')[0];
+    dueDate = localDateString(today);
     section = 'today';
     text = text.replace(/\btoday\b/gi, '').trim();
   } else if (/\btomorrow\b/i.test(text)) {
-    const tomorrow = new Date(today.getTime() + 86400000);
-    dueDate = tomorrow.toISOString().split('T')[0];
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    dueDate = localDateString(tomorrow);
     section = 'upcoming';
     text = text.replace(/\btomorrow\b/gi, '').trim();
   } else {
@@ -65,8 +67,9 @@ export function parseNaturalLanguageTask(rawInput: string): ParsedTaskInput {
     const inDaysMatch = text.match(/\bin (\d+) days?\b/i);
     if (inDaysMatch) {
       const days = parseInt(inDaysMatch[1], 10);
-      const future = new Date(today.getTime() + days * 86400000);
-      dueDate = future.toISOString().split('T')[0];
+      const future = new Date(today);
+      future.setDate(today.getDate() + Math.min(days, 36500));
+      dueDate = localDateString(future);
       section = 'upcoming';
       text = text.replace(inDaysMatch[0], '').trim();
     }
@@ -74,7 +77,7 @@ export function parseNaturalLanguageTask(rawInput: string): ParsedTaskInput {
 
   // Default section assignment: if due today -> today, if due date in future -> upcoming
   if (dueDate && !isThisEvening) {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = localDateString();
     if (dueDate === todayStr) {
       section = 'today';
     } else {

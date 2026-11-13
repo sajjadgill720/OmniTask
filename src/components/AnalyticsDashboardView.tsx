@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { localDateString } from '../utils/dates';
 import { 
   TrendingUp, 
   Clock, 
@@ -37,7 +38,7 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
 
   const nextStep = useMemo(() => {
     const active = tasks.filter(task => task.status !== 'done');
-    const overdue = active.find(task => task.dueDate && new Date(task.dueDate).getTime() < Date.now());
+    const overdue = active.find(task => task.dueDate && task.dueDate < localDateString());
     return overdue || active.find(task => task.status === 'in_progress') || active[0];
   }, [tasks]);
 
@@ -60,8 +61,8 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
     const bins = Array.from({ length: binCount }, (_, index) => {
       const start = new Date(now);
       if (timeframe === 'week') start.setDate(now.getDate() - (binCount - 1 - index));
-      else if (timeframe === 'month') start.setDate(now.getDate() - (binCount - 1 - index) * 7);
-      else start.setMonth(now.getMonth() - (binCount - 1 - index));
+      else if (timeframe === 'month') start.setDate(now.getDate() - (binCount - index) * 7 + 1);
+      else { start.setDate(1); start.setMonth(now.getMonth() - (binCount - 1 - index)); }
       start.setHours(0, 0, 0, 0);
       const end = new Date(start);
       if (timeframe === 'week') end.setDate(start.getDate() + 1);
@@ -74,7 +75,7 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
       }).length;
       const label = timeframe === 'week'
         ? start.toLocaleDateString(undefined, { weekday: 'short' })
-        : timeframe === 'month' ? `W${index + 1}` : start.toLocaleDateString(undefined, { month: 'short' });
+        : timeframe === 'month' ? start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : start.toLocaleDateString(undefined, { month: 'short' });
       return { count, label };
     });
     const peakCount = Math.max(0, ...bins.map(bin => bin.count));
@@ -111,7 +112,7 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
             Your Productivity Insights
           </h1>
           <p className="text-xs font-medium text-stone-600 dark:text-white/60">
-            Track. Improve. Achieve.
+            Totals across all notes. Choose a range for the completion trend below.
           </p>
         </div>
 
@@ -128,7 +129,7 @@ export const AnalyticsDashboardView: React.FC<AnalyticsDashboardViewProps> = ({
                   : 'text-stone-600 dark:text-white/70 hover:text-stone-900 dark:hover:text-white'
               }`}
             >
-              {tf === 'week' ? 'This Week' : tf === 'month' ? 'This Month' : 'This Year'}
+              {tf === 'week' ? '7 days' : tf === 'month' ? '5 weeks' : '12 months'}
             </button>
           ))}
         </div>

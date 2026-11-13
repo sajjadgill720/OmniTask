@@ -1,157 +1,88 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { build } from 'esbuild';
+let sequence = 0;
+async function source(name) {
+  const result = await build({ entryPoints: [`src/utils/${name}.ts`], bundle: true, write: false, platform: 'node', format: 'esm' });
+  return import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text + `\n// test-${sequence++}`).toString('base64')}`);
+}
+function storage(initial = {}) {
+  const values = new Map(Object.entries(initial));
+  globalThis.localStorage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+  return values;
+}
+const task = { id: 'note1', title: 'A real note', notes: 'Details', checklists: [], tags: ['work'], section: 'today', priority: 'normal', status: 'todo', timeSpentSeconds: 20, isTimerRunning: false, createdAt: '2026-11-14T10:00:00Z', updatedAt: '2026-11-14T10:00:00Z' };
+const empty = () => ({ tasks: [], areas: [], projects: [], canvasElements: [], canvasConnections: [] });
 
-// Test 1: Image File Validation
-test('Image Validation: accepts valid images and rejects invalid formats or oversized files', () => {
-  function validateImageFile(file, maxSizeBytes = 20 * 1024 * 1024) {
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
-    if (!validTypes.includes(file.type)) {
-      return { valid: false, error: 'Unsupported format' };
-    }
-    if (file.size > maxSizeBytes) {
-      return { valid: false, error: 'File size exceeded' };
-    }
-    return { valid: true };
-  }
-
-  // Valid JPEG
-  assert.equal(validateImageFile({ name: 'photo.jpg', type: 'image/jpeg', size: 1024 * 1024 }).valid, true);
-
-  // Valid PNG
-  assert.equal(validateImageFile({ name: 'diagram.png', type: 'image/png', size: 2 * 1024 * 1024 }).valid, true);
-
-  // Valid WebP
-  assert.equal(validateImageFile({ name: 'visual.webp', type: 'image/webp', size: 500 * 1024 }).valid, true);
-
-  // Invalid EXE
-  assert.equal(validateImageFile({ name: 'script.exe', type: 'application/x-msdownload', size: 500 }).valid, false);
-
-  // Oversized 25MB
-  assert.equal(validateImageFile({ name: 'huge.jpg', type: 'image/jpeg', size: 25 * 1024 * 1024 }).valid, false);
+test('empty saved collections stay empty; new visitors get no sample notes or projects', async () => {
+  storage({ omnisticky_tasks_v2: '[]', omnisticky_areas_v2: '[]', omnisticky_projects_v2: '[]', omnisticky_canvas_elements_v1: '[]' });
+  const api = await source('storage');
+  assert.deepEqual(api.loadStoredTasks(), []);
+  assert.deepEqual(api.loadStoredAreas(), []);
+  assert.deepEqual(api.loadStoredProjects(), []);
+  assert.deepEqual(api.loadStoredCanvasElements(), []);
+  storage();
+  assert.deepEqual(api.loadStoredTasks(), []);
+  assert.deepEqual(api.loadStoredProjects(), []);
 });
-
-// Test 2: Ray-Box Boundary Intersection Clipping
-test('Ray-Box Intersection: clips connection lines at card borders and never penetrates content', () => {
-  function getClippedEdgePoint(source, target, extraOffset = 4) {
-    const dx = target.cx - source.cx;
-    const dy = target.cy - source.cy;
-    if (dx === 0 && dy === 0) return { x: source.cx, y: source.cy };
-
-    const hw = source.w / 2;
-    const hh = source.h / 2;
-    const absDx = Math.abs(dx);
-    const absDy = Math.abs(dy);
-
-    let scale = 1;
-    if (absDx * hh > absDy * hw) {
-      scale = hw / absDx;
-    } else {
-      scale = hh / absDy;
-    }
-
-    const angle = Math.atan2(dy, dx);
-    return {
-      x: Math.round(source.cx + dx * scale + Math.cos(angle) * extraOffset),
-      y: Math.round(source.cy + dy * scale + Math.sin(angle) * extraOffset),
-    };
-  }
-
-  // Card A at (100, 100, 100x100), Card B at (300, 100, 100x100) -> Target is directly to the right
-  const source = { cx: 100, cy: 100, w: 100, h: 100 };
-  const target = { cx: 300, cy: 100, w: 100, h: 100 };
-
-  const startPt = getClippedEdgePoint(source, target, 4);
-  const endPt = getClippedEdgePoint(target, source, 8);
-
-  // Start point should be at right edge of Card A (100 + 50 = 150) + offset 4 = 154
-  assert.equal(startPt.x, 154);
-  assert.equal(startPt.y, 100);
-
-  // End point should terminate outside left edge of Card B (300 - 50 = 250) - offset 8 = 242
-  assert.equal(endPt.x, 242);
-  assert.equal(endPt.y, 100);
-
-  // Distance between clipped endpoints is positive
-  assert.ok(endPt.x > startPt.x);
+test('legacy notes are migrated without injecting reference notes; reloading pauses timers', async () => {
+  storage({ omnisticky_tasks_v2: JSON.stringify([{ ...task, isTimerRunning: true }]) });
+  const api = await source('storage');
+  const tasks = api.loadStoredTasks();
+  assert.equal(tasks.length, 1); assert.equal(tasks[0].id, task.id); assert.equal(tasks[0].isTimerRunning, false);
 });
-
-// Test 3: Natural Language Task Parsing
-test('NLP Parser: parses priority, tags, and section', () => {
-  function parseNaturalLanguageTask(rawInput) {
-    let text = rawInput.trim();
-    let priority = 'normal';
-    let section = 'inbox';
-    const tags = [];
-
-    const tagMatches = text.match(/#(\w+)/g);
-    if (tagMatches) {
-      tagMatches.forEach(t => tags.push(t.replace('#', '')));
-      text = text.replace(/#\w+/g, '').trim();
-    }
-
-    if (/(?:^|\s)(p1|!urgent|!1)(?:\s|$)/i.test(text)) {
-      priority = 'urgent';
-      text = text.replace(/(?:^|\s)(p1|!urgent|!1)(?:\s|$)/gi, ' ').trim();
-    }
-
-    if (/\b(today)\b/i.test(text)) {
-      section = 'today';
-      text = text.replace(/\b(today)\b/gi, '').trim();
-    }
-
-    return { title: text, priority, section, tags };
-  }
-
-  const result = parseNaturalLanguageTask('Review system design #architecture #critical !urgent today');
-  assert.equal(result.priority, 'urgent');
-  assert.equal(result.section, 'today');
-  assert.deepEqual(result.tags, ['architecture', 'critical']);
-  assert.equal(result.title, 'Review system design');
+test('workspace saves commit related collections together and keep photo references portable', async () => {
+  const values = storage(); const api = await source('storage');
+  const workspace = { ...empty(), tasks: [task], projects: [{ id: 'p', title: 'Launch', colorHex: '#ffffff' }], canvasElements: [{ id: 'photo', imageStorageId: 'original', imageUrl: 'blob:temporary', thumbnailUrl: 'data:image/jpeg;base64,thumb' }] };
+  assert.equal(api.saveStoredWorkspace(workspace), true);
+  const saved = JSON.parse(values.get(api.WORKSPACE_STORAGE_KEY));
+  assert.equal(saved.projects[0].title, 'Launch'); assert.equal(saved.canvasElements[0].imageUrl, 'data:image/jpeg;base64,thumb');
+  assert.equal(api.loadStoredTasks()[0].title, 'A real note');
 });
-
-// Test 4: Deterministic Daily Quote Rotation
-test('Daily Quote: deterministic selection based on day number', () => {
-  const sampleQuotes = [
-    { text: 'Great things are done by a series of small things.', author: 'Vincent Van Gogh' },
-    { text: 'Discipline is choosing between what you want now and what you want most.', author: 'Abraham Lincoln' },
-    { text: 'The secret of getting ahead is getting started.', author: 'Mark Twain' },
-  ];
-
-  function getDailyQuote(date, quotes) {
-    const startOfYear = new Date(date.getFullYear(), 0, 0);
-    const diff = date.getTime() - startOfYear.getTime();
-    const oneDay = 1000 * 60 * 60 * 24;
-    const dayOfYear = Math.floor(diff / oneDay);
-    const index = Math.abs(dayOfYear) % quotes.length;
-    return quotes[index];
-  }
-
-  const dateA = new Date('2026-11-10');
-  const dateB = new Date('2026-11-10'); // same date
-  const dateC = new Date('2026-11-11'); // next date
-
-  const quoteA = getDailyQuote(dateA, sampleQuotes);
-  const quoteB = getDailyQuote(dateB, sampleQuotes);
-  const quoteC = getDailyQuote(dateC, sampleQuotes);
-
-  assert.equal(quoteA.text, quoteB.text); // Stable on refresh
-  assert.notEqual(quoteA.text, quoteC.text); // Automatically rotates on next date
+test('unreadable legacy data is preserved and blocks a destructive migration', async () => {
+  const values = storage({ omnisticky_tasks_v2: '{broken' }); const api = await source('storage');
+  assert.deepEqual(api.loadStoredTasks(), []);
+  assert.equal(api.saveStoredWorkspace(empty()), false);
+  assert.equal(values.get('omnisticky_tasks_v2'), '{broken');
 });
-
-// Test 5: Storage Sanitization
-test('Storage Sanitization: prevents QuotaExceededError by omitting full dataUrls from localStorage', () => {
-  const elements = [
-    { id: '1', title: 'Note 1', imageUrl: 'https://example.com/pic.jpg', thumbnailUrl: 'https://example.com/thumb.jpg' },
-    { id: '2', title: 'Note 2', imageUrl: 'data:image/jpeg;base64,' + 'A'.repeat(60000), thumbnailUrl: 'data:image/jpeg;base64,thumb' },
-  ];
-
-  const sanitized = elements.map(el => {
-    if (el.imageUrl && el.imageUrl.startsWith('data:') && el.imageUrl.length > 50000) {
-      return { ...el, imageUrl: el.thumbnailUrl || '' };
-    }
-    return el;
-  });
-
-  assert.equal(sanitized[0].imageUrl, 'https://example.com/pic.jpg');
-  assert.equal(sanitized[1].imageUrl, 'data:image/jpeg;base64,thumb'); // Preserves thumbnail while trimming huge dataUrl
+test('unreadable canonical data is preserved', async () => {
+  const values = storage({ omnisticky_workspace_v1: '{broken' }); const api = await source('storage');
+  assert.deepEqual(api.loadStoredTasks(), []);
+  assert.equal(api.saveStoredWorkspace(empty()), false);
+  assert.equal(values.get(api.WORKSPACE_STORAGE_KEY), '{broken');
+});
+test('blocked and full storage do not crash reads, and saving reports failure', async () => {
+  globalThis.localStorage = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('full'); } };
+  const api = await source('storage');
+  assert.deepEqual(api.loadStoredTasks(), []); assert.equal(api.saveStoredWorkspace(empty()), false);
+});
+test('complete backups round-trip notes, projects, groups, and empty canvas arrays', async () => {
+  const api = await source('backup');
+  const workspace = { ...empty(), tasks: [task], areas: [{ id: 'a', name: 'Work', emoji: 'W', colorHex: '#ffffff' }], projects: [{ id: 'p', title: 'Launch', colorHex: '#ffffff', areaId: 'a' }] };
+  const backup = await api.createBackup(workspace);
+  assert.deepEqual(api.parseBackup(JSON.stringify(backup)), workspace);
+  assert.deepEqual(api.parseBackup(JSON.stringify([task])).tasks, [task]);
+});
+test('invalid backups, duplicate IDs, bad records, and dangling connections are rejected before replacing data', async () => {
+  const api = await source('backup');
+  const backup = await api.createBackup({ ...empty(), tasks: [task] });
+  for (const invalid of ['not json', JSON.stringify({ ...backup, version: 2 }), JSON.stringify({ ...backup, tasks: [task, task] }), JSON.stringify({ ...backup, tasks: [{ ...task, tags: 'not an array' }] }), JSON.stringify({ ...backup, canvasConnections: [{ id: 'c', fromId: 'missing', toId: 'missing2', style: 'curved' }] })]) {
+    assert.throws(() => api.parseBackup(invalid));
+  }
+});
+test('import rejects nonportable photos and dangerous image URLs', async () => {
+  const api = await source('backup'); const backup = await api.createBackup(empty());
+  const photo = { id: 'photo', type: 'photo', title: 'Photo', x: 10, y: 10, rotation: 0, colorHex: '#fff' };
+  for (const data of [{ ...photo, imageStorageId: 'device-only' }, { ...photo, imageUrl: 'javascript:alert(1)' }, { ...photo, imageUrl: 'blob:expired' }]) {
+    assert.throws(() => api.parseBackup(JSON.stringify({ ...backup, canvasElements: [data] })));
+  }
+});
+test('quick capture parses real priorities, tags, and local calendar dates', async () => {
+  const { parseNaturalLanguageTask } = await source('nlpParser');
+  const { localDateString } = await source('dates');
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const parsed = parseNaturalLanguageTask('Review draft tomorrow p1 #work');
+  assert.equal(parsed.title, 'Review draft'); assert.equal(parsed.priority, 'urgent'); assert.deepEqual(parsed.tags, ['work']);
+  assert.equal(parsed.dueDate, localDateString(tomorrow)); assert.equal(parsed.section, 'upcoming');
+  assert.equal(localDateString(new Date(2026, 10, 14, 0, 5)), '2026-11-14');
 });
